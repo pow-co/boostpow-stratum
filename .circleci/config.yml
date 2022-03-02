@@ -1,0 +1,40 @@
+version: 2.1
+jobs:
+  build_docker:
+    docker:
+      - image: circleci/node:14
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build docker image
+          command: docker build -t boost-stratum . 
+      - run:
+          name: Push to Docker Hub
+          command: |
+            docker login --username $DOCKER_USER --password $DOCKER_PASSWORD
+            docker tag boost-stratum proofofwork/boost-stratum:$CIRCLE_BRANCH
+            docker push proofofwork/boost-stratum:$CIRCLE_BRANCH
+
+  deploy:
+    machine:
+      image: ubuntu-1604:202007-01
+    steps:
+      - run:
+          name: Deploy to Web Servers
+          command: ssh ubuntu@pow.co "sudo chef-client -o recipe[pow.co::boost_stratum]"
+
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - build_docker
+      - deploy:
+          requires:
+            - build_docker
+          filters:
+            branches:
+              only:
+                - master
+
