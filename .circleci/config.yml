@@ -10,7 +10,7 @@ jobs:
           name: Install Dependencies
           command: npm install
       - run:
-          name: Run Tets
+          name: Run Tests
           command: npm test
       - run:
           name: Build docker image
