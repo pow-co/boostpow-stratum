@@ -2,10 +2,16 @@ version: 2.1
 jobs:
   build_docker:
     docker:
-      - image: circleci/node:14
+      - image: circleci/node:12
     steps:
       - checkout
       - setup_remote_docker
+      - run:
+          name: Install Dependencies
+          command: npm install
+      - run:
+          name: Run Tets
+          command: npm test
       - run:
           name: Build docker image
           command: docker build -t boost-stratum . 
