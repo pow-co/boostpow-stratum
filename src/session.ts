@@ -1,8 +1,8 @@
 
 import { Event } from './event'
-import { Log } from './log'
+import { log } from './log'
 
-var net = require('net');
+let net = require('net');
 
 interface HostPort {
   ip: string;
@@ -14,27 +14,27 @@ export class Session {
   socket: net.Socket;
 
   constructor(hostPort: HostPort) {
-    this.client = new net.Socket();
+    this.socket = new net.Socket();
 
-    client.on('close', function() {
+    this.socket.on('close', function() {
       console.log('Connection closed');
     });
 
-    client.on('error', function(err) {
+    this.socket.on('error', function(err) {
       console.error('Connection error: ' + err);
     });
 
-    client.connect(hostPort.port, hostPort.ip, function() {
+    this.socket.connect(hostPort.port, hostPort.ip, function() {
     	console.log('Connection opened');
     });
 
   }
 
-  get open(): bool {
-    return socket.readyState === socket.OPEN;
+  get open(): boolean {
+    return this.socket.readyState === this.socket.OPEN;
   }
 
-  disconnect(server: Server) {
+  disconnect() {
 
     this.socket.disconnect();
 

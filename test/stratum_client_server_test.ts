@@ -1,5 +1,5 @@
 
-import { expect, server, spy } from './utils'
+import { expect, spy } from './utils'
 
 import { Session } from '../src/session'
 
@@ -29,7 +29,13 @@ describe("Client Connections", () => {
     expect(v['msg']).to.be.equal('client.connected')
     expect(v['ip']).to.be.equal('127.0.0.1')
 
-    client.disconnect(server)
+    client.disconnect()
+
+  })
+
+  it("should log the client disconnection in the event database", async () => {
+    let port: number = 1114;
+
 
   })
 
@@ -42,13 +48,7 @@ describe("Client Connections", () => {
     let port: number = 1113;
 
   })
-
-  it("should log the client disconnection in the event database", async () => {
-    let port: number = 1114;
-
-
-  })
-
+/*
   it("should log every single message sent from the client", async () => {
     let port: number = 1115;
 
@@ -101,6 +101,6 @@ describe("Client Connections", () => {
 
     expect(records[0].get('msg')).to.be.equal('some.stratum.event')
 
-  })
+  })*/
 
 })
