@@ -1,8 +1,9 @@
 
-import { Event } from './event'
+import { Events } from './event'
 import { log } from './log'
+import * as net from 'net'
 
-let net = require('net');
+//let net = require('net');
 
 interface HostPort {
   ip: string;
@@ -24,19 +25,24 @@ export class Session {
       console.error('Connection error: ' + err);
     });
 
+    this.socket.on('close', () => {
+      this.socket.end();
+    })
+
     this.socket.connect(hostPort.port, hostPort.ip, function() {
     	console.log('Connection opened');
     });
 
   }
 
+  // TODO I couldn't figure out how to do this one -- Daniel
   get open(): boolean {
-    return this.socket.readyState === this.socket.OPEN;
+    return true
   }
 
   disconnect() {
 
-    this.socket.disconnect();
+    this.socket.end();
 
   }
 

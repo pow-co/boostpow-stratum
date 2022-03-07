@@ -1,4 +1,6 @@
-const net = require('net');
+
+import { Event, Events } from './event'
+import * as net from 'net'
 
 export class Server {
   server;
@@ -8,10 +10,10 @@ export class Server {
     this.name = name;
 
     this.server = net.createServer((socket) => {
-      Events.log({
+      Events.log(new Event({
         'who': name,
-        'what': 'new connection';
-        'ip': "I don't know how to get this information -- Daniel"});
+        'what': 'new connection',
+        'ip': "I don't know how to get this information -- Daniel"}));
 
       socket.on('data', (buffer) => {
         // TODO keep reading data unti we get a \n. Check that everything
@@ -19,10 +21,10 @@ export class Server {
       });
 
       socket.on('end', () => {
-        Events.log({
+        Events.log(new Event({
           'who': name,
-          'what': 'connection closed';
-          'ip': "I don't know how to get this information -- Daniel"})
+          'what': 'connection closed',
+          'ip': "I don't know how to get this information -- Daniel"}))
       });
     });
 

@@ -5,7 +5,7 @@ import { Session } from '../src/session'
 
 import { Server } from '../src/server'
 
-import { Event, Events } from '../src/event'
+import { Events } from '../src/event'
 
 import { log } from '../src/log'
 

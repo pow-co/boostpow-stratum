@@ -1,7 +1,15 @@
 import { log } from './log'
 
-export interface Event {
-  who: String
+export class Event {
+  properties: object;
+
+  constructor(properties: object) {
+    this.properties = properties
+  }
+
+  get(property: string) {
+    return this.properties[property]
+  }
 };
 
 var events : Event[];
@@ -14,15 +22,15 @@ export class Events {
   }
 
   static last(who: String | undefined): Event | undefined {
-    if (events.size() == 0) {
+    if (events.length == 0) {
       return
     }
 
     if (typeof who === undefined) {
-      return events[events.size() - 1]
+      return events[events.length - 1]
     }
 
-    for (let i = events.size(); i > 0; i--) {
+    for (let i = events.length; i > 0; i--) {
       let v: Event = events[i - 1]
       if (v['who'] == who) {
         return v
@@ -37,9 +45,9 @@ export class Events {
       return events;
     }
 
-    filtered = [];
+    var filtered = [];
 
-    events.forEach(event: Event => {
+    events.forEach((event: Event) => {
       if (event['who'] === who) {
         filtered.push(event);
       }
