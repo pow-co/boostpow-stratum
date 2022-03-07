@@ -1,35 +1,51 @@
+import { log } from './log'
 
-import { Client } from './client'
+export interface Event {
+  who: String
+};
 
-export class Event {
+var events : Event[];
 
-  get(key: string): any {
+export class Events {
 
-    return ''
-
+  static log(event: Event) {
+    events.push(new Event(event));
+    log(event);
   }
 
+  static last(who: String | undefined): Event | undefined {
+    if (events.size() == 0) {
+      return
+    }
+
+    if (typeof who === undefined) {
+      return events[events.size() - 1]
+    }
+
+    for (let i = events.size(); i > 0; i--) {
+      let v: Event = events[i - 1]
+      if (v['who'] == who) {
+        return v
+      }
+    }
+
+    return
+  }
+
+  static list(who: String | undefined): Event[] {
+    if (typeof who === undefined) {
+      return events;
+    }
+
+    filtered = [];
+
+    events.forEach(event: Event => {
+      if (event['who'] === who) {
+        filtered.push(event);
+      }
+    });
+
+    return filtered;
+
+  }
 }
-
-export async function listEvents(params: any = {}): Promise<Event[]> {
-
-  return [
-
-    new Event(),
-
-    new Event()
-
-  ]
-
-}
-
-export async function listEventsForClient(client: Client, params: any = {}): Promise<Event[]>  {
-
-  return [
-
-    new Event()
-
-  ]
-
-}
-

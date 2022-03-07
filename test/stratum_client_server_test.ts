@@ -1,9 +1,11 @@
 
 import { expect, server, spy } from './utils'
 
-import { Client } from '../src/client'
+import { Session } from '../src/session'
 
-import { Event, listEvents, listEventsForClient } from '../src/event'
+import { Server } from '../src/server'
+
+import { Event, Events } from '../src/event'
 
 import { log } from '../src/log'
 
@@ -17,54 +19,43 @@ import { log } from '../src/log'
 describe("Client Connections", () => {
 
   it("should log the client connection details in database", async () => {
+    let port: number = 1111;
 
-    let client: Client = new Client({ ip: '127.0.0.1' })
+    let server: Server = new Server("pow co", port, 1)
+    let client: Session = new Session({ ip: '127.0.0.1', port: port})
 
-    let event: Event = await client.connect(client)
+    let v = Events.last("pow co")
 
-    expect(event.get('msg')).to.be.equal('client.connected')
+    expect(v['msg']).to.be.equal('client.connected')
+    expect(v['ip']).to.be.equal('127.0.0.1')
 
-    expect(event.get('ip')).to.be.equal('127.0.0.1')
-
-    await client.disconnect(server)
+    client.disconnect(server)
 
   })
 
   it("should log stratum credentials to database when provided by client", async () => {
-
-    let client: Client = new Client({ ip: '127.0.0.1' })
-
-    let event: Event = await client.connect(server)
-
-    expect(event.get('msg')).to.be.equal('client.connected')
-
-    expect(event.get('ip').to.be.equal('127.0.0.1'))
+    let port: number = 1112;
 
   })
 
   it("should log other stratum metadata provided by the client", async () => {
+    let port: number = 1113;
 
   })
 
   it("should log the client disconnection in the event database", async () => {
+    let port: number = 1114;
 
-    let client: Client = new Client({ ip: '127.0.0.1' })
-
-    let event: Event = await client.connect(server)
-
-    expect(event.get('msg')).to.be.equal('disconnected')
-
-    expect(event.get('ip')).to.be.equal('127.0.0.1')
-
-    await client.disconnect(server)
 
   })
 
   it("should log every single message sent from the client", async () => {
+    let port: number = 1115;
 
     const ip = '127.0.0.1'
 
-    let client: Client = new Client({ ip })
+    let server: Server = new Server("pow co", port, 1)
+    let client: Session = new Session({ ip: '127.0.0.1', port: port })
 
     spy.on(log, ['info'])
 
@@ -85,8 +76,10 @@ describe("Client Connections", () => {
   })
 
   it("should list logged events by event type", async () => {
+    let port: number = 1116;
 
-    let client: Client = new Client({ ip: '127.0.0.1' })
+    let server: Server = new Server("pow co", port, 1)
+    let client: Session = new Session({ ip: '127.0.0.1', port: port })
 
     let records = await listEvents({ msg: 'some.stratum.event' })
 
@@ -97,8 +90,10 @@ describe("Client Connections", () => {
   })
 
   it("should list logged events for a given client", async () => {
+    let port: number = 1117;
 
-    let client: Client = new Client({ ip: '127.0.0.1' })
+    let server: Server = new Server("pow co", port, 1)
+    let client: Session = new Session({ ip: '127.0.0.1', port: port })
 
     let records = await listEventsForClient(client, { msg: 'some.stratum.event' })
 
@@ -109,4 +104,3 @@ describe("Client Connections", () => {
   })
 
 })
-
