@@ -12,7 +12,7 @@ export class Event {
   }
 };
 
-var events : Event[];
+var events : Event[] = [];
 
 export class Events {
 

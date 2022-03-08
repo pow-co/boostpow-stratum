@@ -1,5 +1,5 @@
 
-import { Events } from './event'
+import { Event, Events } from './event'
 import { log } from './log'
 import * as net from 'net'
 
@@ -11,27 +11,41 @@ interface HostPort {
 }
 
 export class Session {
+  name: string
   hostPort: HostPort
-  socket: net.Socket;
+  socket: net.Socket
 
-  constructor(hostPort: HostPort) {
+  constructor(name: string, hostPort: HostPort) {
+    this.name = name;
+    this.hostPort = hostPort;
     this.socket = new net.Socket();
 
     this.socket.on('close', function() {
-      console.log('Connection closed');
-    });
+      Events.log(new Event({
+        'who': name,
+        'what': 'connection successful'}))
+    })
 
-    this.socket.on('error', function(err) {
-      console.error('Connection error: ' + err);
-    });
+    this.socket.on('error', (err: string) => {
+      Events.log(new Event({
+        'who': name,
+        'what': 'error: ' + err}))
+    })
 
     this.socket.on('close', () => {
+      Events.log(new Event({
+        'who': name,
+        'what': 'connection.disconnect'}))
       this.socket.end();
     })
 
     this.socket.connect(hostPort.port, hostPort.ip, function() {
-    	console.log('Connection opened');
-    });
+      Events.log(new Event({
+        'who': name,
+        'what': 'client.connect',
+        'ip': hostPort.ip,
+        'port': hostPort.port}))
+    })
 
   }
 

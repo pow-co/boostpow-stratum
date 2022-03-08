@@ -12,7 +12,7 @@ export class Server {
     this.server = net.createServer((socket) => {
       Events.log(new Event({
         'who': name,
-        'what': 'new connection',
+        'what': 'client.connect',
         'ip': "I don't know how to get this information -- Daniel"}));
 
       socket.on('data', (buffer) => {
@@ -23,7 +23,7 @@ export class Server {
       socket.on('end', () => {
         Events.log(new Event({
           'who': name,
-          'what': 'connection closed',
+          'what': 'client.disconnect',
           'ip': "I don't know how to get this information -- Daniel"}))
       });
     });
