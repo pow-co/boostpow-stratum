@@ -8,7 +8,7 @@ interface NewLogger {
 }
 
 interface LogQuery {
-  type: string;
+  type?: string;
   payload?: any;
   limit?: number;
   offset?: number;
@@ -32,7 +32,7 @@ class Logger {
 
   async info(event_type: string, payload: any = {}) {
 
-    this.pino.info(payload, event_type)
+    this.pino.info({...payload, namespace: this.namespace }, event_type)
 
     let record = await models.Event.create({
       namespace: this.namespace,
@@ -46,7 +46,7 @@ class Logger {
 
   async error(error_type: string, payload: any = {}) {
 
-    this.pino.error(payload, error_type)
+    this.pino.error({...payload, namespace: this.namespace }, error_type)
 
     let record = await models.Event.create({
       namespace: this.namespace,
@@ -65,15 +65,16 @@ class Logger {
 
   }
 
-  async read(query: LogQuery) {
+  async read(query: LogQuery = {}) {
 
-    this.info('log.read', query)
+    this.pino.debug('log.read', query)
 
     const where = {
       namespace: this.namespace,
-      type: query.type,
       error: query.error || false
     }
+
+    if (query.type) { where['type'] = query.type }
 
     if (query.payload) { where['payload'] = query.payload }
 

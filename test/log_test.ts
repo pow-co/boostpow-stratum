@@ -145,6 +145,21 @@ describe('Log', () => {
 
     })
 
+    it('should read the log for all types together', async () => {
+
+      await log.info('type.a')
+      await log.info('type.b')
+
+      let events = await log.read({
+        order: 'desc',
+        limit: 2
+      })
+
+      expect(events[0].type).to.be.equal('type.b')
+      expect(events[1].type).to.be.equal('type.a')
+
+    })
+
   })
 
 })

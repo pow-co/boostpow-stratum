@@ -65,3 +65,16 @@ export class Session {
   }
 
 }
+
+interface SessionData {
+
+}
+
+export async function listSessions(): Promise<SessionData[]> {
+
+  // TODO: Daniel please make this return a list of sessions
+
+  return []
+
+}
+

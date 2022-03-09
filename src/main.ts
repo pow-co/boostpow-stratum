@@ -1,13 +1,17 @@
 
+require('dotenv').config()
+
 import { log } from './log'
 
-export function start() {
+import { server } from './api_server'
 
-  log.info('server.start')
+export async function start() {
 
-  while(true) {
+  log.info('main.start')
 
-  }
+  await server.start()
+
+  log.info('api.server.started', server.info);
 
 }
 
