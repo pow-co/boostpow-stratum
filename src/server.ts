@@ -2,6 +2,8 @@
 import { Event, Events } from './event'
 import * as net from 'net'
 
+import { log } from './log'
+
 export class Server {
   server;
   name: String;
@@ -10,10 +12,11 @@ export class Server {
     this.name = name;
 
     this.server = net.createServer((socket) => {
-      Events.log(new Event({
-        'who': name,
-        'what': 'client.connect',
-        'ip': "I don't know how to get this information -- Daniel"}));
+
+      log.info('client.connect', {
+        name: this.name,
+        'ip': "I don't know how to get this information -- Daniel"
+      })
 
       socket.on('data', (buffer) => {
         // TODO keep reading data unti we get a \n. Check that everything
@@ -21,10 +24,12 @@ export class Server {
       });
 
       socket.on('end', () => {
-        Events.log(new Event({
-          'who': name,
-          'what': 'client.disconnect',
-          'ip': "I don't know how to get this information -- Daniel"}))
+
+        log.info('client.disconnect', {
+          name: this.name, 
+          'ip': "I don't know how to get this information -- Daniel"
+        })
+
       });
     });
 

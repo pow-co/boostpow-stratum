@@ -1,7 +1,103 @@
 
-const pino = require('pino')
+const Pino = require('pino')
 
-const log = pino()
+import { models } from './models'
 
-export { log } 
+interface NewLogger {
+  namespace: string;
+}
+
+interface LogQuery {
+  type: string;
+  payload?: any;
+  limit?: number;
+  offset?: number;
+  order?: 'asc' | 'desc';
+  error?: boolean;
+}
+
+class Logger {
+
+  namespace: string;
+
+  pino: typeof Pino;
+
+  constructor(params: NewLogger = {namespace: ''}) {
+
+    this.pino = Pino()
+
+    this.namespace = params.namespace
+
+  }
+
+  async info(event_type: string, payload: any = {}) {
+
+    this.pino.info(payload, event_type)
+
+    let record = await models.Event.create({
+      namespace: this.namespace,
+      type: event_type,
+      payload
+    })
+
+    return record;
+
+  }
+
+  async error(error_type: string, payload: any = {}) {
+
+    this.pino.error(payload, error_type)
+
+    let record = await models.Event.create({
+      namespace: this.namespace,
+      type: error_type,
+      payload,
+      error: true
+    })
+
+    return record;
+
+  }
+
+  async debug(...params) {
+
+    this.pino.debug(params)
+
+  }
+
+  async read(query: LogQuery) {
+
+    this.info('log.read', query)
+
+    const where = {
+      namespace: this.namespace,
+      type: query.type,
+      error: query.error || false
+    }
+
+    if (query.payload) { where['payload'] = query.payload }
+
+    const findAll = {
+
+      where,
+
+      limit: query.limit || 100,
+
+      offset: query.offset || 0,
+
+      order: [['createdAt', query.order || 'desc']]
+
+    }
+
+    let records = await models.Event.findAll(findAll)
+
+    return records;
+
+  }
+
+}
+
+const log = new Logger({ namespace: 'stratum' })
+
+export { log }
 

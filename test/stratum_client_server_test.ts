@@ -24,11 +24,6 @@ describe("Client Connections", () => {
     let server: Server = new Server("pow co", port, 1)
     let client: Session = new Session("client", { ip: '127.0.0.1', port: port})
 
-    let v = Events.last("pow co")
-
-    expect(v.get('what')).to.be.equal('client.connected')
-    expect(v.get('ip')).to.be.equal('127.0.0.1')
-
     client.disconnect()
 
   })

@@ -20,31 +20,35 @@ export class Session {
     this.hostPort = hostPort;
     this.socket = new net.Socket();
 
-    this.socket.on('close', function() {
-      Events.log(new Event({
-        'who': name,
-        'what': 'connection successful'}))
+    this.socket.on('close', () => {
+
+      log.info('connected.successful', { name: this.name })
+
     })
 
-    this.socket.on('error', (err: string) => {
-      Events.log(new Event({
-        'who': name,
-        'what': 'error: ' + err}))
+    this.socket.on('error', (error) => {
+
+      log.error('socket.error', { error })
     })
 
     this.socket.on('close', () => {
-      Events.log(new Event({
-        'who': name,
-        'what': 'connection.disconnect'}))
-      this.socket.end();
+
+      log.info('connection.disconnect', {
+
+        name: this.name
+
+      })
+
     })
 
-    this.socket.connect(hostPort.port, hostPort.ip, function() {
-      Events.log(new Event({
-        'who': name,
-        'what': 'client.connect',
-        'ip': hostPort.ip,
-        'port': hostPort.port}))
+    this.socket.connect(hostPort.port, hostPort.ip, () => {
+
+      log.info('client.connect', {
+        ip: hostPort.ip,
+        port: hostPort.port,
+        name: this.name
+      })
+
     })
 
   }

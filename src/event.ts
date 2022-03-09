@@ -16,11 +16,6 @@ var events : Event[] = [];
 
 export class Events {
 
-  static log(event: Event) {
-    events.push(new Event(event));
-    log(event);
-  }
-
   static last(who: String | undefined): Event | undefined {
     if (events.length == 0) {
       return
