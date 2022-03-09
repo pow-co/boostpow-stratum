@@ -85,7 +85,7 @@ class Logger {
 
       offset: query.offset || 0,
 
-      order: [['createdAt', query.order || 'desc']]
+      order: [['createdAt', query.order || 'asc']]
 
     }
 

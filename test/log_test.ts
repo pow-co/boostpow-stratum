@@ -54,23 +54,94 @@ describe('Log', () => {
 
       let record = await log.info('share.submitted', { uid })
 
-      console.log(record.toJSON())
-
-      let events = await log.read({
+      let [event] = await log.read({
 
         type: 'share.submitted',
 
-        limit: 1
+        limit: 1,
+
+        order: 'desc'
 
       })
-
-      for (let event of events) { console.log(event.toJSON()) }
-
-      const [event] = events
 
       expect(event.payload.uid).to.be.equal(uid)
 
       expect(event.type).to.be.equal('share.submitted')
+
+    })
+
+    it('allows ordering desc or asc', async () => {
+
+      const eventType = uuid.v4()
+
+      await log.info(eventType, { nonce: 1 })
+      await log.info(eventType, { nonce: 2 })
+      await log.info(eventType, { nonce: 3 })
+
+      let [firstEvent] = await log.read({
+
+        type: eventType,
+
+        order: 'asc'
+
+      })
+
+      expect(firstEvent.payload.nonce).to.be.equal(1)
+
+      let [lastEvent] = await log.read({
+
+        type: eventType,
+
+        order: 'desc'
+
+      })
+
+      expect(lastEvent.payload.nonce).to.be.equal(3)
+
+    })
+
+    it('allows specifying a payload query and offset', async () => {
+
+      const eventType = uuid.v4()
+
+      await log.info(eventType, { region: 'pacific', nonce: 1 })
+
+      await log.info(eventType, { region: 'pacific', nonce: 2 })
+
+      await log.info(eventType, { region: 'atlantic', nonce: 2 })
+
+      let [atlantic] = await log.read({
+
+        type: eventType,
+        
+        payload: { region: 'atlantic' }
+
+      })
+
+      expect(atlantic.payload.nonce).to.be.equal(2)
+      expect(atlantic.payload.region).to.be.equal('atlantic')
+
+      let [pacific] = await log.read({
+
+        type: eventType,
+
+        payload: { region: 'pacific' }
+
+      })
+
+      expect(pacific.payload.nonce).to.be.equal(1)
+
+      let [secondPacific] = await log.read({
+
+        type: eventType,
+
+        payload: { region: 'pacific' },
+
+        offset: 1
+
+      })
+
+      expect(secondPacific.payload.nonce).to.be.equal(2)
 
     })
 
