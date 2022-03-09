@@ -16,7 +16,7 @@ jobs:
           command: npm install
       - run:
           name: Migrate Database
-          command: npmx sequelize db:migrate --url=postgres://user:password@localhost/db
+          command: npx sequelize db:migrate --url=postgres://user:password@localhost/db
       - run:
           name: Run Tests
           command: npm test
