@@ -7,6 +7,8 @@
     "connect": "ts-node src/bin/client.ts connect",
     "logs": "ts-node src/bin/logs.ts tail",
     "test": "NODE_ENV=test mocha --require=ts-node/register --timeout=10000 test/*test.ts --exit",
+    "runtest": "NODE_ENV=test mocha --require=ts-node/register $TEST --timeout=20000 --exit",
+    "test:stratum": "TEST=test/stratum_test.ts npm run runtest",
     "start": "ts-node src/main.ts"
   },
   "author": "",
