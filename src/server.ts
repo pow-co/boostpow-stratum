@@ -2,40 +2,89 @@
 import { Event, Events } from './event'
 import * as net from 'net'
 
+import { asOptional, asNumber } from 'cleaners'
+
+import { Session, startSession } from './session'
+
 import { log } from './log'
+
+interface NewServer {
+  name: string;
+  port: number;
+  maxConnections?: number;
+}
 
 export class Server {
   server;
   name: String;
+  port: number;
 
-  constructor(name: String, port: number, maxConnections: number) {
+  constructor({name, port, maxConnections}: NewServer) {
+
     this.name = name;
 
-    this.server = net.createServer((socket) => {
+    this.server = net.createServer(socket => { 
 
-      log.info('client.connect', {
-        name: this.name,
-        'ip': "I don't know how to get this information -- Daniel"
-      })
+      startSession({ socket })
 
-      socket.on('data', (buffer) => {
-        // TODO keep reading data unti we get a \n. Check that everything
-        // up to the new line is a json message. Read that message.
-      });
+    })
 
-      socket.on('end', () => {
-
-        log.info('client.disconnect', {
-          name: this.name, 
-          'ip': "I don't know how to get this information -- Daniel"
-        })
-
-      });
-    });
+    this.port = port;
 
     this.server.maxConnections = maxConnections;
-    this.server.listen(port);
 
   }
+
+  start() {
+
+    this.server.listen(this.port)
+
+    log.info('stratum.server.started', {
+
+      name: this.name,
+
+      port: this.port,
+
+      maxConnections: this.server.maxConnections
+
+    })
+
+  }
+
+  stop() {
+
+    return new Promise(resolve => {
+
+      this.server.close((result) => {
+
+        log.info('stratum.server.stopped')
+
+        resolve(result)
+
+      })
+
+    })
+
+  }
+}
+
+const port = process.env.STRATUM_PORT ?
+    parseInt(process.env.STRATUM_PORT) :
+    5200
+
+export const server = new Server({
+
+  port,
+
+  name: 'stratum.v0'
+
+})
+
+if (require.main === module) {
+
+  server.start()
+
+  log.info('stratum.server.started', server.server.info);
+
 }
 

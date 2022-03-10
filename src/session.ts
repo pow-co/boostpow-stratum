@@ -1,80 +1,117 @@
 
 import { Event, Events } from './event'
+
 import { log } from './log'
+
 import * as net from 'net'
 
-//let net = require('net');
+import * as uuid from 'uuid'
+
+import { handleStratumMessage } from './stratum'
 
 interface HostPort {
   ip: string;
   port: number;
 }
 
-export class Session {
-  name: string
-  hostPort: HostPort
-  socket: net.Socket
+export type Sessions = {
+  [key: string]: Session
+}
 
-  constructor(name: string, hostPort: HostPort) {
-    this.name = name;
-    this.hostPort = hostPort;
-    this.socket = new net.Socket();
+const sessions: Sessions = {}
+
+type SessionId = string;
+
+interface NewSession {
+  socket: net.Socket;
+}
+
+export class Session {
+
+  sessionId: SessionId;
+
+  connectedAt: Date;
+
+  socket: net.Socket;
+
+  open: boolean;
+
+  constructor({ socket }: NewSession) {
+
+    this.connectedAt = new Date()
+
+    this.sessionId = uuid.v4()
+
+    this.socket = socket;
+
+    this.open = true
+
+    log.info('socket.connect', {
+
+      remoteAddress: this.socket.remoteAddress,
+
+      remotePort: this.socket.remotePort,
+
+      sessionId: this.sessionId
+
+    })
 
     this.socket.on('close', () => {
 
-      log.info('connected.successful', { name: this.name })
+      log.info('socket.close', { sessionId: this.sessionId })
 
+      delete sessions[this.sessionId]
+
+      this.open = false
     })
 
     this.socket.on('error', (error) => {
 
-      log.error('socket.error', { error })
+      log.error('socket.error', { error, sessionId: this.sessionId })
     })
 
-    this.socket.on('close', () => {
+    this.socket.on('data', data => {
 
-      log.info('connection.disconnect', {
-
-        name: this.name
-
-      })
-
-    })
-
-    this.socket.connect(hostPort.port, hostPort.ip, () => {
-
-      log.info('client.connect', {
-        ip: hostPort.ip,
-        port: hostPort.port,
-        name: this.name
-      })
+      handleStratumMessage(data, this.socket)
 
     })
 
   }
-
-  // TODO I couldn't figure out how to do this one -- Daniel
-  get open(): boolean {
-    return true
-  }
-
   disconnect() {
 
     this.socket.end();
 
   }
 
+  toJSON() {
+
+    return {
+
+      remoteAddress: this.socket.remoteAddress,
+
+      remotePort: this.socket.remotePort,
+
+      sessionId: this.sessionId
+
+    }
+  }
+
 }
 
-interface SessionData {
+
+export function startSession({socket}: NewSession): Session {
+
+  let session = new Session({ socket })
+
+  sessions[session.sessionId] = session
+
+  return session
 
 }
 
-export async function listSessions(): Promise<SessionData[]> {
+export async function listSessions(): Promise<Sessions> {
 
-  // TODO: Daniel please make this return a list of sessions
-
-  return []
+  return sessions
 
 }
 

@@ -14,9 +14,17 @@ export { spy }
 
 export { expect, chai }
 
-import { server } from '../src/api_server'
+import { initServer } from '../src/api_server'
 
-const request = require('supertest')(server.listener)
+var request;
+
+before(async () => {
+
+  const server = await initServer()
+
+  request = require('supertest')(server.listener)
+
+})
 
 export { request }
 

@@ -3,6 +3,8 @@ const Pino = require('pino')
 
 import { models } from './models'
 
+import { broadcast } from './socket.io/pubsub'
+
 interface NewLogger {
   namespace: string;
 }
@@ -39,6 +41,15 @@ class Logger {
       type: event_type,
       payload
     })
+
+    const message = Object.assign(record.payload, {
+      msg: record.type,
+      createdAt: record.createdAt,
+    })
+
+    if (record.error) { message.error = record.error }
+
+    broadcast('log', message)
 
     return record;
 

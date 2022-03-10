@@ -17,6 +17,7 @@ import { log } from '../src/log'
  * for a clear example on how to implement a simple stratum server and client*/
 
 describe("Client Connections", () => {
+  /*
 
   it("should log the client connection details in database", async () => {
     let port: number = 1111;
