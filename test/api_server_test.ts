@@ -17,15 +17,17 @@ describe('API Server', () => {
 
       await log.info('proof.received')
 
-      var response = await request.get('/api/v1/events?limit=1&order=desc')
+      var response = await request.get('/api/v1/events?limit=3&order=desc')
 
-      expect(response.body.events[0].type).to.be.equal('proof.received')
+      expect(response.body.events[1].type).to.be.equal('proof.received')
 
       await log.info('job.sent')
 
-      var response = await request.get('/api/v1/events?limit=1&order=desc')
+      var response = await request.get('/api/v1/events?limit=3&order=desc')
 
-      expect(response.body.events[0].type).to.be.equal('job.sent')
+      expect(response.body.events[0].type).to.be.equal('request.log.read')
+
+      expect(response.body.events[1].type).to.be.equal('job.sent')
 
       var response = await request.get('/api/v1/events?type=job.sent')
 

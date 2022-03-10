@@ -83,7 +83,7 @@ async function initServer(): Hapi.Server {
 
       const { remoteAddress, remotePort, query } = request
 
-      log.info('request.log.read', { remoteAddress, remotePort, query })
+      await log.info('request.log.read', { remoteAddress, remotePort, query })
 
       try {
 
