@@ -5,8 +5,8 @@ import {method} from '../src/Stratum/method'
 import {Request} from '../src/Stratum/request'
 import {Response, BooleanResponse} from '../src/Stratum/response'
 import {Notification} from '../src/Stratum/notification'
-/*import {AuthorizeRequest} from '../src/Stratum/mining/authorize'
-import {SubmitRequest} from '../src/Stratum/mining/submit'
+import {AuthorizeRequest} from '../src/Stratum/mining/authorize'
+/*import {SubmitRequest} from '../src/Stratum/mining/submit'
 import {GetVersionRequest, GetVersionResponse} from '../src/Stratum/client/get_version'
 import {ShowMessage} from '../src/Stratum/client/show_message'
 import {Notify} from '../src/Stratum/mining/notify'
@@ -47,7 +47,7 @@ describe("Stratum Messages", () => {
     expect(Request.valid({id:3, method:'mining.authorize', params:[]})).to.be.equal(true)
     expect(Request.valid({id:null, method:'mining.authorize', params:[]})).to.be.equal(false)
     expect(Request.valid({id:"3", method:'mining.authorize', params:[true, {}, ""]})).to.be.equal(true)
-    let x 
+    let x
     expect(Request.valid({id:3, method:'mining.authorize', params:[x]})).to.be.equal(false)
   })
 
@@ -72,43 +72,50 @@ describe("Stratum Messages", () => {
   })
 
   it("should distinguish valid and invalid authorize messages", async () => {
+    expect(AuthorizeRequest.valid({id:"x", method: 'mining.authorize', params: ["abcd"]})).to.be.equal(true)
+    expect(AuthorizeRequest.valid({id:"x", method: 'mining.authorize', params: ["abcd", "xyzt"]})).to.be.equal(true)
+    expect(AuthorizeRequest.valid({id:"x", method: 'mining.subscribe', params: ["abcd"]})).to.be.equal(false)
+    expect(AuthorizeRequest.username({id:"x", method: 'mining.authorize', params: ["abcd"]})).to.be.equal("abcd")
+    expect(AuthorizeRequest.password({id:"x", method: 'mining.authorize', params: ["abcd"]})).to.be.equal(undefined)
+    expect(AuthorizeRequest.password({id:"x", method: 'mining.authorize', params: ["abcd", "xyzt"]})).to.be.equal("xyzt")
+  })
 
+  it("should distinguish valid and invalid submit messages", async () => {
+    //expect(SubmitRequest.valid()).to.be.equal(true)
   })
 
   it("should distinguish valid and invalid subscribe messages", async () => {
+    //expect(SubscribeRequest.valid()).to.be.equal(true)
+    //expect(SubscribeResponse.valid()).to.be.equal(true)
+  })
 
+  it("should distinguish valid and invalid set_extranonce messages", async () => {
+    //expect(SetExtranonce.valid()).to.be.equal(true)
+  })
+
+  it("should distinguish valid and invalid set_difficulty messages", async () => {
+    //expect(SetDifficulty.valid()).to.be.equal(true)
+  })
+
+  it("should distinguish valid and invalid set_version_mask messages", async () => {
+    //expect(SetVersionMask.valid()).to.be.equal(true)
+  })
+
+  it("should distinguish valid and invalid get_version messages", async () => {
+    //expect(GetVersionRequest.valid()).to.be.equal(true)
+    //expect(GetVersionResponse.valid()).to.be.equal(true)
+  })
+
+  it("should distinguish valid and invalid show_message messages", async () => {
+    //expect(ShowMessage.valid()).to.be.equal(true)
   })
 
   it("should distinguish valid and invalid configure messages", async () => {
 
   })
 
-  it("should distinguish valid and invalid submit messages", async () => {
-
-  })
-
   it("should distinguish valid and invalid notify messages", async () => {
-
-  })
-
-  it("should distinguish valid and invalid set_extranonce messages", async () => {
-
-  })
-
-  it("should distinguish valid and invalid set_difficulty messages", async () => {
-
-  })
-
-  it("should distinguish valid and invalid set_version_mask messages", async () => {
-
-  })
-
-  it("should distinguish valid and invalid get_version messages", async () => {
-
-  })
-
-  it("should distinguish valid and invalid show_message messages", async () => {
-
+    //expect(Notify.valid()).to.be.equal(true)
   })
 
   it("should construct proofs from the notify, subscribe, and submit messages", async () => {
