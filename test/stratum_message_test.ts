@@ -6,9 +6,9 @@ import {Request} from '../src/Stratum/request'
 import {Response, BooleanResponse} from '../src/Stratum/response'
 import {Notification} from '../src/Stratum/notification'
 import {AuthorizeRequest} from '../src/Stratum/mining/authorize'
-/*import {SubmitRequest} from '../src/Stratum/mining/submit'
 import {GetVersionRequest, GetVersionResponse} from '../src/Stratum/client/get_version'
 import {ShowMessage} from '../src/Stratum/client/show_message'
+/*import {SubmitRequest} from '../src/Stratum/mining/submit'
 import {Notify} from '../src/Stratum/mining/notify'
 import {SetDifficulty} from '../src/Stratum/mining/set_difficulty'
 import {SetExtranonce} from '../src/Stratum/mining/set_extranonce'
@@ -80,6 +80,17 @@ describe("Stratum Messages", () => {
     expect(AuthorizeRequest.password({id:"x", method: 'mining.authorize', params: ["abcd", "xyzt"]})).to.be.equal("xyzt")
   })
 
+  it("should distinguish valid and invalid get_version messages", async () => {
+    expect(GetVersionRequest.valid({id:'a', method: 'client.get_version', params: []})).to.be.equal(true)
+    expect(GetVersionResponse.valid({id:'a', result: "3", err: null})).to.be.equal(true)
+    expect(GetVersionResponse.version({id:'a', result: "3", err: null})).to.be.equal("3")
+  })
+
+  it("should distinguish valid and invalid show_message messages", async () => {
+    expect(ShowMessage.valid({id:null, method: 'client.show_message', params: ['message']})).to.be.equal(true)
+    expect(ShowMessage.message({id:null, method: 'client.show_message', params: ['message']})).to.be.equal('message')
+  })
+
   it("should distinguish valid and invalid submit messages", async () => {
     //expect(SubmitRequest.valid()).to.be.equal(true)
   })
@@ -99,15 +110,6 @@ describe("Stratum Messages", () => {
 
   it("should distinguish valid and invalid set_version_mask messages", async () => {
     //expect(SetVersionMask.valid()).to.be.equal(true)
-  })
-
-  it("should distinguish valid and invalid get_version messages", async () => {
-    //expect(GetVersionRequest.valid()).to.be.equal(true)
-    //expect(GetVersionResponse.valid()).to.be.equal(true)
-  })
-
-  it("should distinguish valid and invalid show_message messages", async () => {
-    //expect(ShowMessage.valid()).to.be.equal(true)
   })
 
   it("should distinguish valid and invalid configure messages", async () => {
