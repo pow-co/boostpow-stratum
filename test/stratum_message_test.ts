@@ -8,11 +8,11 @@ import {Notification} from '../src/Stratum/notification'
 import {AuthorizeRequest} from '../src/Stratum/mining/authorize'
 import {GetVersionRequest, GetVersionResponse} from '../src/Stratum/client/get_version'
 import {ShowMessage} from '../src/Stratum/client/show_message'
-/*import {SubmitRequest} from '../src/Stratum/mining/submit'
-import {Notify} from '../src/Stratum/mining/notify'
 import {SetDifficulty} from '../src/Stratum/mining/set_difficulty'
 import {SetExtranonce} from '../src/Stratum/mining/set_extranonce'
 import {SetVersionMask} from '../src/Stratum/mining/set_version_mask'
+/*import {SubmitRequest} from '../src/Stratum/mining/submit'
+import {Notify} from '../src/Stratum/mining/notify'
 import {SubscribeRequest, SubscribeResponse} from '../src/Stratum/mining/subscribe'*/
 //import {ConfigureRequest, ConfigrueResponse} from '../src/Stratum/mining/configure'
 
@@ -91,6 +91,21 @@ describe("Stratum Messages", () => {
     expect(ShowMessage.message({id:null, method: 'client.show_message', params: ['message']})).to.be.equal('message')
   })
 
+  it("should distinguish valid and invalid set_difficulty messages", async () => {
+    expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: [1]})).to.be.equal(true)
+    expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: [1.1]})).to.be.equal(true)
+    expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: []})).to.be.equal(false)
+    expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: [""]})).to.be.equal(false)
+  })
+
+  it("should distinguish valid and invalid set_extranonce messages", async () => {
+    expect(SetExtranonce.valid({id:null, method: 'mining.set_extranonce', params: ["00000000", 8]})).to.be.equal(true)
+  })
+
+  it("should distinguish valid and invalid set_version_mask messages", async () => {
+    expect(SetVersionMask.valid({id:null, method: 'mining.set_version_mask', params: ["00000000"]})).to.be.equal(true)
+  })
+
   it("should distinguish valid and invalid submit messages", async () => {
     //expect(SubmitRequest.valid()).to.be.equal(true)
   })
@@ -98,18 +113,6 @@ describe("Stratum Messages", () => {
   it("should distinguish valid and invalid subscribe messages", async () => {
     //expect(SubscribeRequest.valid()).to.be.equal(true)
     //expect(SubscribeResponse.valid()).to.be.equal(true)
-  })
-
-  it("should distinguish valid and invalid set_extranonce messages", async () => {
-    //expect(SetExtranonce.valid()).to.be.equal(true)
-  })
-
-  it("should distinguish valid and invalid set_difficulty messages", async () => {
-    //expect(SetDifficulty.valid()).to.be.equal(true)
-  })
-
-  it("should distinguish valid and invalid set_version_mask messages", async () => {
-    //expect(SetVersionMask.valid()).to.be.equal(true)
   })
 
   it("should distinguish valid and invalid configure messages", async () => {
