@@ -106,13 +106,13 @@ describe("Stratum Messages", () => {
     expect(SetVersionMask.valid({id:null, method: 'mining.set_version_mask', params: ["00000000"]})).to.be.equal(true)
   })
 
-  it("should distinguish valid and invalid submit messages", async () => {
-    //expect(SubmitRequest.valid()).to.be.equal(true)
-  })
-
   it("should distinguish valid and invalid subscribe messages", async () => {
     //expect(SubscribeRequest.valid()).to.be.equal(true)
     //expect(SubscribeResponse.valid()).to.be.equal(true)
+  })
+
+  it("should distinguish valid and invalid submit messages", async () => {
+    //expect(SubmitRequest.valid()).to.be.equal(true)
   })
 
   it("should distinguish valid and invalid configure messages", async () => {

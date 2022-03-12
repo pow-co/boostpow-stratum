@@ -20,7 +20,7 @@ export class SetDifficulty extends Notification {
   }
 
   static difficulty(message): boostpow.Difficulty {
-    if (SetDifficulty.valid(message)) return new boospow.Difficulty(message['params'][0])
+    if (SetDifficulty.valid(message)) return new boostpow.Difficulty(message['params'][0])
 
     throw "invalid set_difficulty"
   }

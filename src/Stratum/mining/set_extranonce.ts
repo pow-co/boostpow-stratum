@@ -17,7 +17,8 @@ export class SetExtranonce extends Notification {
     }
 
     let params = message['params']
-    return params.length === 2 && typeof params[0] === 'string' && SessionID.valid(message) && Number.isInteger(params[1])))
+    return params.length === 2 && typeof params[0] === 'string' &&
+      SessionID.valid(params[0]) && Number.isInteger(params[1]) && params[1] > 0
   }
 
   static extranonce1(message: set_extranonce): boostpow.Int32Little {
