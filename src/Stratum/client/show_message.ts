@@ -10,7 +10,7 @@ export type show_message = {
 export class ShowMessage extends Notification {
 
   static valid(m: show_message): boolean {
-    if (!(Notification.valid(m) && m['method'] === "client.show_message")) {
+    if (!(Notification.valid(m) && m['method'] === 'client.show_message')) {
       return false
     }
 
@@ -22,6 +22,10 @@ export class ShowMessage extends Notification {
     if (ShowMessage.valid(m)) return m['params'][0]
 
     throw "invalid show_message"
+  }
+
+  static make(message: string): show_message {
+    return {id: null, method: 'client.show_message', params: [message]}
   }
 
 }

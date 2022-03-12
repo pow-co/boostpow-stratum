@@ -51,6 +51,14 @@ export class Response {
     return Response.error(message) !== null
   }
 
+  static make(id: message_id, result: JSONValue, err?: error): response {
+    if (err === undefined) {
+      return {id: id, result: result, err: null}
+    }
+
+    return {id: id, result: result, err: err}
+  }
+
 }
 
 export class BooleanResponse extends Response {
@@ -68,6 +76,10 @@ export class BooleanResponse extends Response {
     }
 
     throw "invalid response"
+  }
+
+  static make(id: message_id, result: boolean, err?: error): response {
+    return Response.make(id, result, err)
   }
 
 }

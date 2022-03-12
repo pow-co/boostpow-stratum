@@ -15,7 +15,7 @@ export type subscribe_request = {
 export class SubscribeRequest extends Request {
 
   static valid(message: subscribe_request): boolean {
-    if (!(Request.valid(message) && message['method'] === "mining.subscribe")) {
+    if (!(Request.valid(message) && message['method'] === 'mining.subscribe')) {
       return false
     }
 
@@ -31,18 +31,27 @@ export class SubscribeRequest extends Request {
     throw "invalid subscribe request"
   }
 
-  static extranonce1(message: subscribe_request): boostpow.UInt32Big {
-    if (SubscribeRequest.valid(message)) {
+  static extranonce1(message: subscribe_request): boostpow.UInt32Big | undefined {
+    if (SubscribeRequest.valid(message) && message['params'].length = 2) {
       return UInt32Big.fromHex(message['params'][1])
     }
 
     throw "invalid subscribe response"
+  }
+
+  static make(id: message_id, user_agent: string, extranonce1?: boostpow.UInt32Big): subscribe_request {
+    if (extranonce1 === undefined) {
+      return {id: id, method: 'mining.subscribe', params: [user_agent]}
+    }
+
+    return {id: id, method: 'mining.subscribe', params: [user_agent, extranonce1.hex]}
   }
 }
 
 export type subscribe_response = {
   id: message_id,
   params: [[string, string][]. string, number]
+  err: error
 }
 
 export class SubscribeResponse extends Response {
@@ -89,5 +98,13 @@ export class SubscribeResponse extends Response {
     }
 
     throw "invalid set_extranonce"
+  }
+
+  static make(id: message_id, subscriptions: [string, string][], extranonce1: boostpow.UInt32Big, extranonce2size: number): subscribe_response {
+    return {id: message_id, params: [subscriptions, extranonce1.hex, extranonce2size], err: null}
+  }
+
+  static make_error(id: message_id, err: [number, string]): subscribe_response {
+    return {id: message_id, params: null, error: err}
   }
 }

@@ -12,7 +12,7 @@ export type set_extranonce = {
 export class SetExtranonce extends Notification {
 
   static valid(message: set_extranonce): boolean {
-    if (!(Notification.valid(message) && message['method'] === "mining.set_extranonce")) {
+    if (!(Notification.valid(message) && message['method'] === 'mining.set_extranonce')) {
       return false
     }
 
@@ -21,9 +21,9 @@ export class SetExtranonce extends Notification {
       SessionID.valid(params[0]) && Number.isInteger(params[1]) && params[1] > 0
   }
 
-  static extranonce1(message: set_extranonce): boostpow.Int32Little {
+  static extranonce1(message: set_extranonce): boostpow.UInt32Big {
     if (SetExtranonce.valid(message)) {
-      return boostpow.Int32Little.fromHex(message['params'][0])
+      return boostpow.UInt32Big.fromHex(message['params'][0])
     }
 
     throw "invalid set_extranonce"
@@ -35,6 +35,10 @@ export class SetExtranonce extends Notification {
     }
 
     throw "invalid set_extranonce"
+  }
+
+  static make(ex1: boostpow.UInt32Big, s: number): set_extranonce {
+    return {id: null, method: 'mining.set_extranonce', params: [ex1.hex, s]}
   }
 
 }

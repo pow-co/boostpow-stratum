@@ -25,4 +25,8 @@ export class SetDifficulty extends Notification {
     throw "invalid set_difficulty"
   }
 
+  static make(d: number): show_message {
+    return {id: null, method: 'mining.set_difficulty', params: [d]}
+  }
+
 }

@@ -12,7 +12,7 @@ export type set_version_mask = {
 export class SetVersionMask extends Notification {
 
   static valid(message: set_version_mask): boolean {
-    if (!(Notification.valid(message) && message['method'] === "mining.set_version_mask")) {
+    if (!(Notification.valid(message) && message['method'] === 'mining.set_version_mask')) {
       return false
     }
 
@@ -22,6 +22,10 @@ export class SetVersionMask extends Notification {
 
   static version_mask(message: set_version_mask): boostpow.Int32Little {
     if (SetVersionMask.valid(message)) return Int32Little.fromHex(message['params'][0])
+  }
+
+  static make(mask: boostpow.Int32Little): set_version_mask {
+    return {id: null, method: 'mining.set_version_mask', params: [mask.hex]}
   }
 
 }

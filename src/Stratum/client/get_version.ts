@@ -13,7 +13,11 @@ export type get_version_request = {
 export class GetVersionRequest extends Request {
 
   static valid(message: get_version_request): boolean {
-    return Request.valid(message) && message['method'] === "client.get_version" && message['params'].length === 0
+    return Request.valid(message) && message['method'] === 'client.get_version' && message['params'].length === 0
+  }
+
+  static make(id: message_id): get_version_request {
+    return {id: id, method: 'client.get_version', params: []}
   }
 
 }
@@ -38,6 +42,14 @@ export class GetVersionResponse extends Response {
 
     static version(message: get_version_response): string {
       return GetVersionResponse.result(message)
+    }
+
+    static make(id: message_id, result: string, err?: error): get_version_response {
+      if (err === undefined) {
+        return {id: id, result: result, err:null}
+      }
+
+      return {id: id, result: result, err: err}
     }
 
 }
