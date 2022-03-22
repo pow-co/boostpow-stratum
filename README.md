@@ -2,7 +2,7 @@
 # Stratum Server for Boost Jobs
 
 [![.github/workflows/main.yml](https://github.com/ProofOfWorkCompany/boost-stratum/actions/workflows/main.yml/badge.svg)](https://github.com/ProofOfWorkCompany/boost-stratum/actions/workflows/main.yml)
-[![<ProofOfWorkCompany>](https://circleci.com/gh/ProofOfWorkCompany/boost-stratum.svg?style=svg)](<https://circleci.com/gh/ProofOfWorkCompany/boost-stratum>)
+[![<ProofOfWorkCompany>](https://circleci.com/gh/ProofOfWorkCompany/boost-stratum.svg?style=shield)](<https://circleci.com/gh/ProofOfWorkCompany/boost-stratum>)
 
 
 ## Installation
