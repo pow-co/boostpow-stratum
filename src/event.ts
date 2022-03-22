@@ -1,35 +1,54 @@
-
-import { Client } from './client'
+import { log } from './log'
 
 export class Event {
+  properties: object;
 
-  get(key: string): any {
-
-    return ''
-
+  constructor(properties: object) {
+    this.properties = properties
   }
 
+  get(property: string) {
+    return this.properties[property]
+  }
+};
+
+var events : Event[] = [];
+
+export class Events {
+
+  static last(who: String | undefined): Event | undefined {
+    if (events.length == 0) {
+      return
+    }
+
+    if (typeof who === undefined) {
+      return events[events.length - 1]
+    }
+
+    for (let i = events.length; i > 0; i--) {
+      let v: Event = events[i - 1]
+      if (v['who'] == who) {
+        return v
+      }
+    }
+
+    return
+  }
+
+  static list(who: String | undefined): Event[] {
+    if (typeof who === undefined) {
+      return events;
+    }
+
+    var filtered = [];
+
+    events.forEach((event: Event) => {
+      if (event['who'] === who) {
+        filtered.push(event);
+      }
+    });
+
+    return filtered;
+
+  }
 }
-
-export async function listEvents(params: any = {}): Promise<Event[]> {
-
-  return [
-
-    new Event(),
-
-    new Event()
-
-  ]
-
-}
-
-export async function listEventsForClient(client: Client, params: any = {}): Promise<Event[]>  {
-
-  return [
-
-    new Event()
-
-  ]
-
-}
-
