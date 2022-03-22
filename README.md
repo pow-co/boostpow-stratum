@@ -1,6 +1,8 @@
 
 # Stratum Server for Boost Jobs
 
+[![.github/workflows/main.yml](https://github.com/ProofOfWorkCompany/boost-stratum/actions/workflows/main.yml/badge.svg)](https://github.com/ProofOfWorkCompany/boost-stratum/actions/workflows/main.yml)
+
 ## Installation
 
 Typescript must be installed on your development machine 
