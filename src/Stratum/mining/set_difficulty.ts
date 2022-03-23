@@ -1,6 +1,6 @@
 import { Notification } from '../notification'
 import { method } from '../method'
-import * as boostpow from 'boostpow-js'
+import * as boostpow from 'boostpow'
 
 export type show_message = {
   id: null,

@@ -3,7 +3,7 @@ import { Response, BooleanResponse } from '../response'
 import { message_id } from '../messageID'
 import { method } from '../method'
 import { error } from '../error'
-import * as boostpow from 'boostpow-js'
+import * as boostpow from 'boostpow'
 
 export type share = [string, string, string, string, string] |
   [string, string, string, string, string, string]

@@ -1,7 +1,7 @@
 import { Notification } from '../notification'
 import { method } from '../method'
 import { SessionID } from '../sessionID'
-import * as boostpow from 'boostpow-js'
+import * as boostpow from 'boostpow'
 
 export type set_extranonce = {
   id: null,
