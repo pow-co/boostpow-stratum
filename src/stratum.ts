@@ -3,7 +3,10 @@ import { Socket } from 'net'
 
 import { log } from './log'
 
-export async function handleStratumMessage(data: Buffer, socket: Socket) { 
+// Stratum protocol documentation: 
+// https://docs.google.com/document/d/1ocEC8OdFYrvglyXbag1yi8WoskaZoYuR5HGhwf0hWAY/edit
+
+export async function handleStratumMessage(data: Buffer, socket: Socket) {
 
   log.info('socket.message.data', {data: data.toString() })
 

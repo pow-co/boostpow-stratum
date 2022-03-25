@@ -11,10 +11,11 @@ import {ShowMessage} from '../src/Stratum/client/show_message'
 import {SetDifficulty} from '../src/Stratum/mining/set_difficulty'
 import {SetExtranonce} from '../src/Stratum/mining/set_extranonce'
 import {SetVersionMask} from '../src/Stratum/mining/set_version_mask'
-/*import {SubmitRequest} from '../src/Stratum/mining/submit'
+import {SubmitRequest} from '../src/Stratum/mining/submit'
 import {Notify} from '../src/Stratum/mining/notify'
-import {SubscribeRequest, SubscribeResponse} from '../src/Stratum/mining/subscribe'*/
-//import {ConfigureRequest, ConfigrueResponse} from '../src/Stratum/mining/configure'
+import {SubscribeRequest, SubscribeResponse} from '../src/Stratum/mining/subscribe'
+import {Difficulty, UInt32Big} from 'boostpow'
+//import {ConfigureRequest, ConfigureResponse} from '../src/Stratum/mining/configure'
 
 import { expect } from './utils'
 
@@ -75,6 +76,9 @@ describe("Stratum Messages", () => {
     expect(AuthorizeRequest.valid({id:"x", method: 'mining.authorize', params: ["abcd"]})).to.be.equal(true)
     expect(AuthorizeRequest.valid({id:"x", method: 'mining.authorize', params: ["abcd", "xyzt"]})).to.be.equal(true)
     expect(AuthorizeRequest.valid({id:"x", method: 'mining.subscribe', params: ["abcd"]})).to.be.equal(false)
+  })
+
+  it("should read authorize request values", async () => {
     expect(AuthorizeRequest.username({id:"x", method: 'mining.authorize', params: ["abcd"]})).to.be.equal("abcd")
     expect(AuthorizeRequest.password({id:"x", method: 'mining.authorize', params: ["abcd"]})).to.be.equal(undefined)
     expect(AuthorizeRequest.password({id:"x", method: 'mining.authorize', params: ["abcd", "xyzt"]})).to.be.equal("xyzt")
@@ -82,13 +86,35 @@ describe("Stratum Messages", () => {
 
   it("should distinguish valid and invalid get_version messages", async () => {
     expect(GetVersionRequest.valid({id:'a', method: 'client.get_version', params: []})).to.be.equal(true)
+    expect(GetVersionRequest.valid({id:'a', method: '', params: []})).to.be.equal(false)
     expect(GetVersionResponse.valid({id:'a', result: "3", err: null})).to.be.equal(true)
+  })
+
+  it("should read get_version values", async () => {
     expect(GetVersionResponse.version({id:'a', result: "3", err: null})).to.be.equal("3")
   })
 
   it("should distinguish valid and invalid show_message messages", async () => {
     expect(ShowMessage.valid({id:null, method: 'client.show_message', params: ['message']})).to.be.equal(true)
+    expect(ShowMessage.valid({id:null, method: '', params: ['message']})).to.be.equal(true)
+  })
+
+  it("should read show_message message", async () => {
     expect(ShowMessage.message({id:null, method: 'client.show_message', params: ['message']})).to.be.equal('message')
+    expect(ShowMessage.message({id:null, method: '', params: ['message']})).to.be.equal('message')
+  })
+
+  it("should distinguish valid and invalid set_extranonce messages", async () => {
+    expect(SetExtranonce.valid({id:null, method: 'mining.set_extranonce', params: ["00000000", 8]})).to.be.equal(true)
+    expect(SetExtranonce.valid({id:null, method: 'mining.set_extranonce', params: ["00000000", 2.2]})).to.be.equal(false)
+    expect(SetExtranonce.valid({id:null, method: 'mining.set_extranonce', params: ["000000000", 8]})).to.be.equal(false)
+    expect(SetExtranonce.valid({id:null, method: '', params: ["00000000", 8]})).to.be.equal(false)
+  })
+
+  it("should distinguish valid and invalid set_version_mask messages", async () => {
+    expect(SetVersionMask.valid({id:null, method: 'mining.set_version_mask', params: ["00000000"]})).to.be.equal(true)
+    expect(SetVersionMask.valid({id:null, method: 'mining.set_version_mask', params: ["000000000"]})).to.be.equal(false)
+    expect(SetVersionMask.valid({id:null, method: '', params: ["00000000"]})).to.be.equal(true)
   })
 
   it("should distinguish valid and invalid set_difficulty messages", async () => {
@@ -96,24 +122,62 @@ describe("Stratum Messages", () => {
     expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: [1.1]})).to.be.equal(true)
     expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: []})).to.be.equal(false)
     expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: [""]})).to.be.equal(false)
+    expect(SetDifficulty.valid({id:null, method: '', params: [1]})).to.be.equal(false)
   })
 
-  it("should distinguish valid and invalid set_extranonce messages", async () => {
-    expect(SetExtranonce.valid({id:null, method: 'mining.set_extranonce', params: ["00000000", 8]})).to.be.equal(true)
+  it("should read set_difficulty values", async () => {
+    let diffA = new Difficulty(1)
+    let diffB = new Difficulty(1.1)
+
+    expect(SetDifficulty.difficulty(SetDifficulty.make(diffA))).to.be.equal(diffA)
+    expect(SetDifficulty.difficulty(SetDifficulty.make(diffB))).to.be.equal(diffB)
+    expect(SetDifficulty.difficulty(SetDifficulty.make(diffA))).to.be.not.equal(diffB)
+    expect(SetDifficulty.difficulty(SetDifficulty.make(diffB))).to.be.not.equal(diffA)
   })
 
-  it("should distinguish valid and invalid set_version_mask messages", async () => {
-    expect(SetVersionMask.valid({id:null, method: 'mining.set_version_mask', params: ["00000000"]})).to.be.equal(true)
+  it("should distinguish valid and invalid subscribe request messages", async () => {
+    expect(SubscribeRequest.valid({id:55, method: 'mining.subscribe', params: [""]})).to.be.equal(true)
+    expect(SubscribeRequest.valid({id:55, method: 'mining.subscribe', params: ["", "00000000"]})).to.be.equal(true)
+    expect(SubscribeRequest.valid({id:55, method: '', params: [""]})).to.be.equal(false)
+    expect(SubscribeRequest.valid({id:55, method: 'mining.subscribe', params: ["", "000000000"]})).to.be.equal(false)
   })
 
-  it("should distinguish valid and invalid subscribe messages", async () => {
-    //expect(SubscribeRequest.valid()).to.be.equal(true)
-    //expect(SubscribeResponse.valid()).to.be.equal(true)
+  it("should read subscribe request parameters", async () => {
+    let sx = UInt32Big.fromHex("00000001")
+
+    expect(SubscribeRequest.userAgent(SubscribeRequest.make(777, "noob", sx))).to.be.equal("noob")
+    expect(SubscribeRequest.extranonce1(SubscribeRequest.make(777, "noob", sx))).to.be.equal(sx)
+    expect(SubscribeRequest.extranonce1(SubscribeRequest.make(777, "noob"))).to.be.equal(undefined)
   })
 
-  it("should distinguish valid and invalid submit messages", async () => {
-    //expect(SubmitRequest.valid()).to.be.equal(true)
+  it("should distinguish valid and invalid subscribe response messages", async () => {
+    expect(SubscribeResponse.valid({id:55, err: null, result: [[], "00000001", 8]})).to.be.equal(true)
+    expect(SubscribeResponse.valid({id:55, err: null, result: [[["mining.notify", "abcd"]], "00000001", 8]})).to.be.equal(true)
+    expect(SubscribeResponse.valid({id:55, err: null, result: [[["mining.notify", "abcd"], ["mining.set_extranonce", "xyzt"]], "00000001", 8]})).to.be.equal(true)
+    expect(SubscribeResponse.valid({id:55, err: null, result: [[], "000000010", 8]})).to.be.equal(false)
+    expect(SubscribeResponse.valid({id:55, err: null, result: [[], "00000001", 0]})).to.be.equal(false)
+    expect(SubscribeResponse.valid({id:55, err: null, result: [[], "00000001", 1.34]})).to.be.equal(false)
+    expect(SubscribeResponse.valid({id:55, err: null, result: [[["mining.crapify", "abcd"]], "00000001", 8]})).to.be.equal(false)
+    expect(SubscribeResponse.valid(SubscribeResponse.make_error(55, [99, "mooo"]))).to.be.equal(false)
   })
+
+  it("should read subscribe response parameters", async () => {
+    let sx = UInt32Big.fromHex("00000001")
+    let subs = [["mining.subscribe", "nahanana"]]
+    let response = SubscribeResponse.make_subscribe(777, subs, sx, 8)
+
+    expect(SubscribeResponse.subscriptions(response)).to.be.equal(subs)
+    expect(SubscribeResponse.extranonce1(response)).to.be.equal(sx)
+    expect(SubscribeResponse.extranonce2size(response)).to.be.equal(8)
+  })
+  /*
+  it("should distinguish valid and invalid submit request messages", async () => {
+    expect(SubmitRequest.valid({id:55, method: 'mining.submit', params: })).to.be.equal(true)
+  })
+
+  it("should distinguish valid and invalid submit response messages", async () => {
+    expect(SubmitResponse.valid({id:55, err: null, result: })).to.be.equal(true)
+  })*/
 
   it("should distinguish valid and invalid configure messages", async () => {
 

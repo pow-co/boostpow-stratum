@@ -12,3 +12,15 @@ export let methods: method[] = [
   "mining.submit",
   "mining.subscribe"
 ]
+
+export class Method {
+  static valid(p: method): boolean {
+    for (let m of methods) {
+      if (p === m) {
+        return true
+      }
+    }
+
+    return false
+  }
+}

@@ -2,9 +2,9 @@ import { Request } from '../request'
 import { Response, BooleanResponse } from '../response'
 import { SessionID } from '../sessionID'
 import { message_id } from '../messageID'
-import { method } from '../method'
+import { method, Method } from '../method'
 import { error } from '../error'
-import * as boostpow from 'boostpow-js'
+import { UInt32Big } from 'boostpow'
 
 export type subscribe_request = {
   id: message_id,
@@ -31,15 +31,19 @@ export class SubscribeRequest extends Request {
     throw "invalid subscribe request"
   }
 
-  static extranonce1(message: subscribe_request): boostpow.UInt32Big | undefined {
-    if (SubscribeRequest.valid(message) && message['params'].length = 2) {
-      return UInt32Big.fromHex(message['params'][1])
+  static extranonce1(message: subscribe_request): UInt32Big | undefined {
+    if (SubscribeRequest.valid(message)) {
+      if (message['params'].length == 2) {
+        return UInt32Big.fromHex(message['params'][1])
+      } else {
+        return
+      }
     }
 
     throw "invalid subscribe response"
   }
 
-  static make(id: message_id, user_agent: string, extranonce1?: boostpow.UInt32Big): subscribe_request {
+  static make(id: message_id, user_agent: string, extranonce1?: UInt32Big): subscribe_request {
     if (extranonce1 === undefined) {
       return {id: id, method: 'mining.subscribe', params: [user_agent]}
     }
@@ -50,25 +54,28 @@ export class SubscribeRequest extends Request {
 
 export type subscribe_response = {
   id: message_id,
-  params: [[string, string][]. string, number]
+  result: [string[][], string, number]
   err: error
 }
 
 export class SubscribeResponse extends Response {
 
   static valid(message: subscribe_response): boolean {
-    if (!(Request.valid(message)) {
+    if (!Response.valid(message)) {
       return false
     }
 
     let result = message['result']
-    if (!(Array.isArray(result) && result.length === 3 && Array.isArray(result[0]) &&
-      SessionID.valid(result[1]) && Number.isInteger(result[2]) && result[2] > 0)) {
+    if (Response.is_error(message) && result === null) {
+      return true
+    }
+
+    if (!(SessionID.valid(result[1]) && Number.isInteger(result[2]) && result[2] > 0)) {
       return false
     }
 
-    for (subscription of result[0]) {
-      if (!(Array.isArray(subscription) && subscription.length === 2 && Method.valid(subscription[0]) && typeof subscription[1] === 'string')) {
+    for (let subscription of result[0]) {
+      if (!(subscription.length != 2 && Method.valid(subscription[0]))) {
         return false
       }
     }
@@ -76,35 +83,50 @@ export class SubscribeResponse extends Response {
     return true
   }
 
-  static subscriptions(message: subscribe_response): [string, string][] {
-    if (SubscribeRequest.valid(message)) {
-      return UInt32Big.fromHex(message['result'][0])
+  static subscriptions(message: subscribe_response): string[][] {
+    if (SubscribeResponse.valid(message)) {
+      let result = message['result']
+      if (result === null) {
+        return
+      }
+
+      return message['result'][0]
     }
 
     throw "invalid subscribe response"
   }
 
-  static extranonce1(message: subscribe_request): boostpow.UInt32Big {
-    if (SubscribeRequest.valid(message)) {
+  static extranonce1(message: subscribe_response): UInt32Big | undefined {
+    if (SubscribeResponse.valid(message)) {
+      let result = message['result']
+      if (result === null) {
+        return
+      }
+
       return UInt32Big.fromHex(message['result'][1])
     }
 
     throw "invalid subscribe response"
   }
 
-  static extranonce2size(message: set_extranonce): number {
-    if (SetExtranonce.valid(message)) {
+  static extranonce2size(message: subscribe_response): number | undefined {
+    if (SubscribeResponse.valid(message)) {
+      let result = message['result']
+      if (result === null) {
+        return
+      }
+
       return message['result'][2]
     }
 
     throw "invalid set_extranonce"
   }
 
-  static make(id: message_id, subscriptions: [string, string][], extranonce1: boostpow.UInt32Big, extranonce2size: number): subscribe_response {
-    return {id: message_id, params: [subscriptions, extranonce1.hex, extranonce2size], err: null}
+  static make_subscribe(id: message_id, subscriptions: string[][], extranonce1: UInt32Big, extranonce2size: number): subscribe_response {
+    return {id: id, result: [subscriptions, extranonce1.hex, extranonce2size], err: null}
   }
 
   static make_error(id: message_id, err: [number, string]): subscribe_response {
-    return {id: message_id, params: null, error: err}
+    return {id: id, result: null, err: err}
   }
 }

@@ -10,12 +10,7 @@ export type show_message = {
 export class ShowMessage extends Notification {
 
   static valid(m: show_message): boolean {
-    if (!(Notification.valid(m) && m['method'] === 'client.show_message')) {
-      return false
-    }
-
-    let params = m['params']
-    return params.length === 1 && typeof params[0] === 'string'
+    return Notification.valid(m) && m['method'] === 'client.show_message' 
   }
 
   static message(m: show_message): string {
