@@ -3,22 +3,26 @@ import { method } from '../method'
 import { SessionID } from '../sessionID'
 import * as boostpow from 'boostpow'
 
+export type extranonce = [string, number]
+
 export type set_extranonce = {
   id: null,
   method: method,
-  params: [string, number]
+  params: extranonce
 }
 
 export class SetExtranonce extends Notification {
+
+  static valid_extranonce(x: extranonce) {
+    return SessionID.valid(x[0]) && Number.isInteger(x[1]) && x[1] >= 0
+  }
 
   static valid(message: set_extranonce): boolean {
     if (!(Notification.valid(message) && message['method'] === 'mining.set_extranonce')) {
       return false
     }
 
-    let params = message['params']
-    return params.length === 2 && typeof params[0] === 'string' &&
-      SessionID.valid(params[0]) && Number.isInteger(params[1]) && params[1] > 0
+    return this.valid_extranonce(message['params'])
   }
 
   static extranonce1(message: set_extranonce): boostpow.UInt32Big {

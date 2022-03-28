@@ -1,7 +1,7 @@
 import { Notification } from '../notification'
 import { message_id } from '../messageID'
 import { method } from '../method'
-import * as boostpow from 'boostpow-js'
+import { Digest32, Int32Little, UInt32Little } from 'boostpow'
 
 export type notify_params = [string, string, string, string, string[], string, string, string, boolean]
 
@@ -49,7 +49,7 @@ export class Notify extends Notification {
     throw "invalid notify"
   }
 
-  static prevHash(message: notify): boostpow.Digest32 {
+  static prevHash(message: notify): Digest32 {
     if (SetExtranonce.valid(message)) {
       return boostpow.Digest32.fromHex(message['params'][1])
     }
@@ -73,7 +73,7 @@ export class Notify extends Notification {
     throw "invalid notify"
   }
 
-  static merkleBranch(message: notify): string[] {
+  static merkleBranch(message: notify): Digest32[] {
     if (SetExtranonce.valid(message)) {
       return message['params'][4]
     }
@@ -81,7 +81,7 @@ export class Notify extends Notification {
     throw "invalid notify"
   }
 
-  static version(message: notify): boostpow.Int32Little {
+  static version(message: notify): Int32Little {
     if (SetExtranonce.valid(message)) {
       return boostpow.Int32Little.fromHex(message['params'][5])
     }
@@ -89,7 +89,7 @@ export class Notify extends Notification {
     throw "invalid notify"
   }
 
-  static nonce(message: notify): boostpow.UInt32Little {
+  static nonce(message: notify): UInt32Little {
     if (SetExtranonce.valid(message)) {
       return boostpow.UInt32Little.fromHex(message['params'][6])
     }
@@ -97,7 +97,7 @@ export class Notify extends Notification {
     throw "invalid notify"
   }
 
-  static time(message: notify): boostpow.UInt32Little {
+  static time(message: notify): UInt32Little {
     if (SetExtranonce.valid(message)) {
       return boostpow.UInt32Little.fromHex(message['params'][7])
     }

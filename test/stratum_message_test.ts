@@ -14,7 +14,7 @@ import {SetVersionMask} from '../src/Stratum/mining/set_version_mask'
 import {SubmitRequest} from '../src/Stratum/mining/submit'
 import {Notify} from '../src/Stratum/mining/notify'
 import {SubscribeRequest, SubscribeResponse} from '../src/Stratum/mining/subscribe'
-import {Difficulty, UInt32Big} from 'boostpow'
+import {Difficulty, UInt32Big, UInt32Little, Int32Little, Bytes} from 'boostpow'
 //import {ConfigureRequest, ConfigureResponse} from '../src/Stratum/mining/configure'
 
 import { expect } from './utils'
@@ -170,24 +170,45 @@ describe("Stratum Messages", () => {
     expect(SubscribeResponse.extranonce1(response)).to.be.equal(sx)
     expect(SubscribeResponse.extranonce2size(response)).to.be.equal(8)
   })
-  /*
+
   it("should distinguish valid and invalid submit request messages", async () => {
-    expect(SubmitRequest.valid({id:55, method: 'mining.submit', params: })).to.be.equal(true)
+    expect(SubmitRequest.valid({id:55, method: 'mining.submit',
+      params: ["daniel", "abcd", "00000000", "00000001",
+        "00000000000000000000000000000001"]})).to.be.equal(true)
+    expect(SubmitRequest.valid({id:55, method: 'mining.submit',
+      params: ["daniel", "abcd", "00000000", "00000001",
+        "00000000000000000000000000000001", "00000000"]})).to.be.equal(true)
   })
 
-  it("should distinguish valid and invalid submit response messages", async () => {
-    expect(SubmitResponse.valid({id:55, err: null, result: })).to.be.equal(true)
-  })*/
-
-  it("should distinguish valid and invalid configure messages", async () => {
-
+  it("should read submit request parameters", async () => {
+    let worker_name = "daniel"
+    let job_id = "abcd"
+    let timestamp = UInt32Little.fromNumber(3)
+    let nonce = UInt32Little.fromNumber(4)
+    let en2 = new Bytes(Buffer.from("0000000000000001", 'hex'))
+    let version = Int32Little.fromNumber(23)
+    let message = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce, en2, version)
+    expect(SubmitRequest.workerName(message)).to.be.equal(worker_name)
+    expect(SubmitRequest.jobID(message)).to.be.equal(job_id)
+    expect(SubmitRequest.timestamp(message)).to.be.equal(timestamp)
+    expect(SubmitRequest.nonce(message)).to.be.equal(nonce)
+    expect(SubmitRequest.extranonce2(message)).to.be.equal(en2)
+    expect(SubmitRequest.generalPurposeBits(message)).to.be.equal(version)
   })
 
   it("should distinguish valid and invalid notify messages", async () => {
-    //expect(Notify.valid()).to.be.equal(true)
+
+  })
+
+  it("should read properties of notify messages", async () => {
+
   })
 
   it("should construct proofs from the notify, subscribe, and submit messages", async () => {
+
+  })
+
+  it("should distinguish valid and invalid configure messages", async () => {
 
   })
 

@@ -1,6 +1,6 @@
 import { Notification } from '../notification'
 import { method } from '../method'
-import { Difficulty } from 'boostpow'
+import { Difficulty } from '../../../../../MatterPool/boostpow-js'
 
 export type show_message = {
   id: null,
