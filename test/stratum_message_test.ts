@@ -9,12 +9,12 @@ import {AuthorizeRequest} from '../src/Stratum/mining/authorize'
 import {GetVersionRequest, GetVersionResponse} from '../src/Stratum/client/get_version'
 import {ShowMessage} from '../src/Stratum/client/show_message'
 import {SetDifficulty} from '../src/Stratum/mining/set_difficulty'
-import {SetExtranonce} from '../src/Stratum/mining/set_extranonce'
+import {extranonce, SetExtranonce} from '../src/Stratum/mining/set_extranonce'
 import {SetVersionMask} from '../src/Stratum/mining/set_version_mask'
 import {SubmitRequest} from '../src/Stratum/mining/submit'
 import {Notify} from '../src/Stratum/mining/notify'
 import {SubscribeRequest, SubscribeResponse} from '../src/Stratum/mining/subscribe'
-import {Difficulty, UInt32Big, UInt32Little, Int32Little, Bytes} from 'boostpow'
+import {Difficulty, UInt32Big, UInt32Little, Int32Little, Bytes, Digest32} from '../../../MatterPool/boostpow-js/lib/index'
 //import {ConfigureRequest, ConfigureResponse} from '../src/Stratum/mining/configure'
 
 import { expect } from './utils'
@@ -178,6 +178,9 @@ describe("Stratum Messages", () => {
     expect(SubmitRequest.valid({id:55, method: 'mining.submit',
       params: ["daniel", "abcd", "00000000", "00000001",
         "00000000000000000000000000000001", "00000000"]})).to.be.equal(true)
+    expect(SubmitRequest.valid({id:55, method: '',
+      params: ["daniel", "abcd", "00000000", "00000001",
+        "00000000000000000000000000000001", "00000000"]})).to.be.equal(false)
   })
 
   it("should read submit request parameters", async () => {
@@ -185,7 +188,7 @@ describe("Stratum Messages", () => {
     let job_id = "abcd"
     let timestamp = UInt32Little.fromNumber(3)
     let nonce = UInt32Little.fromNumber(4)
-    let en2 = new Bytes(Buffer.from("0000000000000001", 'hex'))
+    let en2 = Bytes.fromHex("0000000000000001")
     let version = Int32Little.fromNumber(23)
     let message = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce, en2, version)
     expect(SubmitRequest.workerName(message)).to.be.equal(worker_name)
@@ -197,15 +200,37 @@ describe("Stratum Messages", () => {
   })
 
   it("should distinguish valid and invalid notify messages", async () => {
-
+    expect(Notify.valid({id:null, method: 'mining.notify',
+      params: ["abcd",
+        "000000000000000000000000000000000000000000000000000000000001",
+        "abcdef", "abcdef", [], "00000002", "00000003", "00000004", false]})).to.be.equal(true)
   })
 
   it("should read properties of notify messages", async () => {
-
+    let prevHash = Digest32.fromHex("000000000000000000000000000000000000000000000000000000000001")
+    let gentx1 = Bytes.fromHex("abcdef")
+    let gentx2 = Bytes.fromHex("010203")
+    let version = Int32Little.fromNumber(2)
+    let time = UInt32Little.fromNumber(3)
+    let d = new Difficulty(.001)
+    expect(Notify.jobID(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal("abcd")
+    expect(Notify.prevHash(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(prevHash)
+    expect(Notify.generationTX1(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(gentx1)
+    expect(Notify.merkleBranch(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal([])
+    expect(Notify.version(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(version)
+    expect(Notify.nbits(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(d)
+    expect(Notify.time(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(time)
+    expect(Notify.clean(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(false)
   })
 
   it("should construct proofs from the notify, subscribe, and submit messages", async () => {
-
+    let en1 = UInt32Big.fromNumber(1)
+    let n: extranonce = [en1.hex, 8]
+    let job_id = "abcd"
+    let prevHash = Digest32.fromHex("000000000000000000000000000000000000000000000000000000000001")
+    let version = UInt32Little.fromNumber(2)
+    let timestamp = UInt32Little.fromNumber(3)
+    let nonce_false = UInt32Little.fromNumber(555)
   })
 
   it("should distinguish valid and invalid configure messages", async () => {

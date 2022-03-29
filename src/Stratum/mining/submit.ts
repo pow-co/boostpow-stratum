@@ -4,7 +4,7 @@ import { message_id } from '../messageID'
 import { SessionID } from '../sessionID'
 import { method } from '../method'
 import { error } from '../error'
-import { UInt32Little, Int32Little, Bytes } from 'boostpow'
+import { UInt32Big, UInt32Little, Int32Little, Bytes } from 'boostpow'
 
 export type share = [string, string, string, string, string] |
   [string, string, string, string, string, string]
@@ -63,7 +63,7 @@ export class SubmitRequest extends Request {
 
   static extranonce2(message: submit_request): Bytes {
     if (this.valid(message)) {
-      return new Bytes(Buffer.from(message['params'][4], 'hex'))
+      return Bytes.fromHex(message['params'][4])
     }
 
     throw "invalid submit request"

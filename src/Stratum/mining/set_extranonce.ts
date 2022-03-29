@@ -1,7 +1,7 @@
 import { Notification } from '../notification'
 import { method } from '../method'
 import { SessionID } from '../sessionID'
-import * as boostpow from 'boostpow'
+import { UInt32Big } from 'boostpow'
 
 export type extranonce = [string, number]
 
@@ -25,9 +25,9 @@ export class SetExtranonce extends Notification {
     return this.valid_extranonce(message['params'])
   }
 
-  static extranonce1(message: set_extranonce): boostpow.UInt32Big {
+  static extranonce1(message: set_extranonce): UInt32Big {
     if (SetExtranonce.valid(message)) {
-      return boostpow.UInt32Big.fromHex(message['params'][0])
+      return UInt32Big.fromHex(message['params'][0])
     }
 
     throw "invalid set_extranonce"
@@ -41,7 +41,7 @@ export class SetExtranonce extends Notification {
     throw "invalid set_extranonce"
   }
 
-  static make(ex1: boostpow.UInt32Big, s: number): set_extranonce {
+  static make(ex1: UInt32Big, s: number): set_extranonce {
     return {id: null, method: 'mining.set_extranonce', params: [ex1.hex, s]}
   }
 
