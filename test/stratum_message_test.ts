@@ -9,12 +9,13 @@ import {AuthorizeRequest} from '../src/Stratum/mining/authorize'
 import {GetVersionRequest, GetVersionResponse} from '../src/Stratum/client/get_version'
 import {ShowMessage} from '../src/Stratum/client/show_message'
 import {SetDifficulty} from '../src/Stratum/mining/set_difficulty'
-import {extranonce, SetExtranonce} from '../src/Stratum/mining/set_extranonce'
+import {extranonce, Extranonce, SetExtranonce} from '../src/Stratum/mining/set_extranonce'
 import {SetVersionMask} from '../src/Stratum/mining/set_version_mask'
-import {SubmitRequest} from '../src/Stratum/mining/submit'
-import {Notify} from '../src/Stratum/mining/notify'
+import {SubmitRequest, Share} from '../src/Stratum/mining/submit'
+import {Notify, NotifyParams} from '../src/Stratum/mining/notify'
 import {SubscribeRequest, SubscribeResponse} from '../src/Stratum/mining/subscribe'
-import {Difficulty, UInt32Big, UInt32Little, Int32Little, Bytes, Digest32} from '../../../MatterPool/boostpow-js/lib/index'
+import {prove} from '../src/Stratum/proof'
+import {Difficulty, UInt32Big, UInt32Little, Int32Little, Bytes, Digest32, BoostUtilsHelper} from 'boostpow'
 //import {ConfigureRequest, ConfigureResponse} from '../src/Stratum/mining/configure'
 
 import { expect } from './utils'
@@ -190,13 +191,13 @@ describe("Stratum Messages", () => {
     let nonce = UInt32Little.fromNumber(4)
     let en2 = Bytes.fromHex("0000000000000001")
     let version = Int32Little.fromNumber(23)
-    let message = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce, en2, version)
-    expect(SubmitRequest.workerName(message)).to.be.equal(worker_name)
-    expect(SubmitRequest.jobID(message)).to.be.equal(job_id)
-    expect(SubmitRequest.timestamp(message)).to.be.equal(timestamp)
-    expect(SubmitRequest.nonce(message)).to.be.equal(nonce)
-    expect(SubmitRequest.extranonce2(message)).to.be.equal(en2)
-    expect(SubmitRequest.generalPurposeBits(message)).to.be.equal(version)
+    let share = Share.make(worker_name, job_id, timestamp, nonce, en2, version)
+    expect(Share.workerName(share)).to.be.equal(worker_name)
+    expect(Share.jobID(share)).to.be.equal(job_id)
+    expect(Share.timestamp(share)).to.be.equal(timestamp)
+    expect(Share.nonce(share)).to.be.equal(nonce)
+    expect(Share.extranonce2(share)).to.be.equal(en2)
+    expect(Share.generalPurposeBits(share)).to.be.equal(version)
   })
 
   it("should distinguish valid and invalid notify messages", async () => {
@@ -213,24 +214,70 @@ describe("Stratum Messages", () => {
     let version = Int32Little.fromNumber(2)
     let time = UInt32Little.fromNumber(3)
     let d = new Difficulty(.001)
-    expect(Notify.jobID(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal("abcd")
-    expect(Notify.prevHash(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(prevHash)
-    expect(Notify.generationTX1(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(gentx1)
-    expect(Notify.merkleBranch(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal([])
-    expect(Notify.version(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(version)
-    expect(Notify.nbits(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(d)
-    expect(Notify.time(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(time)
-    expect(Notify.clean(Notify.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(false)
+    expect(NotifyParams.jobID(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal("abcd")
+    expect(NotifyParams.prevHash(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(prevHash)
+    expect(NotifyParams.generationTX1(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(gentx1)
+    expect(NotifyParams.merkleBranch(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal([])
+    expect(NotifyParams.version(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(version)
+    expect(NotifyParams.nbits(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(d)
+    expect(NotifyParams.time(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(time)
+    expect(NotifyParams.clean(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(false)
   })
 
   it("should construct proofs from the notify, subscribe, and submit messages", async () => {
     let en1 = UInt32Big.fromNumber(1)
-    let n: extranonce = [en1.hex, 8]
+    let n: extranonce = [en1.hex, 16]
+
     let job_id = "abcd"
+
+    let d = new Difficulty(.001)
     let prevHash = Digest32.fromHex("000000000000000000000000000000000000000000000000000000000001")
-    let version = UInt32Little.fromNumber(2)
+    let gentx1 = Bytes.fromHex("abcdef")
+    let gentx2 = Bytes.fromHex("010203")
+    let version = Int32Little.fromNumber(2)
     let timestamp = UInt32Little.fromNumber(3)
+    let notify = Notify.make(job_id, prevHash, gentx1, gentx2, [], version, d, timestamp, false)['params']
+
+    let worker_name = "daniel"
     let nonce_false = UInt32Little.fromNumber(555)
+    let nonce_true_v1 = UInt32Little.fromNumber(555) // need to come up with the real number here.
+    let nonce_true_v2 = UInt32Little.fromNumber(555) // need to come up with the real number here.
+    let extra_nonce_2 = Bytes.fromHex("abcdef0123456789abcdef0123456789")
+    let extra_nonce_2_big = Bytes.fromHex("abcdef0123456789abcdef012345678900")
+    let gpr = Int32Little.fromHex("ffffffff")
+
+    let submit_wrong_job_id = SubmitRequest.make(777, worker_name, "xyzt", timestamp, nonce_true_v2, extra_nonce_2, version)['params']
+    let submit_wrong_size = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_true_v2, extra_nonce_2_big, version)['params']
+    let submit_true_v1 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_true_v1, extra_nonce_2)['params']
+    let submit_true_v2 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_true_v2, extra_nonce_2, version)['params']
+    let submit_false_v1 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_false, extra_nonce_2)['params']
+    let submit_false_v2 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_false, extra_nonce_2, version)['params']
+
+    let version_mask = Int32Little.fromNumber(BoostUtilsHelper.generalPurposeBitsMask()).hex
+
+    expect(prove(n, notify, submit_wrong_job_id, version_mask)).to.be.equal(undefined)
+    expect(prove(n, notify, submit_wrong_size, version_mask)).to.be.equal(undefined)
+
+    expect(prove(n, notify, submit_true_v1, version_mask)).to.be.equal(undefined)
+    expect(prove(n, notify, submit_true_v2)).to.be.equal(undefined)
+
+    let pf1 = prove(n, notify, submit_false_v1, version_mask)
+    let pf2 = prove(n, notify, submit_false_v2, version_mask)
+
+    expect(pf1).to.be.not.equal(undefined)
+    expect(pf2).to.be.not.equal(undefined)
+
+    expect(pf1.valid()).to.be.equal(false)
+    expect(pf2.valid()).to.be.equal(false)
+
+    let pt1 = prove(n, notify, submit_true_v1, version_mask)
+    let pt2 = prove(n, notify, submit_true_v2, version_mask)
+
+    expect(pt1).to.be.not.equal(undefined)
+    expect(pt2).to.be.not.equal(undefined)
+
+    expect(pt1.valid()).to.be.equal(true)
+    expect(pt2.valid()).to.be.equal(true)
   })
 
   it("should distinguish valid and invalid configure messages", async () => {

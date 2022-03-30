@@ -6,26 +6,14 @@ import { UInt32Big, Digest32, UInt32Little, Difficulty, Int32Little, Bytes } fro
 
 export type notify_params = [string, string, string, string, string[], string, string, string, boolean]
 
-export type notify = {
-  id: null,
-  method: method,
-  params: notify_params
-}
+export class NotifyParams {
 
-export class Notify extends Notification {
-
-  static valid(message: notify): boolean {
-    if (!(Notification.valid(message) && message['method'] === "mining.notify")) {
-      return false
-    }
-
-    let params = message['params']
-
+  static valid(params: notify_params): boolean {
     let is_hex = function(hex) {
       return typeof hex === 'string' && /^(([0-9a-f][0-9a-f])*)|(([0-9A-F][0-9A-F])*)$/.test(hex)
     }
 
-    if (!(params.length === 9 && SessionID.valid(params[0]) &&
+    if (!(SessionID.valid(params[0]) &&
       is_hex(params[1]) && params[1].length == 64 &&
       is_hex(params[2]) && is_hex(params[3]) && Array.isArray(params[4]) &&
       SessionID.valid(params[5]) && SessionID.valid(params[6]) &&
@@ -42,42 +30,42 @@ export class Notify extends Notification {
     return true
   }
 
-  static jobID(message: notify): string {
-    if (this.valid(message)) {
-      return message['params'][0]
+  static jobID(p: notify_params): string {
+    if (this.valid(p)) {
+      return p[0]
     }
 
     throw "invalid notify"
   }
 
-  static prevHash(message: notify): Digest32 {
-    if (this.valid(message)) {
-      return Digest32.fromHex(message['params'][1])
+  static prevHash(p: notify_params): Digest32 {
+    if (this.valid(p)) {
+      return Digest32.fromHex(p[1])
     }
 
     throw "invalid notify"
   }
 
-  static generationTX1(message: notify): Buffer {
-    if (this.valid(message)) {
-      return Buffer.from(message['params'][2], 'hex')
+  static generationTX1(p: notify_params): Bytes {
+    if (this.valid(p)) {
+      return new Bytes(Buffer.from(p[2], 'hex'))
     }
 
     throw "invalid notify"
   }
 
-  static generationTX2(message: notify): Buffer {
-    if (this.valid(message)) {
-      return Buffer.from(message['params'][3], 'hex')
+  static generationTX2(p: notify_params): Bytes {
+    if (this.valid(p)) {
+      return new Bytes(Buffer.from(p[3], 'hex'))
     }
 
     throw "invalid notify"
   }
 
-  static merkleBranch(message: notify): Digest32[] {
-    if (!this.valid(message)) throw "invalid notify"
+  static merkleBranch(p: notify_params): Digest32[] {
+    if (!this.valid(p)) throw "invalid notify"
 
-    let path_hex: string[] = message['params'][4]
+    let path_hex: string[] = p[4]
 
     let path: Digest32[] = []
     for (let d of path_hex) {
@@ -87,33 +75,33 @@ export class Notify extends Notification {
     return path
   }
 
-  static version(message: notify): Int32Little {
-    if (this.valid(message)) {
-      return Int32Little.fromHex(message['params'][5])
+  static version(p: notify_params): Int32Little {
+    if (this.valid(p)) {
+      return Int32Little.fromHex(p[5])
     }
 
     throw "invalid notify"
   }
 
-  static nbits(message: notify): Difficulty {
-    if (this.valid(message)) {
-      return new Difficulty(UInt32Little.fromHex(message['params'][6]).number)
+  static nbits(p: notify_params): Difficulty {
+    if (this.valid(p)) {
+      return new Difficulty(UInt32Little.fromHex(p[6]).number)
     }
 
     throw "invalid notify"
   }
 
-  static time(message: notify): UInt32Little {
-    if (this.valid(message)) {
-      return UInt32Little.fromHex(message['params'][7])
+  static time(p: notify_params): UInt32Little {
+    if (this.valid(p)) {
+      return UInt32Little.fromHex(p[7])
     }
 
     throw "invalid notify"
   }
 
-  static clean(message: notify): boolean {
-    if (this.valid(message)) {
-      return message['params'][8]
+  static clean(p: notify_params): boolean {
+    if (this.valid(p)) {
+      return p[8]
     }
 
     throw "invalid notify"
@@ -121,15 +109,40 @@ export class Notify extends Notification {
 
   static make(job_id: string, prev_hash: Digest32, gtx1: Bytes, gtx2: Bytes,
     branch: Digest32[], version: Int32Little, bits: Difficulty,
-    time: UInt32Little, clean: boolean): notify {
+    time: UInt32Little, clean: boolean): notify_params {
 
     let path: string[] = []
     for (let d of branch) {
       path.push(d.hex)
     }
 
+    return [job_id, prev_hash.hex, gtx1.hex, gtx2.hex, path, version.hex, bits.hex, time.hex, clean]
+  }
+
+}
+
+export type notify = {
+  id: null,
+  method: method,
+  params: notify_params
+}
+
+export class Notify extends Notification {
+
+  static valid(message: notify): boolean {
+    if (!(Notification.valid(message) && message['method'] === "mining.notify")) {
+      return false
+    }
+
+    return NotifyParams.valid(message['params'])
+  }
+
+  static make(job_id: string, prev_hash: Digest32, gtx1: Bytes, gtx2: Bytes,
+    branch: Digest32[], version: Int32Little, bits: Difficulty,
+    time: UInt32Little, clean: boolean): notify {
+
     return {id: null, method: 'mining.notify',
-      params: [job_id, prev_hash.hex, gtx1.hex, gtx2.hex, path, version.hex, bits.hex, time.hex, clean]}
+      params: NotifyParams.make(job_id, prev_hash, gtx1, gtx2, branch, version, bits, time, clean)}
   }
 
 }
