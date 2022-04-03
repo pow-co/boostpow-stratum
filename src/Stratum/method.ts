@@ -1,5 +1,8 @@
+// the method name is included with every request and notification.
 export type method = string
 
+// these are not all methods defined in Stratum, but they are the ones
+// we need. 
 export let methods: method[] = [
   "client.get_version",
   "client.show_message",

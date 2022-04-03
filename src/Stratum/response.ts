@@ -3,6 +3,7 @@ import { method } from './method'
 import { error, Error } from './error'
 import { JSONValue } from './message'
 
+// A response is a reply to a request. 
 export type response = {
   id: message_id,
   result: JSONValue,

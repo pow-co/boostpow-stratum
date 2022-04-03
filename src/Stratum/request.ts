@@ -2,6 +2,7 @@ import { message_id, MessageID } from './messageID'
 import { method } from './method'
 import { JSONArray } from './message'
 
+// every request sent must be replied to with a response. 
 export type request = {
   id: message_id,
   method: method,

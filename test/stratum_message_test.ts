@@ -15,8 +15,8 @@ import {SubmitRequest, Share} from '../src/Stratum/mining/submit'
 import {Notify, NotifyParams} from '../src/Stratum/mining/notify'
 import {SubscribeRequest, SubscribeResponse} from '../src/Stratum/mining/subscribe'
 import {prove} from '../src/Stratum/proof'
+import {ConfigureRequest, ConfigureResponse} from '../src/Stratum/mining/configure'
 import {Difficulty, UInt32Big, UInt32Little, Int32Little, Bytes, Digest32, BoostUtilsHelper} from 'boostpow'
-//import {ConfigureRequest, ConfigureResponse} from '../src/Stratum/mining/configure'
 
 import { expect } from './utils'
 
@@ -97,12 +97,11 @@ describe("Stratum Messages", () => {
 
   it("should distinguish valid and invalid show_message messages", async () => {
     expect(ShowMessage.valid({id:null, method: 'client.show_message', params: ['message']})).to.be.equal(true)
-    expect(ShowMessage.valid({id:null, method: '', params: ['message']})).to.be.equal(true)
+    expect(ShowMessage.valid({id:null, method: '', params: ['message']})).to.be.equal(false)
   })
 
   it("should read show_message message", async () => {
     expect(ShowMessage.message({id:null, method: 'client.show_message', params: ['message']})).to.be.equal('message')
-    expect(ShowMessage.message({id:null, method: '', params: ['message']})).to.be.equal('message')
   })
 
   it("should distinguish valid and invalid set_extranonce messages", async () => {
@@ -115,7 +114,7 @@ describe("Stratum Messages", () => {
   it("should distinguish valid and invalid set_version_mask messages", async () => {
     expect(SetVersionMask.valid({id:null, method: 'mining.set_version_mask', params: ["00000000"]})).to.be.equal(true)
     expect(SetVersionMask.valid({id:null, method: 'mining.set_version_mask', params: ["000000000"]})).to.be.equal(false)
-    expect(SetVersionMask.valid({id:null, method: '', params: ["00000000"]})).to.be.equal(true)
+    expect(SetVersionMask.valid({id:null, method: '', params: ["00000000"]})).to.be.equal(false)
   })
 
   it("should distinguish valid and invalid set_difficulty messages", async () => {
@@ -130,10 +129,10 @@ describe("Stratum Messages", () => {
     let diffA = new Difficulty(1)
     let diffB = new Difficulty(1.1)
 
-    expect(SetDifficulty.difficulty(SetDifficulty.make(diffA))).to.be.equal(diffA)
-    expect(SetDifficulty.difficulty(SetDifficulty.make(diffB))).to.be.equal(diffB)
-    expect(SetDifficulty.difficulty(SetDifficulty.make(diffA))).to.be.not.equal(diffB)
-    expect(SetDifficulty.difficulty(SetDifficulty.make(diffB))).to.be.not.equal(diffA)
+    expect(SetDifficulty.difficulty(SetDifficulty.make(diffA)).bits).to.be.equal(diffA.bits)
+    expect(SetDifficulty.difficulty(SetDifficulty.make(diffB)).bits).to.be.equal(diffB.bits)
+    expect(SetDifficulty.difficulty(SetDifficulty.make(diffA)).bits).to.be.not.equal(diffB.bits)
+    expect(SetDifficulty.difficulty(SetDifficulty.make(diffB)).bits).to.be.not.equal(diffA.bits)
   })
 
   it("should distinguish valid and invalid subscribe request messages", async () => {
@@ -147,7 +146,7 @@ describe("Stratum Messages", () => {
     let sx = UInt32Big.fromHex("00000001")
 
     expect(SubscribeRequest.userAgent(SubscribeRequest.make(777, "noob", sx))).to.be.equal("noob")
-    expect(SubscribeRequest.extranonce1(SubscribeRequest.make(777, "noob", sx))).to.be.equal(sx)
+    expect(SubscribeRequest.extranonce1(SubscribeRequest.make(777, "noob", sx)).hex).to.be.equal(sx.hex)
     expect(SubscribeRequest.extranonce1(SubscribeRequest.make(777, "noob"))).to.be.equal(undefined)
   })
 
@@ -159,7 +158,7 @@ describe("Stratum Messages", () => {
     expect(SubscribeResponse.valid({id:55, err: null, result: [[], "00000001", 0]})).to.be.equal(false)
     expect(SubscribeResponse.valid({id:55, err: null, result: [[], "00000001", 1.34]})).to.be.equal(false)
     expect(SubscribeResponse.valid({id:55, err: null, result: [[["mining.crapify", "abcd"]], "00000001", 8]})).to.be.equal(false)
-    expect(SubscribeResponse.valid(SubscribeResponse.make_error(55, [99, "mooo"]))).to.be.equal(false)
+    expect(SubscribeResponse.valid(SubscribeResponse.make_error(55, [99, "mooo"]))).to.be.equal(true)
   })
 
   it("should read subscribe response parameters", async () => {
@@ -168,7 +167,7 @@ describe("Stratum Messages", () => {
     let response = SubscribeResponse.make_subscribe(777, subs, sx, 8)
 
     expect(SubscribeResponse.subscriptions(response)).to.be.equal(subs)
-    expect(SubscribeResponse.extranonce1(response)).to.be.equal(sx)
+    expect(SubscribeResponse.extranonce1(response).hex).to.be.equal(sx.hex)
     expect(SubscribeResponse.extranonce2size(response)).to.be.equal(8)
   })
 
@@ -194,33 +193,37 @@ describe("Stratum Messages", () => {
     let share = Share.make(worker_name, job_id, timestamp, nonce, en2, version)
     expect(Share.workerName(share)).to.be.equal(worker_name)
     expect(Share.jobID(share)).to.be.equal(job_id)
-    expect(Share.timestamp(share)).to.be.equal(timestamp)
-    expect(Share.nonce(share)).to.be.equal(nonce)
-    expect(Share.extranonce2(share)).to.be.equal(en2)
-    expect(Share.generalPurposeBits(share)).to.be.equal(version)
+    expect(Share.timestamp(share).hex).to.be.equal(timestamp.hex)
+    expect(Share.nonce(share).hex).to.be.equal(nonce.hex)
+    expect(Share.extranonce2(share).hex).to.be.equal(en2.hex)
+    expect(Share.generalPurposeBits(share).hex).to.be.equal(version.hex)
   })
 
   it("should distinguish valid and invalid notify messages", async () => {
     expect(Notify.valid({id:null, method: 'mining.notify',
       params: ["abcd",
-        "000000000000000000000000000000000000000000000000000000000001",
+        "0000000000000000000000000000000000000000000000000000000000000001",
         "abcdef", "abcdef", [], "00000002", "00000003", "00000004", false]})).to.be.equal(true)
+    expect(Notify.valid({id:null, method: '',
+      params: ["abcd",
+        "0000000000000000000000000000000000000000000000000000000000000001",
+        "abcdef", "abcdef", [], "00000002", "00000003", "00000004", false]})).to.be.equal(false)
   })
 
   it("should read properties of notify messages", async () => {
-    let prevHash = Digest32.fromHex("000000000000000000000000000000000000000000000000000000000001")
+    let prevHash = Digest32.fromHex("0000000000000000000000000000000000000000000000000000000000000001")
     let gentx1 = Bytes.fromHex("abcdef")
     let gentx2 = Bytes.fromHex("010203")
     let version = Int32Little.fromNumber(2)
     let time = UInt32Little.fromNumber(3)
     let d = new Difficulty(.001)
     expect(NotifyParams.jobID(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal("abcd")
-    expect(NotifyParams.prevHash(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(prevHash)
-    expect(NotifyParams.generationTX1(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(gentx1)
-    expect(NotifyParams.merkleBranch(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal([])
-    expect(NotifyParams.version(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(version)
-    expect(NotifyParams.nbits(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(d)
-    expect(NotifyParams.time(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(time)
+    expect(NotifyParams.prevHash(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false)).hex).to.be.equal(prevHash.hex)
+    expect(NotifyParams.generationTX1(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false)).hex).to.be.equal(gentx1.hex)
+    expect(NotifyParams.merkleBranch(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false)).length).to.be.equal(0)
+    expect(NotifyParams.version(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false)).hex).to.be.equal(version.hex)
+    expect(NotifyParams.nbits(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false)).bits).to.be.equal(d.bits)
+    expect(NotifyParams.time(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false)).hex).to.be.equal(time.hex)
     expect(NotifyParams.clean(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(false)
   })
 
@@ -231,7 +234,7 @@ describe("Stratum Messages", () => {
     let job_id = "abcd"
 
     let d = new Difficulty(.001)
-    let prevHash = Digest32.fromHex("000000000000000000000000000000000000000000000000000000000001")
+    let prevHash = Digest32.fromHex("0000000000000000000000000000000000000000000000000000000000000001")
     let gentx1 = Bytes.fromHex("abcdef")
     let gentx2 = Bytes.fromHex("010203")
     let version = Int32Little.fromNumber(2)
@@ -280,8 +283,42 @@ describe("Stratum Messages", () => {
     expect(pt2.valid()).to.be.equal(true)
   })
 
-  it("should distinguish valid and invalid configure messages", async () => {
+  it("should distinguish valid and invalid configure request messages", async () => {
+    expect(ConfigureRequest.valid({id:9, method: 'mining.configure', params: [[], {}]})).to.be.equal(true)
+    expect(ConfigureRequest.valid({id:9, method: '', params: [[], {}]})).to.be.equal(false)
+    expect(ConfigureRequest.valid({id:9, method: 'mining.configure', params:
+      [['version-rolling', 'minimum-difficulty', 'subscribe-extranonce', 'info', 'unknown-extension'], {
+        'version-rolling.mask': '0f0f0f0f', 'version-rolling.min-bit-count': 2,
+        'minimum-difficulty.value': 3,
+        'info.connection-url': "connectionUrl",
+        'info.hw-version': "HWVersion",
+        'info.sw-version': "SWVersion",
+        'info.hw-id': "mooo", "unknown-extension.unknown-parameter": 35}]})).to.be.equal(true)
+    // should fail because a required paramer is missing.
+    expect(ConfigureRequest.valid({id:9, method: 'mining.configure', params:
+      [['version-rolling', 'minimum-difficulty', 'subscribe-extranonce'], {
+        'version-rolling.mask': '0f0f0f0f',
+        'minimum-difficulty.value': 3}]})).to.be.equal(false)
+    expect(ConfigureRequest.valid({id:9, method: 'mining.configure', params:
+      [['version-rolling', 'minimum-difficulty', 'subscribe-extranonce', 'info', 'unknown-extension'], {
+        'version-rolling.mask': '0f0f0f0f', 'version-rolling.min-bit-count': 2,
+        'minimum-difficulty.value': 3,
+        'info.connection-url': "connectionUrl",
+        'info.hw-version': "HWVersion",
+        'info.hw-id': "mooo", "unknown-extension.unknown-parameter": 35}]})).to.be.equal(true)
+    expect(ConfigureRequest.valid({id:9, method: 'mining.configure', params:
+      [['version-rolling', 'minimum-difficulty', 'subscribe-extranonce'], {
+        'version-rolling.mask': '0f0f0f0f',
+        'minimum-difficulty.value': "3"}]})).to.be.equal(false)
+  })
 
+  it("should distinguish valid and invalid configure response messages", async () => {
+  expect(ConfigureResponse.valid({id:9, err: null, result:{
+      'version-rolling':true, 'minimum-difficulty':true,
+      'subscribe-extranonce':true, 'info':false,
+      'unknown-extension': 'we do not support this extension',
+      'version-rolling.mask': '0f0f0f0f'
+    }})).to.be.equal(true)
   })
 
 })

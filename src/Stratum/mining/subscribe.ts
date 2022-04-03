@@ -75,7 +75,7 @@ export class SubscribeResponse extends Response {
     }
 
     for (let subscription of result[0]) {
-      if (!(subscription.length != 2 && Method.valid(subscription[0]))) {
+      if (!(subscription.length == 2 && Method.valid(subscription[0]))) {
         return false
       }
     }

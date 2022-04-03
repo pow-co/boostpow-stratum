@@ -1,6 +1,7 @@
 import { method } from './method'
 import { JSONArray } from './message'
 
+// a notification is like a request but with no response expected. 
 export type notification = {
   id: null,
   method: method,

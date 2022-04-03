@@ -13,16 +13,21 @@ export class NotifyParams {
       return typeof hex === 'string' && /^(([0-9a-f][0-9a-f])*)|(([0-9A-F][0-9A-F])*)$/.test(hex)
     }
 
-    if (!(SessionID.valid(params[0]) &&
-      is_hex(params[1]) && params[1].length == 64 &&
+    if (!(is_hex(params[1]) && params[1].length == 64 &&
       is_hex(params[2]) && is_hex(params[3]) && Array.isArray(params[4]) &&
       SessionID.valid(params[5]) && SessionID.valid(params[6]) &&
       SessionID.valid(params[7]) && typeof params[8] === 'boolean')) {
+      console.log("invalid notify params x: " + params[1].length + " " +
+        is_hex(params[1]) + (params[1].length == 64) +
+        is_hex(params[2]) + is_hex(params[3]) + Array.isArray(params[4]) +
+        SessionID.valid(params[5]) + SessionID.valid(params[6]) +
+        SessionID.valid(params[7]) + (typeof params[8] === 'boolean'))
       return false
     }
 
     for (let digest of params[4]) {
       if (!(is_hex(digest) && digest.length === 64)) {
+        console.log("invalid notify params y")
         return false
       }
     }
@@ -85,7 +90,7 @@ export class NotifyParams {
 
   static nbits(p: notify_params): Difficulty {
     if (this.valid(p)) {
-      return new Difficulty(UInt32Little.fromHex(p[6]).number)
+      return Difficulty.fromBits(UInt32Little.fromHex(p[6]).number)
     }
 
     throw "invalid notify"
