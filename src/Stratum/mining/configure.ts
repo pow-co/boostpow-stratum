@@ -143,8 +143,12 @@ export class Extensions {
 }
 
 export class ExtensionVersionRolling {
-  static valid = function(r: {'mask':string, 'min-bit-count':number}): boolean {
+  static valid_params = function(r: {'mask':string, 'min-bit-count':number}): boolean {
     return SessionID.valid(r['mask']) && Number.isInteger(r['min-bit-count']) && r['min-bit-count'] >= 0
+  }
+
+  static valid_result = function(r: {'mask':string}): boolean {
+    return SessionID.valid(r['mask'])
   }
 
   static requestParams(mask: Int32Little, minBitCount: number): object {
@@ -165,8 +169,12 @@ export class ExtensionVersionRolling {
 }
 
 export class ExtensionMinimumDifficulty {
-  static valid = function(r: {'value': number}): boolean {
-    return r['number'] > 0
+  static valid_params = function(r: {'value': number}): boolean {
+    return r['value'] > 0
+  }
+
+  static valid_result = function(r: {}): boolean {
+    return true
   }
 
   static requestParams(d: Difficulty): object {
@@ -179,7 +187,11 @@ export class ExtensionMinimumDifficulty {
 }
 
 export class ExtensionSubscribeExtranonce {
-  static valid = function(r: {}): boolean {
+  static valid_params = function(r: {}): boolean {
+    return true
+  }
+
+  static valid_result = function(r: {}): boolean {
     return true
   }
 
@@ -193,11 +205,15 @@ export class ExtensionSubscribeExtranonce {
 }
 
 export class ExtensionInfo {
-  static valid = function(r: {
+  static valid_params = function(r: {
     'connection-url': string,
     'hw-version': string,
     'sw-version': string,
     'hw-id': string}) : boolean {
+    return true
+  }
+
+  static valid_result = function(r: {}) : boolean {
     return true
   }
 
@@ -228,10 +244,10 @@ export class ConfigureRequest {
     }
 
     let known_extensions = {
-      'version-rolling': ExtensionVersionRolling.valid,
-      'minimum-difficulty': ExtensionMinimumDifficulty.valid,
-      'subscribe-extranonce': ExtensionSubscribeExtranonce.valid,
-      'info': ExtensionInfo.valid
+      'version-rolling': ExtensionVersionRolling.valid_params,
+      'minimum-difficulty': ExtensionMinimumDifficulty.valid_params,
+      'subscribe-extranonce': ExtensionSubscribeExtranonce.valid_params,
+      'info': ExtensionInfo.valid_params
     }
 
     for (let name in exq) {
@@ -252,7 +268,27 @@ export class ConfigureRequest {
 
 export class ConfigureResponse {
   static valid(r: configure_response): boolean {
-    return r.err !== null || (Extensions.extension_results(r) !== undefined)
+    let exr = Extensions.extension_results(r['result'])
+
+    if (!exr) {
+      return r.err != null
+    }
+
+    let known_extensions = {
+      'version-rolling': ExtensionVersionRolling.valid_result,
+      'minimum-difficulty': ExtensionMinimumDifficulty.valid_result,
+      'subscribe-extranonce': ExtensionSubscribeExtranonce.valid_result,
+      'info': ExtensionInfo.valid_result
+    }
+
+    for (let name in exr) {
+      let val = known_extensions[name]
+      if (val && !val(exr[name][1])) {
+        return false
+      }
+    }
+
+    return true
   }
 
   static make(id: message_id, s: extension_results, err?: error): configure_response {

@@ -227,62 +227,6 @@ describe("Stratum Messages", () => {
     expect(NotifyParams.clean(NotifyParams.make("abcd", prevHash, gentx1, gentx2, [], version, d, time, false))).to.be.equal(false)
   })
 
-  it("should construct proofs from the notify, subscribe, and submit messages", async () => {
-    let en1 = UInt32Big.fromNumber(1)
-    let n: extranonce = [en1.hex, 16]
-
-    let job_id = "abcd"
-
-    let d = new Difficulty(.001)
-    let prevHash = Digest32.fromHex("0000000000000000000000000000000000000000000000000000000000000001")
-    let gentx1 = Bytes.fromHex("abcdef")
-    let gentx2 = Bytes.fromHex("010203")
-    let version = Int32Little.fromNumber(2)
-    let timestamp = UInt32Little.fromNumber(3)
-    let notify = Notify.make(job_id, prevHash, gentx1, gentx2, [], version, d, timestamp, false)['params']
-
-    let worker_name = "daniel"
-    let nonce_false = UInt32Little.fromNumber(555)
-    let nonce_true_v1 = UInt32Little.fromNumber(555) // need to come up with the real number here.
-    let nonce_true_v2 = UInt32Little.fromNumber(555) // need to come up with the real number here.
-    let extra_nonce_2 = Bytes.fromHex("abcdef0123456789abcdef0123456789")
-    let extra_nonce_2_big = Bytes.fromHex("abcdef0123456789abcdef012345678900")
-    let gpr = Int32Little.fromHex("ffffffff")
-
-    let submit_wrong_job_id = SubmitRequest.make(777, worker_name, "xyzt", timestamp, nonce_true_v2, extra_nonce_2, version)['params']
-    let submit_wrong_size = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_true_v2, extra_nonce_2_big, version)['params']
-    let submit_true_v1 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_true_v1, extra_nonce_2)['params']
-    let submit_true_v2 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_true_v2, extra_nonce_2, version)['params']
-    let submit_false_v1 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_false, extra_nonce_2)['params']
-    let submit_false_v2 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_false, extra_nonce_2, version)['params']
-
-    let version_mask = Int32Little.fromNumber(BoostUtilsHelper.generalPurposeBitsMask()).hex
-
-    expect(prove(n, notify, submit_wrong_job_id, version_mask)).to.be.equal(undefined)
-    expect(prove(n, notify, submit_wrong_size, version_mask)).to.be.equal(undefined)
-
-    expect(prove(n, notify, submit_true_v1, version_mask)).to.be.equal(undefined)
-    expect(prove(n, notify, submit_true_v2)).to.be.equal(undefined)
-
-    let pf1 = prove(n, notify, submit_false_v1, version_mask)
-    let pf2 = prove(n, notify, submit_false_v2, version_mask)
-
-    expect(pf1).to.be.not.equal(undefined)
-    expect(pf2).to.be.not.equal(undefined)
-
-    expect(pf1.valid()).to.be.equal(false)
-    expect(pf2.valid()).to.be.equal(false)
-
-    let pt1 = prove(n, notify, submit_true_v1, version_mask)
-    let pt2 = prove(n, notify, submit_true_v2, version_mask)
-
-    expect(pt1).to.be.not.equal(undefined)
-    expect(pt2).to.be.not.equal(undefined)
-
-    expect(pt1.valid()).to.be.equal(true)
-    expect(pt2.valid()).to.be.equal(true)
-  })
-
   it("should distinguish valid and invalid configure request messages", async () => {
     expect(ConfigureRequest.valid({id:9, method: 'mining.configure', params: [[], {}]})).to.be.equal(true)
     expect(ConfigureRequest.valid({id:9, method: '', params: [[], {}]})).to.be.equal(false)
@@ -294,11 +238,13 @@ describe("Stratum Messages", () => {
         'info.hw-version': "HWVersion",
         'info.sw-version': "SWVersion",
         'info.hw-id': "mooo", "unknown-extension.unknown-parameter": 35}]})).to.be.equal(true)
+
     // should fail because a required paramer is missing.
     expect(ConfigureRequest.valid({id:9, method: 'mining.configure', params:
       [['version-rolling', 'minimum-difficulty', 'subscribe-extranonce'], {
         'version-rolling.mask': '0f0f0f0f',
         'minimum-difficulty.value': 3}]})).to.be.equal(false)
+
     expect(ConfigureRequest.valid({id:9, method: 'mining.configure', params:
       [['version-rolling', 'minimum-difficulty', 'subscribe-extranonce', 'info', 'unknown-extension'], {
         'version-rolling.mask': '0f0f0f0f', 'version-rolling.min-bit-count': 2,
@@ -306,6 +252,7 @@ describe("Stratum Messages", () => {
         'info.connection-url': "connectionUrl",
         'info.hw-version': "HWVersion",
         'info.hw-id': "mooo", "unknown-extension.unknown-parameter": 35}]})).to.be.equal(true)
+
     expect(ConfigureRequest.valid({id:9, method: 'mining.configure', params:
       [['version-rolling', 'minimum-difficulty', 'subscribe-extranonce'], {
         'version-rolling.mask': '0f0f0f0f',
@@ -313,12 +260,81 @@ describe("Stratum Messages", () => {
   })
 
   it("should distinguish valid and invalid configure response messages", async () => {
-  expect(ConfigureResponse.valid({id:9, err: null, result:{
+    expect(ConfigureResponse.valid({id:9, err: null, result:{
       'version-rolling':true, 'minimum-difficulty':true,
       'subscribe-extranonce':true, 'info':false,
       'unknown-extension': 'we do not support this extension',
       'version-rolling.mask': '0f0f0f0f'
     }})).to.be.equal(true)
+
+    expect(ConfigureResponse.valid({id:9, err: null, result:{
+      'version-rolling':true, 'minimum-difficulty':true,
+      'subscribe-extranonce':true, 'info':false,
+      'unknown-extension.value': 3,
+      'version-rolling.mask': '0f0f0f0f'
+    }})).to.be.equal(false)
+  })
+
+  it("should construct proofs from the notify, subscribe, and submit messages", async () => {
+    let en1 = UInt32Big.fromNumber(1)
+    let n: extranonce = [en1.hex, 8]
+
+    let job_id = "abcd"
+
+    let d = new Difficulty(.0001)
+    let prevHash = Digest32.fromHex("0000000000000000000000000000000000000000000000000000000000000001")
+    let gentx1 = Bytes.fromHex("abcdef")
+    let gentx2 = Bytes.fromHex("010203")
+    let version = Int32Little.fromNumber(2)
+    let timestamp = UInt32Little.fromNumber(3)
+    let notify = Notify.make(job_id, prevHash, gentx1, gentx2, [], version, d, timestamp, false)['params']
+
+    let worker_name = "daniel"
+    let nonce_false = UInt32Little.fromNumber(555)
+    let nonce_true_v1 = UInt32Little.fromNumber(65067)
+    let nonce_true_v2 = UInt32Little.fromNumber(449600)
+    let extra_nonce_2 = Bytes.fromHex("abcdef0123456789")
+    let extra_nonce_2_big = Bytes.fromHex("abcdef012345678900")
+    let gpr = Int32Little.fromHex("ffffffff")
+
+    let submit_wrong_job_id = SubmitRequest.make(777, worker_name, "xyzt", timestamp, nonce_true_v2, extra_nonce_2, gpr)['params']
+    let submit_wrong_size = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_true_v2, extra_nonce_2_big, gpr)['params']
+    let submit_true_v1 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_true_v1, extra_nonce_2)['params']
+    let submit_true_v2 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_true_v2, extra_nonce_2, gpr)['params']
+    let submit_false_v1 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_false, extra_nonce_2)['params']
+    let submit_false_v2 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_false, extra_nonce_2, gpr)['params']
+
+    let version_mask = Int32Little.fromNumber(BoostUtilsHelper.generalPurposeBitsMask()).hex
+
+    expect(prove(n, notify, submit_wrong_job_id, version_mask)).to.be.equal(undefined)
+    expect(prove(n, notify, submit_wrong_size, version_mask)).to.be.equal(undefined)
+
+    expect(prove(n, notify, submit_true_v1, version_mask)).to.be.equal(undefined)
+    expect(prove(n, notify, submit_true_v2)).to.be.equal(undefined)
+
+    let pf1 = prove(n, notify, submit_false_v1)
+    let pf2 = prove(n, notify, submit_false_v2, version_mask)
+
+    expect(pf1).to.be.not.equal(undefined)
+    expect(pf2).to.be.not.equal(undefined)
+
+    expect(pf1.valid()).to.be.equal(false)
+    expect(pf2.valid()).to.be.equal(false)
+
+    let pt1 = prove(n, notify, submit_true_v1)
+    let pt2 = prove(n, notify, submit_true_v2, version_mask)
+
+    expect(pt1).to.be.not.equal(undefined)
+    expect(pt2).to.be.not.equal(undefined)
+
+    expect(pt1.Puzzle.Mask).to.be.equal(undefined)
+    expect(pt2.Puzzle.Mask).to.be.not.equal(undefined)
+
+    expect(pt1.Solution.GeneralPurposeBits).to.be.equal(undefined)
+    expect(pt2.Solution.GeneralPurposeBits).to.be.not.equal(undefined)
+
+    expect(pt1.valid()).to.be.equal(true)
+    expect(pt2.valid()).to.be.equal(true)
   })
 
 })

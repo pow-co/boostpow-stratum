@@ -10,6 +10,7 @@ import {work, Int32Little, BoostUtilsHelper} from 'boostpow'
 //   * share returned
 //   * an optional version mask (provided first, with the configure response
 export function prove(en: extranonce, n: notify_params, x: share, version_mask?: string): work.Proof | undefined {
+
   if (!Extranonce.valid(en) || !NotifyParams.valid(n) || !Share.valid(x) ||
     (version_mask && !SessionID.valid(version_mask)) ||
     NotifyParams.jobID(n) != Share.jobID(x) ||
