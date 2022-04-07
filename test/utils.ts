@@ -1,11 +1,6 @@
+require('dotenv').config()
 
 import * as chai from 'chai'
-
-import { Server } from '../src/server'
-
-const server = new Server()
-
-export { server }
 
 const expect = chai.expect
 
@@ -18,4 +13,18 @@ var spy = chai.spy.sandbox()
 export { spy }
 
 export { expect, chai }
+
+import { initServer } from '../src/api_server'
+
+var request;
+
+before(async () => {
+
+  const server = await initServer()
+
+  request = require('supertest')(server.listener)
+
+})
+
+export { request }
 

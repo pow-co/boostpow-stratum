@@ -29,3 +29,19 @@ npm start
 
 You should see some logs to the console and in your log database.
 
+## Step Three
+
+Connect a client to see what happens to the API
+
+```
+npm run connect
+```
+
+## Production
+
+To tail the logs in production run
+
+```
+npm run logs
+```
+

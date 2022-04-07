@@ -1,39 +1,38 @@
 
-import { Server } from './server'
+import { Socket } from 'net'
 
-import { Event } from './event'
+import { log } from './log'
 
-interface NewClient {
-  ip: string;
+class Client {
+
+  socket: Socket;
+
+  constructor(socket) {
+
+    this.socket = socket
+
+  }
+
 }
 
-export class Client {
+interface Connect {
+  host: string;
+  port: number;
+}
 
-  ip: string;
+export async function connect({host, port}: Connect): Promise<Socket> {
 
-  constructor(params: NewClient) {
+  return new Promise((resolve, reject) => {
 
-    this.ip = params.ip;
+    let socket = new Socket()
 
-  }
+    socket.connect(port, host, () => {
 
-  async connect(server: Server): Promise<Event> {
+      resolve(socket)
 
-    return new Event()
+    })
 
-  }
- 
-  async disconnect(server: Server): Promise<Event> {
-
-    return new Event()
-
-  }
-
-  async sendTo(server: Server, message: any): Promise<Event> {
-
-    return new Event()
-
-  }
+  })
 
 }
 
