@@ -32,9 +32,11 @@ export async function handleStratumMessage(data: Buffer, socket: Socket) {
 
   var response: StratumResponse;
 
+  var request: StratumRequest;;
+
   try {
 
-    const request: StratumRequest = JSON.parse(data.toString())
+    request = JSON.parse(data.toString())
 
     await schema.validateAsync(request)
 
@@ -59,13 +61,15 @@ export async function handleStratumMessage(data: Buffer, socket: Socket) {
 
     Object.assign({ id: request.id, error: null }, response)
 
-    socket.write(`${JSON.stringify(response)}\n`)
-
   } catch(error) {
+
+    response = { id: request?.id, error: [500, error.message], result: null }
 
     log.error('stratum.message.error', error)
     log.info('stratum.message.error', error)
 
   }
+
+  socket.write(`${JSON.stringify(response)}\n`)
 
 }
