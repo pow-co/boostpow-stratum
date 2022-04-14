@@ -37,6 +37,12 @@ Connect a client to see what happens to the API
 npm run connect
 ```
 
+Connect minerd to the Stratum Server with debug mode
+
+```
+./minerd --url stratum+tcp://localhost:5200 --user me --pass secret --debug
+```
+
 ## Production
 
 To tail the logs in production run
