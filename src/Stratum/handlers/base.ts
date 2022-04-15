@@ -1,14 +1,15 @@
+import { message_id } from '../messageID'
+import { method } from '../method'
+import { request } from '../request'
+import { JSONValue } from '../message'
+import { error } from '../error'
 
-export interface StratumRequest {
-  id: number;
-  method: string;
-  params: any[];
-}
+export type StratumRequest = request
 
 export interface StratumResponse {
-  id?: number;
-  result: any;
-  error?: any[];
+  id?: message_id;
+  result: JSONValue;
+  err?: error;
 }
 
 export interface StratumHandler  {
@@ -18,4 +19,3 @@ export interface StratumHandler  {
 export interface StratumHandlers  {
   [key: string]: StratumHandler;
 }
-
