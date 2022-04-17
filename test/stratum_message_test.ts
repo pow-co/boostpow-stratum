@@ -13,7 +13,7 @@ import {extranonce, Extranonce, SetExtranonce} from '../src/Stratum/mining/set_e
 import {SetVersionMask} from '../src/Stratum/mining/set_version_mask'
 import {SubmitRequest, Share} from '../src/Stratum/mining/submit'
 import {Notify, NotifyParams} from '../src/Stratum/mining/notify'
-import {SubscribeRequest, SubscribeResponse} from '../src/Stratum/mining/subscribe'
+import {SubscribeRequest, SubscribeResponse, subscriptions} from '../src/Stratum/mining/subscribe'
 import {prove} from '../src/Stratum/proof'
 import {ConfigureRequest, ConfigureResponse} from '../src/Stratum/mining/configure'
 import {Difficulty, UInt32Big, UInt32Little, Int32Little, Bytes, Digest32, BoostUtilsHelper} from 'boostpow'
@@ -163,7 +163,7 @@ describe("Stratum Messages", () => {
 
   it("should read subscribe response parameters", async () => {
     let sx = UInt32Big.fromHex("00000001")
-    let subs = [["mining.subscribe", "nahanana"]]
+    let subs = <subscriptions>[["mining.subscribe", "nahanana"]]
     let response = SubscribeResponse.make_subscribe(777, subs, sx, 8)
 
     expect(SubscribeResponse.subscriptions(response)).to.be.equal(subs)

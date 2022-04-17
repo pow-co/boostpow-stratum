@@ -1,5 +1,5 @@
 import { Request } from '../request'
-import { Response, BooleanResponse } from '../response'
+import { Response, BooleanResponse, boolean_response } from '../response'
 import { message_id } from '../messageID'
 import { SessionID } from '../sessionID'
 import { method } from '../method'
@@ -101,4 +101,5 @@ export class SubmitRequest extends Request {
 
 }
 
-export type SubmitResponse = BooleanResponse
+export type submit_response = boolean_response
+export let SubmitResponse = BooleanResponse

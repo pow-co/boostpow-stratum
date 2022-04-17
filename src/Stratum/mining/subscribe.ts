@@ -52,9 +52,12 @@ export class SubscribeRequest extends Request {
   }
 }
 
+export type subscription = [string, string]
+export type subscriptions = subscription[]
+
 export type subscribe_response = {
   id: message_id,
-  result: [string[][], string, number]
+  result: [subscriptions, string, number]
   err: error
 }
 
@@ -122,7 +125,7 @@ export class SubscribeResponse extends Response {
     throw "invalid set_extranonce"
   }
 
-  static make_subscribe(id: message_id, subscriptions: string[][], extranonce1: UInt32Big, extranonce2size: number): subscribe_response {
+  static make_subscribe(id: message_id, subscriptions: subscriptions, extranonce1: UInt32Big, extranonce2size: number): subscribe_response {
     return {id: id, result: [subscriptions, extranonce1.hex, extranonce2size], err: null}
   }
 

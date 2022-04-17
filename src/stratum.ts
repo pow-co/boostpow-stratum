@@ -15,14 +15,6 @@ import { response, Response } from './Stratum/response'
 
 import { StratumRequest, StratumResponse, StratumHandler, StratumHandlers } from './Stratum/handlers/base'
 
-export const handlers: StratumHandlers = require('require-all')({
-  dirname: join(__dirname, 'Stratum/handlers'),
-  filter:  /(mining.+)\.ts$/,
-  resolve: (handler) => {
-    return handler.default
-  }
-})
-
 export function handleStratumMessage(handlers: StratumHandlers): (data: Buffer, socket: net.Socket) => void {
   return async (data: Buffer, socket: net.Socket) => {
     log.info('socket.message.data', {data: data.toString() })

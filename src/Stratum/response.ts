@@ -4,7 +4,7 @@ import { error, Error } from './error'
 import { result } from './message'
 
 // A response is a reply to a request.
-export type response = {
+export interface response {
   id: message_id,
   result: result,
   err: error
@@ -62,6 +62,12 @@ export class Response {
 
 }
 
+export interface boolean_response {
+  id: message_id,
+  result: null | boolean,
+  err: error
+}
+
 export class BooleanResponse extends Response {
   static valid(message: response): boolean {
     return Response.valid(message) &&
@@ -79,8 +85,8 @@ export class BooleanResponse extends Response {
     throw "invalid response"
   }
 
-  static make(id: message_id, result: boolean, err?: error): response {
-    return Response.make(id, result, err)
+  static make(id: message_id, result: boolean, err?: error): boolean_response {
+    return <boolean_response>Response.make(id, result, err)
   }
 
 }

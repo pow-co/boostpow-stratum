@@ -1,5 +1,5 @@
 import { Request } from '../request'
-import { Response, BooleanResponse } from '../response'
+import { Response, BooleanResponse, boolean_response } from '../response'
 import { message_id } from '../messageID'
 import { method } from '../method'
 
@@ -35,4 +35,5 @@ export class AuthorizeRequest extends Request {
 
 }
 
-export type AuthorizeResponse = BooleanResponse
+export type authorize_response = boolean_response
+export let AuthorizeResponse = BooleanResponse
