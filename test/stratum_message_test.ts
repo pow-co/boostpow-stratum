@@ -155,7 +155,7 @@ describe("Stratum Messages", () => {
     expect(SubscribeResponse.valid({id:55, err: null, result: [[["mining.notify", "abcd"]], "00000001", 8]})).to.be.equal(true)
     expect(SubscribeResponse.valid({id:55, err: null, result: [[["mining.notify", "abcd"], ["mining.set_extranonce", "xyzt"]], "00000001", 8]})).to.be.equal(true)
     expect(SubscribeResponse.valid({id:55, err: null, result: [[], "000000010", 8]})).to.be.equal(false)
-    expect(SubscribeResponse.valid({id:55, err: null, result: [[], "00000001", 0]})).to.be.equal(false)
+    expect(SubscribeResponse.valid({id:55, err: null, result: [[], "00000001", 0]})).to.be.equal(true)
     expect(SubscribeResponse.valid({id:55, err: null, result: [[], "00000001", 1.34]})).to.be.equal(false)
     expect(SubscribeResponse.valid({id:55, err: null, result: [[["mining.crapify", "abcd"]], "00000001", 8]})).to.be.equal(false)
     expect(SubscribeResponse.valid(SubscribeResponse.make_error(55, [99, "mooo"]))).to.be.equal(true)
@@ -163,7 +163,7 @@ describe("Stratum Messages", () => {
 
   it("should read subscribe response parameters", async () => {
     let sx = UInt32Big.fromHex("00000001")
-    let subs = <subscriptions>[["mining.subscribe", "nahanana"]]
+    let subs: subscriptions = [["mining.subscribe", "nahanana"]]
     let response = SubscribeResponse.make_subscribe(777, subs, sx, 8)
 
     expect(SubscribeResponse.subscriptions(response)).to.be.equal(subs)

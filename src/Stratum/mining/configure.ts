@@ -1,4 +1,4 @@
-import { Request } from '../request'
+import { request, Request } from '../request'
 import { Response } from '../response'
 import { message_id } from '../messageID'
 import { SessionID } from '../sessionID'
@@ -6,6 +6,7 @@ import { method } from '../method'
 import { JSONValue } from '../../json'
 import { error } from '../error'
 import { Difficulty, Int32Little } from 'boostpow'
+import * as Joi from 'joi'
 
 // https://github.com/slushpool/stratumprotocol/blob/master/stratum-extensions.mediawiki
 
@@ -232,16 +233,17 @@ export class ExtensionInfo {
 }
 
 export class ConfigureRequest {
-  static valid(r: configure_request): boolean {
-    if (r.method !== 'mining.configure') {
-      return false
-    }
 
-    let exq = Extensions.extension_requests(r['params'])
+  static valid(r: request): boolean {
+    if (!Request.valid(r)) return false
 
-    if (!exq) {
-      return false
-    }
+    if (r.method !== 'mining.configure') return false
+
+    let params = r['params']
+
+    let exq = Extensions.extension_requests(params)
+
+    if (!exq) return false
 
     let known_extensions = {
       'version-rolling': ExtensionVersionRolling.valid_params,

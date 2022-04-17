@@ -15,20 +15,12 @@ import { response, Response } from './Stratum/response'
 
 import { StratumRequest, StratumResponse, StratumHandler, StratumHandlers } from './Stratum/handlers/base'
 
-export function handleStratumMessage(handlers: StratumHandlers): (data: Buffer, socket: net.Socket) => void {
-  return async (data: Buffer, socket: net.Socket) => {
-    log.info('socket.message.data', {data: data.toString() })
+export function handleStratumRequest(handlers: StratumHandlers): (request: request) => Promise<response> {
+  return async (request: request) => {
 
     var response: StratumResponse
 
-    var request: request
-
     try {
-
-      request = <request>JSON.parse(data.toString())
-      if (!Request.valid(request)) {
-        throw "invalid message encountered: " + data.toString()
-      }
 
       let handler: StratumHandler = handlers[request.method]
 
@@ -58,8 +50,21 @@ export function handleStratumMessage(handlers: StratumHandlers): (data: Buffer, 
 
     }
 
-    Object.assign({id: request.id, err: null}, response)
+    response['id'] = request.id
+    return <response>response
+  }
+}
 
-    socket.write(`${JSON.stringify(response)}\n`)
+export function handleStratumMessage(handleRequest: (request: request) => Promise<response>): (data: Buffer, socket: net.Socket) => void {
+  return async (data: Buffer, socket: net.Socket) => {
+    log.info('socket.message.data', {data: data.toString() })
+
+    var request: request = <request>JSON.parse(data.toString())
+    if (!Request.valid(request)) {
+      log.info('invalid message.')
+      socket.end()
+    }
+
+    socket.write(`${JSON.stringify(handleRequest(request))}\n`)
   }
 }

@@ -6,7 +6,7 @@ import { asOptional, asNumber } from 'cleaners'
 
 import { Session } from './session'
 
-import { handleStratumMessage } from './stratum'
+import { handleStratumMessage, handleStratumRequest } from './stratum'
 
 import { remote_client } from './remote_client'
 
@@ -31,7 +31,7 @@ export class Server {
 
       // this session is not immediately deleted because it adds itself
       // to a global object called sessions containing all sessions.
-      new Session({ socket }, handleStratumMessage(remote_client()))
+      new Session({ socket }, handleStratumMessage(handleStratumRequest(remote_client(true))))
 
     })
 

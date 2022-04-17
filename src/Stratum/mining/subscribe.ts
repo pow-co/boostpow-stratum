@@ -1,9 +1,11 @@
 import { Request } from '../request'
-import { Response, BooleanResponse } from '../response'
+import { response, Response, BooleanResponse } from '../response'
 import { SessionID } from '../sessionID'
 import { message_id } from '../messageID'
 import { method, Method } from '../method'
 import { error } from '../error'
+import { result } from '../message'
+import { is_natural_number } from '../../json'
 import { UInt32Big } from 'boostpow'
 
 export type subscribe_request = {
@@ -28,7 +30,7 @@ export class SubscribeRequest extends Request {
       return message['params'][0]
     }
 
-    throw "invalid subscribe request"
+    throw 'invalid subscribe request'
   }
 
   static extranonce1(message: subscribe_request): UInt32Big | undefined {
@@ -40,7 +42,7 @@ export class SubscribeRequest extends Request {
       }
     }
 
-    throw "invalid subscribe response"
+    throw 'invalid subscribe response'
   }
 
   static make(id: message_id, user_agent: string, extranonce1?: UInt32Big): subscribe_request {
@@ -57,33 +59,31 @@ export type subscriptions = subscription[]
 
 export type subscribe_response = {
   id: message_id,
-  result: [subscriptions, string, number]
+  result: null | [subscriptions, string, number]
   err: error
 }
 
 export class SubscribeResponse extends Response {
 
-  static valid(message: subscribe_response): boolean {
-    if (!Response.valid(message)) {
-      return false
-    }
+  static #valid_result(r: result): boolean {
+    if (!Array.isArray(r) || r.length !== 3 || !is_natural_number(r[2]) || !SessionID.valid(r[1])) return false
 
-    let result = message['result']
-    if (Response.is_error(message) && result === null) {
-      return true
-    }
-
-    if (!(SessionID.valid(result[1]) && Number.isInteger(result[2]) && result[2] > 0)) {
-      return false
-    }
-
-    for (let subscription of result[0]) {
-      if (!(subscription.length == 2 && Method.valid(subscription[0]))) {
+    for (let subscription of r[0]) {
+      if (!Array.isArray(subscription) || subscription.length !== 2 || !Method.valid(subscription[0]))
         return false
-      }
     }
 
     return true
+  }
+
+  static valid(message: response): boolean {
+
+    if (!Response.valid(message)) return false
+    
+    let result = message['result']
+    if (Response.is_error(message) && result === null) return true
+
+    return this.#valid_result(result)
   }
 
   static subscriptions(message: subscribe_response): string[][] {
@@ -109,7 +109,7 @@ export class SubscribeResponse extends Response {
       return UInt32Big.fromHex(message['result'][1])
     }
 
-    throw "invalid subscribe response"
+    throw 'invalid subscribe response'
   }
 
   static extranonce2size(message: subscribe_response): number | undefined {

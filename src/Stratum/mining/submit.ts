@@ -101,5 +101,4 @@ export class SubmitRequest extends Request {
 
 }
 
-export type submit_response = boolean_response
 export let SubmitResponse = BooleanResponse

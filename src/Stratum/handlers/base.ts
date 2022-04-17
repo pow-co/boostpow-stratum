@@ -8,7 +8,7 @@ export type StratumRequest = request
 export interface StratumResponse {
   id?: message_id;
   result: JSONValue;
-  err?: error;
+  err: error;
 }
 
 export interface StratumHandler  {

@@ -35,5 +35,4 @@ export class AuthorizeRequest extends Request {
 
 }
 
-export type authorize_response = boolean_response
 export let AuthorizeResponse = BooleanResponse
