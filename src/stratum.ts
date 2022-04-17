@@ -1,5 +1,4 @@
-
-import { Socket } from 'net'
+import * as net from 'net'
 
 import { log } from './log'
 
@@ -24,51 +23,51 @@ export const handlers: StratumHandlers = require('require-all')({
   }
 })
 
-export async function handleStratumMessage(data: Buffer, socket: Socket) {
+export function handleStratumMessage(handlers: StratumHandlers): (data: Buffer, socket: net.Socket) => void {
+  return async (data: Buffer, socket: net.Socket) => {
+    log.info('socket.message.data', {data: data.toString() })
 
-  log.info('socket.message.data', {data: data.toString() })
+    var response: StratumResponse
 
-  var response: StratumResponse
+    var request: request
 
-  var request: request
+    try {
 
-  try {
-
-    request = <request>JSON.parse(data.toString())
-    if (!Request.valid(request)) {
-      throw "invalid message encountered: " + data.toString()
-    }
-
-    let handler: StratumHandler = handlers[request.method]
-
-    if (handler) {
-
-      log.info(`stratum.request.${request.method}`, request.params)
-
-      response = await handler(request)
-
-      log.info(`stratum.response.${request.method}`, response)
-
-    } else {
-
-      response = {
-        err: Error.make(Error.ILLEGAL_METHOD),
-        result: null
+      request = <request>JSON.parse(data.toString())
+      if (!Request.valid(request)) {
+        throw "invalid message encountered: " + data.toString()
       }
 
+      let handler: StratumHandler = handlers[request.method]
+
+      if (handler) {
+
+        log.info(`stratum.request.${request.method}`, request.params)
+
+        response = await handler(request)
+
+        log.info(`stratum.response.${request.method}`, response)
+
+      } else {
+
+        response = {
+          err: Error.make(Error.ILLEGAL_METHOD),
+          result: null
+        }
+
+      }
+
+    } catch(error) {
+
+      response = { err: Error.make(Error.UNKNOWN), result: null }
+
+      log.error('stratum.message.error', error)
+      log.info('stratum.message.error', error)
+
     }
 
-  } catch(error) {
+    Object.assign({id: request.id, err: null}, response)
 
-    response = { err: Error.make(Error.UNKNOWN), result: null }
-
-    log.error('stratum.message.error', error)
-    log.info('stratum.message.error', error)
-
+    socket.write(`${JSON.stringify(response)}\n`)
   }
-
-  Object.assign({id: request.id, err: null}, response)
-
-  socket.write(`${JSON.stringify(response)}\n`)
-
 }

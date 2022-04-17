@@ -4,7 +4,9 @@ import * as net from 'net'
 
 import { asOptional, asNumber } from 'cleaners'
 
-import { Session, startSession } from './session'
+import { Session } from './session'
+
+import { handlers, handleStratumMessage } from './stratum'
 
 import { log } from './log'
 
@@ -23,9 +25,11 @@ export class Server {
 
     this.name = name;
 
-    this.server = net.createServer(socket => { 
+    this.server = net.createServer(socket => {
 
-      startSession({ socket })
+      // this session is not immediately deleted because it adds itself
+      // to a global object called sessions containing all sessions.
+      new Session({ socket }, handleStratumMessage(handlers))
 
     })
 
@@ -87,4 +91,3 @@ if (require.main === module) {
   log.info('stratum.server.started', server.server.info);
 
 }
-
