@@ -3,7 +3,7 @@ import { Response } from '../response'
 import { message_id } from '../messageID'
 import { SessionID } from '../sessionID'
 import { method } from '../method'
-import { JSONValue } from '../message'
+import { JSONValue } from '../../json'
 import { error } from '../error'
 import { Difficulty, Int32Little } from 'boostpow'
 

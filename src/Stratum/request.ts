@@ -1,13 +1,13 @@
 import { message_id, MessageID } from './messageID'
 import { method } from './method'
-import { JSONArray } from './message'
+import { parameters } from './message'
 import * as Joi from 'joi'
 
 // every request sent must be replied to with a response.
 export type request = {
   id: message_id,
   method: method,
-  params: JSONArray
+  params: parameters
 }
 
 export class Request {
@@ -42,7 +42,7 @@ export class Request {
     throw "invalid request"
   }
 
-  static params(message: request): JSONArray {
+  static params(message: request): parameters {
     if (Request.valid(message)) return message['params']
 
     throw "invalid request"

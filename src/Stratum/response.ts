@@ -1,12 +1,12 @@
 import { message_id, MessageID } from './messageID'
 import { method } from './method'
 import { error, Error } from './error'
-import { JSONValue } from './message'
+import { result } from './message'
 
-// A response is a reply to a request. 
+// A response is a reply to a request.
 export type response = {
   id: message_id,
-  result: JSONValue,
+  result: result,
   err: error
 }
 
@@ -32,7 +32,7 @@ export class Response {
     throw "invalid response"
   }
 
-  static result(message: response): JSONValue {
+  static result(message: response): result {
     if (Response.valid(message)) {
       return message['result']
     }
@@ -52,7 +52,7 @@ export class Response {
     return Response.error(message) !== null
   }
 
-  static make(id: message_id, result: JSONValue, err?: error): response {
+  static make(id: message_id, result: result  , err?: error): response {
     if (err === undefined) {
       return {id: id, result: result, err: null}
     }

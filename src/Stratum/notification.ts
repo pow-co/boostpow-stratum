@@ -1,11 +1,11 @@
 import { method } from './method'
-import { JSONArray } from './message'
+import { parameters } from './message'
 
-// a notification is like a request but with no response expected. 
+// a notification is like a request but with no response expected.
 export type notification = {
   id: null,
   method: method,
-  params: JSONArray
+  params: parameters
 }
 
 export class Notification {
@@ -30,7 +30,7 @@ export class Notification {
     throw "invalid notification"
   }
 
-  static params(message): JSONArray {
+  static params(message): parameters {
     if (Notification.valid(message)) {
       return message['params']
     }

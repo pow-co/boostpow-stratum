@@ -1,7 +1,6 @@
 import { message_id } from '../messageID'
 import { method } from '../method'
 import { request } from '../request'
-import { JSONValue } from '../message'
 import { error } from '../error'
 
 export type StratumRequest = request

@@ -1,5 +1,5 @@
 import * as Joi from 'joi'
-import { is_natural_number } from './message'
+import { is_natural_number } from '../json'
 
 export type error = null | [number, string]
 
