@@ -18,12 +18,12 @@ export type configure_result = {[key: string]: JSONValue;}
 // values of objects containing the parameters for the requests.
 export type extension_requests = {[key: string]: {[key: string] : JSONValue;};}
 
-export type extension_result = [boolean | string, object];
+export type extension_result = [boolean | string, {[key: string]: JSONValue;}];
 
 // an object containing keys for the names of the extensions and
 // values of extension_result. The first value is whether the request
 // was successful and the second contains parameters.
-export type extension_results = {[key: string]: [extension_result, {[key: string]: JSONValue;}];}
+export type extension_results = {[key: string]: extension_result}
 
 export type configure_request = {
   id: message_id,
@@ -235,8 +235,6 @@ export class ExtensionInfo {
 export class ConfigureRequest {
 
   static valid(r: request): boolean {
-    if (!Request.valid(r)) return false
-
     if (r.method !== 'mining.configure') return false
 
     let params = r['params']

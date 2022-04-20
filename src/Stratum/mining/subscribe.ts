@@ -17,7 +17,7 @@ export type subscribe_request = {
 export class SubscribeRequest extends Request {
 
   static valid(message: subscribe_request): boolean {
-    if (!(Request.valid(message) && message['method'] === 'mining.subscribe')) {
+    if (!(message['method'] === 'mining.subscribe')) {
       return false
     }
 

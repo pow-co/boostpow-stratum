@@ -3,6 +3,7 @@ import { Response, BooleanResponse, boolean_response } from '../response'
 import { message_id } from '../messageID'
 import { SessionID } from '../sessionID'
 import { method } from '../method'
+import { parameters } from '../message'
 import { error } from '../error'
 import * as boostpow from 'boostpow'
 
@@ -16,6 +17,12 @@ export class Share {
       /^(([0-9a-f][0-9a-f])*)|(([0-9A-F][0-9A-F])*)$/.test(params[4]) &&
       (params.length === 5 ||
         (params.length === 6 && SessionID.valid(params[5])))
+  }
+
+  static read(params: parameters): share | undefined {
+    if (params.length < 5 || params.length > 6) return
+    for(let elem of params) if (typeof elem !== 'string') return
+    if (Share.valid(<share>params)) return <share>params
   }
 
   static workerName(x: share): string {
@@ -94,7 +101,7 @@ export type submit_request = {
 export class SubmitRequest extends Request {
 
   static valid(message: submit_request): boolean {
-    if (!(Request.valid(message) && message['method'] === "mining.submit")) {
+    if (!(message['method'] === "mining.submit")) {
       return false
     }
 

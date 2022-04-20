@@ -19,33 +19,23 @@ export class Request {
     params: Joi.array().required()
   })
 
-  static valid(message: request): boolean {
-    if (Request.schema.validate(message).error) return false
-
-    for (let x of message.params) if (x === undefined) return false
-
-    return true
-  }
-
   static read(message: JSONValue): request | undefined {
-    if (Request.valid(<request>message)) return <request>message
+    if (Request.schema.validate(message).error) return
+
+    for (let x of (<request>message).params) if (x === undefined) return
+
+    return <request>message
   }
 
   static id(message: request): message_id {
-    if (Request.valid(message)) return message['id']
-
-    throw "invalid request"
+    return message['id']
   }
 
   static method(message: request): method {
-    if (Request.valid(message)) return message['method']
-
-    throw "invalid request"
+    return message['method']
   }
 
   static params(message: request): parameters {
-    if (Request.valid(message)) return message['params']
-
-    throw "invalid request"
+    return message['params']
   }
 }

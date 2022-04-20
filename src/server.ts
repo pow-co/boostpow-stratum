@@ -1,7 +1,7 @@
 
 import * as net from 'net'
 import { Session } from './session'
-import { handleStratumMessage, handleStratumRequest } from './stratum'
+import { stratum } from './stratum'
 import { server_session } from './server_session'
 import { log } from './log'
 import { listJobs } from './powco'
@@ -28,7 +28,7 @@ export class Server {
 
       // this session is not immediately deleted because it adds itself
       // to a global object called sessions containing all sessions.
-      new Session({ socket }, handleStratumMessage(handleStratumRequest(server_session(this.jobs.subscribe, true))))
+      new Session({ socket }, stratum(server_session(this.jobs.subscribe, true)))
 
     })
 

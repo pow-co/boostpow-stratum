@@ -13,7 +13,7 @@ export type get_version_request = {
 export class GetVersionRequest extends Request {
 
   static valid(message: get_version_request): boolean {
-    return Request.valid(message) && message['method'] === 'client.get_version' && message['params'].length === 0
+    return message['method'] === 'client.get_version' && message['params'].length === 0
   }
 
   static make(id: message_id): get_version_request {
