@@ -46,11 +46,11 @@ describe("Stratum Messages", () => {
   })
 
   it("should distinguish valid and invalid requests", async () => {
-    expect(Request.valid({id:3, method:'mining.authorize', params:[]})).to.be.equal(true)
-    expect(Request.valid({id:null, method:'mining.authorize', params:[]})).to.be.equal(false)
-    expect(Request.valid({id:"3", method:'mining.authorize', params:[true, {}, ""]})).to.be.equal(true)
+    expect(Request.read({id:3, method:'mining.authorize', params:[]})).to.be.not.equal(undefined)
+    expect(Request.read({id:null, method:'mining.authorize', params:[]})).to.be.equal(undefined)
+    expect(Request.read({id:"3", method:'mining.authorize', params:[true, {}, ""]})).to.be.not.equal(undefined)
     let x
-    expect(Request.valid({id:3, method:'mining.authorize', params:[x]})).to.be.equal(false)
+    expect(Request.read({id:3, method:'mining.authorize', params:[x]})).to.be.equal(undefined)
   })
 
   it("should distinguish valid and invalid responses", async () => {
@@ -66,11 +66,11 @@ describe("Stratum Messages", () => {
   })
 
   it("should distinguish valid and invalid notifications", async () => {
-    expect(Notification.valid({id:null, method:'mining.notify', params:[]})).to.be.equal(true)
-    expect(Notification.valid({id:3, method:'mining.notify', params:[]})).to.be.equal(false)
-    expect(Notification.valid({id:null, method:'mining.notify', params:[true, {}, ""]})).to.be.equal(true)
+    expect(Notification.read({id:null, method:'mining.notify', params:[]})).to.be.not.equal(undefined)
+    expect(Notification.read({id:3, method:'mining.notify', params:[]})).to.be.equal(undefined)
+    expect(Notification.read({id:null, method:'mining.notify', params:[true, {}, ""]})).to.be.not.equal(undefined)
     let x
-    expect(Notification.valid({id:null, method:'mining.notify', params:[x]})).to.be.equal(false)
+    expect(Notification.read({id:null, method:'mining.notify', params:[x]})).to.be.equal(undefined)
   })
 
   it("should distinguish valid and invalid authorize messages", async () => {

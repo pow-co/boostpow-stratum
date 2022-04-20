@@ -75,8 +75,8 @@ export class Share {
     job_id: string,
     time: boostpow.UInt32Little,
     nonce: boostpow.UInt32Little,
-    en2: boostpow.Bytes, gpr?:
-    boostpow.Int32Little): share {
+    en2: boostpow.Bytes,
+    gpr?: boostpow.Int32Little): share {
     if (gpr) {
       return [worker_name, job_id, time.hex, nonce.hex, en2.hex, gpr.hex]
     } else {

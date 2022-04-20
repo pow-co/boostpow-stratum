@@ -12,7 +12,7 @@ export type set_version_mask = {
 export class SetVersionMask extends Notification {
 
   static valid(message: set_version_mask): boolean {
-    if (!(Notification.valid(message) && message['method'] === 'mining.set_version_mask')) {
+    if (message['method'] !== 'mining.set_version_mask') {
       return false
     }
 

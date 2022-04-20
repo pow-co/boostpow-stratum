@@ -42,7 +42,7 @@ export function handleStratumRequest(handlers: StratumHandlers): (request: reque
       }
 
     } catch(error) {
-
+      
       response = { err: Error.make(Error.UNKNOWN), result: null }
 
       log.error('stratum.message.error', error)

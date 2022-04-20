@@ -1,16 +1,14 @@
 
 import { Event, Events } from './event'
 import * as net from 'net'
-
 import { asOptional, asNumber } from 'cleaners'
-
 import { Session } from './session'
-
 import { handleStratumMessage, handleStratumRequest } from './stratum'
-
-import { remote_client } from './remote_client'
-
+import { server_session } from './server_session'
 import { log } from './log'
+import { listJobs } from './powco'
+import { JobManager, job_manager } from './jobs'
+import { wallet } from './bitcoin'
 
 interface NewServer {
   name: string;
@@ -22,6 +20,7 @@ export class Server {
   server;
   name: String;
   port: number;
+  jobs: JobManager
 
   constructor({name, port, maxConnections}: NewServer) {
 
@@ -31,7 +30,7 @@ export class Server {
 
       // this session is not immediately deleted because it adds itself
       // to a global object called sessions containing all sessions.
-      new Session({ socket }, handleStratumMessage(handleStratumRequest(remote_client(true))))
+      new Session({ socket }, handleStratumMessage(handleStratumRequest(server_session(this.jobs.subscribe, true))))
 
     })
 
@@ -41,7 +40,8 @@ export class Server {
 
   }
 
-  start() {
+  start(jobs: JobManager) {
+    this.jobs = jobs
 
     this.server.listen(this.port)
 
@@ -86,10 +86,15 @@ export const server = new Server({
 
 })
 
-if (require.main === module) {
+async function startServer(w: wallet) {
 
-  server.start()
+  server.start(job_manager(await listJobs(), w, 10))
 
   log.info('stratum.server.started', server.server.info);
-
 }
+/*
+if (require.main === module) {
+
+  startServer()
+
+}*/

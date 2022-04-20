@@ -46,7 +46,7 @@ export class SetExtranonce extends Notification {
   }
 
   static valid(message: set_extranonce): boolean {
-    if (!(Notification.valid(message) && message['method'] === 'mining.set_extranonce')) {
+    if (message['method'] !== 'mining.set_extranonce') {
       return false
     }
 

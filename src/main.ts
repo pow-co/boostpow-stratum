@@ -1,5 +1,9 @@
-
 require('dotenv').config()
+import * as bsv from 'bsv'
+import {private_key_wallet} from './bitcoin'
+
+// Include process module
+const process = require('process');
 
 import { log } from './log'
 
@@ -7,7 +11,30 @@ import { initServer, server as api } from './api_server'
 
 import { server as stratum } from './server'
 
+import { listJobs } from './powco'
+
+import { job_manager } from './jobs'
+
 export async function start() {
+
+  // Printing process.argv property value
+  var args = process.argv;
+
+  let key
+
+  if (args.length !== 3) {
+    console.log("expecting one argument; " + (args.length - 2) + " provided")
+    console.log("the first argument should be a WIF private key that will be used as a wallet.")
+    return
+  } else {
+    try {
+      key = new bsv.PrivKey().fromWif(args[2])
+      key.validate()
+    } catch (er) {
+      console.log("could not read WIF")
+      return
+    }
+  }
 
   log.info('main.start')
 
@@ -17,7 +44,9 @@ export async function start() {
 
   await log.info('api.server.started', api.info);
 
-  await stratum.start()
+  await stratum.start(job_manager(await listJobs(), private_key_wallet(key), 10))
+
+  await log.info('stratum.server.started', api.info);
 
 }
 
@@ -44,4 +73,3 @@ if (require.main === module) {
   start()
 
 }
-

@@ -1,6 +1,7 @@
 import { message_id, MessageID } from './messageID'
 import { method } from './method'
 import { parameters } from './message'
+import { JSONValue } from '../json'
 import * as Joi from 'joi'
 
 // every request sent must be replied to with a response.
@@ -26,7 +27,7 @@ export class Request {
     return true
   }
 
-  static read(message: any): request | undefined {
+  static read(message: JSONValue): request | undefined {
     if (Request.valid(<request>message)) return <request>message
   }
 

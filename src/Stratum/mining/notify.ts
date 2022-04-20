@@ -2,6 +2,7 @@ import { Notification } from '../notification'
 import { SessionID } from '../sessionID'
 import { message_id } from '../messageID'
 import { method } from '../method'
+import { JSONValue } from '../../json'
 import * as boostpow from 'boostpow'
 
 export type notify_params = [string, string, string, string, string[], string, string, string, boolean]
@@ -105,9 +106,7 @@ export class NotifyParams {
   }
 
   static clean(p: notify_params): boolean {
-    if (this.valid(p)) {
-      return p[8]
-    }
+    if (this.valid(p)) return p[8]
 
     throw "invalid notify"
   }
@@ -141,15 +140,15 @@ export type notify = {
 
 export class Notify extends Notification {
 
-  static valid(message: notify): boolean {
-    if (!(Notification.valid(message) && message['method'] === "mining.notify")) {
-      return false
-    }
+  static valid(message: JSONValue): boolean {
+    let n = Notification.read(message)
+    if (!n || n['method'] !== "mining.notify") return false
 
-    return NotifyParams.valid(message['params'])
+    return NotifyParams.valid(n['params'])
   }
 
-  static make(job_id: string,
+  static make(
+    job_id: string,
     prev_hash: boostpow.Digest32,
     gtx1: boostpow.Bytes,
     gtx2: boostpow.Bytes,

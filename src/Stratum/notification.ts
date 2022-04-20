@@ -1,5 +1,6 @@
 import { method } from './method'
 import { parameters } from './message'
+import { JSONValue } from '../json'
 
 // a notification is like a request but with no response expected.
 export type notification = {
@@ -9,32 +10,24 @@ export type notification = {
 }
 
 export class Notification {
-  static valid(message): boolean {
+
+  static read(message: JSONValue): notification | undefined {
     if (!(typeof message === 'object' && message['id'] === null &&
-      typeof message['method'] === 'string')) {
-      return false
-    }
+      typeof message['method'] === 'string' &&
+      Array.isArray(message['params']))) return
 
     for (let x of message['params']) {
-      if (x === undefined) return false
+      if (x === undefined) return
     }
 
-    return true
+    return <notification>message
   }
 
-  static method(message): method {
-    if (Notification.valid(message)) {
-      return message['method']
-    }
-
-    throw "invalid notification"
+  static method(message: notification): method {
+    return message['method']
   }
 
-  static params(message): parameters {
-    if (Notification.valid(message)) {
-      return message['params']
-    }
-
-    throw "invalid notification"
+  static params(message: notification): parameters {
+    return message['params']
   }
 }

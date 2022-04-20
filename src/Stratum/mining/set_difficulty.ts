@@ -1,8 +1,9 @@
 import { Notification } from '../notification'
 import { method } from '../method'
+import { JSONValue } from '../../json'
 import * as boostpow from 'boostpow'
 
-export type show_message = {
+export type set_difficulty = {
   id: null,
   method: method,
   params: [number]
@@ -10,8 +11,9 @@ export type show_message = {
 
 export class SetDifficulty extends Notification {
 
-  static valid(message): boolean {
-    if (!(Notification.valid(message) && message['method'] === "mining.set_difficulty")) {
+  static valid(message: JSONValue): boolean {
+    let n = Notification.read(message)
+    if (!n || n['method'] !== "mining.set_difficulty") {
       return false
     }
 
@@ -25,7 +27,7 @@ export class SetDifficulty extends Notification {
     throw "invalid set_difficulty"
   }
 
-  static make(d: boostpow.Difficulty): show_message {
+  static make(d: boostpow.Difficulty): set_difficulty {
     return {id: null, method: 'mining.set_difficulty', params: [d.number]}
   }
 

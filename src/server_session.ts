@@ -14,10 +14,16 @@ import { authorize_request, AuthorizeRequest, AuthorizeResponse }
   from './Stratum/mining/authorize'
 import { submit_request, SubmitRequest, SubmitResponse }
   from './Stratum/mining/submit'
-
+import { notify_params, NotifyParams } from './Stratum/mining/notify'
+import { StratumJob, Worker } from './jobs'
 import { StratumRequest, StratumResponse, StratumHandler, StratumHandlers } from './Stratum/handlers/base'
+import * as boostpow from 'boostpow'
 
-export function remote_client(
+// Subscribe lets us subscribe to new jobs. The backend could be boost or a mining pool.
+type Subscribe = (w: Worker) => StratumJob | undefined
+
+export function server_session(
+  select: Subscribe,
   can_submit_without_authorization: boolean,
   // undefined indicates that Stratum extensions are not supported.
   // Otherwise there is a list of supported extensions.
@@ -51,6 +57,14 @@ export function remote_client(
     return true
   }
 
+  function minimum_difficulty(): number {
+    let p = extension_parameters('minimum_difficulty')['value']
+    if (p === undefined) return 0
+    return <number>p
+  }
+
+  let jobs: StratumJob[] = []
+
   let user_agent: undefined | string
 
   let extranonce: undefined | extranonce
@@ -58,16 +72,6 @@ export function remote_client(
   // If the subscribe method has not yet been sent, this is undefined.
   // Otherwise, it has the subscriptions that were sent.
   let subscriptions: undefined | subscriptions
-
-  // TODO a subscription id should be a random string.
-  function generate_subscription_id() {
-    return "abcd"
-  }
-
-  // TODO should be random.
-  function generate_extranonce1() {
-    return "00000000"
-  }
 
   function subscribed(): boolean {
     return subscriptions !== undefined
@@ -114,26 +118,29 @@ export function remote_client(
 
     let subscribe_extranonce: boolean = extension_supported("subscribe_extranonce")
 
-    let n2
+    let job = select({
+      'subscribe_extranonce': subscribe_extranonce,
+      'new_job': (Job) => {},
+      'hashpower':() => { return {'hashpower': 0, 'certainty': 0} },
+      'minimum_difficulty': minimum_difficulty,
+      'cancel': () => {}
+    })
+    if (!job) return {result:null, err: Error.make(Error.INTERNAL_ERROR)}
 
-    // TODO if we are using the extended protocol, we cannot actually complete
-    // the request because we need to select a boost job now in order to know
-    // extranonce2_size. Since we do not have that functionality yet, we fail
-    // here. In the future we should select a job here and set n2 appropriately.
+    jobs.push(job)
+
     if (subscribe_extranonce) {
       subscriptions = [['mining.notify', SubscribeResponse.random_subscription_id()],
         ['mining.set_difficulty', SubscribeResponse.random_subscription_id()],
         ['mining.set_extranonce', SubscribeResponse.random_subscription_id()]]
-        // TODO set n2 here
     } else {
       subscriptions = [['mining.notify', SubscribeResponse.random_subscription_id()],
         ['mining.set_difficulty', SubscribeResponse.random_subscription_id()]]
-      n2 = 8
     }
 
     // has the user requestd an extranonce1?
     let n1 = SubscribeRequest.extranonce1(sub)
-    extranonce = [n1 ? n1.hex : SessionID.random(), n2]
+    let extranonce = [n1 ? n1.hex : SessionID.random(), job.extranonce2Size]
 
     return {result:[subscriptions, extranonce[0], extranonce[1]], err: null}
   }
@@ -171,5 +178,4 @@ export function remote_client(
       })
     }
   }
-
 }
