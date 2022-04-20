@@ -2,6 +2,7 @@ import { message_id, MessageID } from './messageID'
 import { method } from './method'
 import { error, Error } from './error'
 import { result } from './message'
+import { JSONValue } from '../json'
 
 // A response is a reply to a request.
 export interface response {
@@ -11,9 +12,15 @@ export interface response {
 }
 
 export class Response {
+
   static valid(message: response): boolean {
-    return typeof message === 'object' && MessageID.valid(message['id']) &&
-      message['result'] !== undefined && Error.valid(message['err'])
+    return message['result'] !== undefined && Error.valid(message['err'])
+  }
+
+  static read(message: JSONValue): response | undefined {
+    if (typeof message == 'object' && MessageID.valid(message['id']) &&
+      Error.valid(message['err']) &&
+      Response.valid(<response><unknown>message)) return <response><unknown>message
   }
 
   static id(message: response): message_id {
@@ -52,7 +59,7 @@ export class Response {
     return Response.error(message) !== null
   }
 
-  static make(id: message_id, result: result  , err?: error): response {
+  static make(id: message_id, result: result, err?: error): response {
     if (err === undefined) {
       return {id: id, result: result, err: null}
     }

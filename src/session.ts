@@ -6,6 +6,7 @@ import { log } from './log'
 import * as net from 'net'
 
 import * as uuid from 'uuid'
+import { JSONValue } from './json'
 
 interface HostPort {
   ip: string;
@@ -24,6 +25,15 @@ interface NewSession {
   socket: net.Socket
 }
 
+export type Connection = {
+  send: (j: JSONValue) => void,
+  close: () => void
+}
+
+export type Receive = (msg: JSONValue) => void
+
+export type Protocol = (conn: Connection) => Receive
+
 export class Session {
 
   sessionId: SessionId
@@ -34,9 +44,9 @@ export class Session {
 
   open: boolean
 
-  handleMessage: (data: Buffer, socket: net.Socket) => void
+  handleMessage: Receive
 
-  constructor({ socket }: NewSession, messageHandler: (data: Buffer, socket: net.Socket) => void) {
+  constructor({ socket }: NewSession, remote: Protocol) {
 
     this.connectedAt = new Date()
 
@@ -46,7 +56,7 @@ export class Session {
 
     this.open = true
 
-    this.handleMessage = messageHandler
+    this.handleMessage = remote({send: this.sendJSON, close: this.disconnect})
 
     log.info('socket.connect', {
 
@@ -74,13 +84,18 @@ export class Session {
 
     this.socket.on('data', data => {
 
-      this.handleMessage(data, this.socket)
+      this.handleMessage(JSON.parse(data.toString()))
 
     })
 
     sessions[this.sessionId] = this
 
   }
+
+  sendJSON(x: JSONValue): void {
+    this.socket.write(`${JSON.stringify(x)}\n`)
+  }
+
   disconnect() {
 
     this.socket.end();
