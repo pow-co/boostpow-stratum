@@ -1,5 +1,6 @@
 import { error, Error } from './Stratum/error'
 import { JSONValue } from './json'
+import { SessionID } from './Stratum/sessionID'
 import { request } from './Stratum/request'
 import { response } from './Stratum/response'
 import { notification } from './Stratum/notification'
@@ -111,27 +112,28 @@ export function remote_client(
 
     user_agent = SubscribeRequest.userAgent(sub)
 
+    let subscribe_extranonce: boolean = extension_supported("subscribe_extranonce")
+
     let n2
 
     // TODO if we are using the extended protocol, we cannot actually complete
     // the request because we need to select a boost job now in order to know
     // extranonce2_size. Since we do not have that functionality yet, we fail
     // here. In the future we should select a job here and set n2 appropriately.
-    if (extension_supported("subscibe_extranonce")) {
-      subscriptions = [['mining.notify', generate_subscription_id()],
-        ['mining.set_difficulty', generate_subscription_id()],
-        ['mining.set_extranonce', generate_subscription_id()]]
-      return {result:null, err: Error.make(Error.INTERNAL_ERROR)}
-      // TODO set n2 here.
+    if (subscribe_extranonce) {
+      subscriptions = [['mining.notify', SubscribeResponse.random_subscription_id()],
+        ['mining.set_difficulty', SubscribeResponse.random_subscription_id()],
+        ['mining.set_extranonce', SubscribeResponse.random_subscription_id()]]
+        // TODO set n2 here
     } else {
-      subscriptions = [['mining.notify', generate_subscription_id()],
-        ['mining.set_difficulty', generate_subscription_id()]]
+      subscriptions = [['mining.notify', SubscribeResponse.random_subscription_id()],
+        ['mining.set_difficulty', SubscribeResponse.random_subscription_id()]]
       n2 = 8
     }
 
     // has the user requestd an extranonce1?
     let n1 = SubscribeRequest.extranonce1(sub)
-    extranonce = [n1 ? n1.hex : generate_extranonce1(), n2]
+    extranonce = [n1 ? n1.hex : SessionID.random(), n2]
 
     return {result:[subscriptions, extranonce[0], extranonce[1]], err: null}
   }

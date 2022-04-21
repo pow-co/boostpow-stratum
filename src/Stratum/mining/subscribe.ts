@@ -125,6 +125,10 @@ export class SubscribeResponse extends Response {
     throw "invalid set_extranonce"
   }
 
+  static random_subscription_id(): string {
+    return SessionID.random()
+  }
+
   static make_subscribe(
     id: message_id,
     subscriptions: subscriptions,
