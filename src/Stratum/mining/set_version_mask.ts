@@ -1,7 +1,7 @@
 import { Notification } from '../notification'
 import { SessionID } from '../sessionID'
 import { method } from '../method'
-import { Int32Little } from 'boostpow'
+import * as boostpow from 'boostpow'
 
 export type set_version_mask = {
   id: null,
@@ -20,11 +20,11 @@ export class SetVersionMask extends Notification {
     return params.length === 1 && SessionID.valid(params[0])
   }
 
-  static version_mask(message: set_version_mask): Int32Little {
-    if (SetVersionMask.valid(message)) return Int32Little.fromHex(message['params'][0])
+  static version_mask(message: set_version_mask): boostpow.Int32Little {
+    if (SetVersionMask.valid(message)) return boostpow.Int32Little.fromHex(message['params'][0])
   }
 
-  static make(mask: Int32Little): set_version_mask {
+  static make(mask: boostpow.Int32Little): set_version_mask {
     return {id: null, method: 'mining.set_version_mask', params: [mask.hex]}
   }
 

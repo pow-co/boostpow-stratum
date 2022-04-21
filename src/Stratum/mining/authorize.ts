@@ -35,4 +35,4 @@ export class AuthorizeRequest extends Request {
 
 }
 
-export let AuthorizeResponse = BooleanResponse
+export { BooleanResponse as AuthorizeResponse }

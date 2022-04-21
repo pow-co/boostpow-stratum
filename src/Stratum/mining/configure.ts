@@ -5,7 +5,7 @@ import { SessionID } from '../sessionID'
 import { method } from '../method'
 import { JSONValue } from '../../json'
 import { error } from '../error'
-import { Difficulty, Int32Little } from 'boostpow'
+import * as boostpow from 'boostpow'
 import * as Joi from 'joi'
 
 // https://github.com/slushpool/stratumprotocol/blob/master/stratum-extensions.mediawiki
@@ -152,11 +152,11 @@ export class ExtensionVersionRolling {
     return SessionID.valid(r['mask'])
   }
 
-  static requestParams(mask: Int32Little, minBitCount: number): object {
+  static requestParams(mask: boostpow.Int32Little, minBitCount: number): object {
     return {mask: mask.hex, 'min-bit-count': minBitCount}
   }
 
-  static result(success: boolean | string, mask?: Int32Little): object {
+  static result(success: boolean | string, mask?: boostpow.Int32Little): object {
     if (success === true) {
       if (mask) {
         return [success, mask.hex]
@@ -178,7 +178,7 @@ export class ExtensionMinimumDifficulty {
     return true
   }
 
-  static requestParams(d: Difficulty): object {
+  static requestParams(d: boostpow.Difficulty): object {
     return {}
   }
 

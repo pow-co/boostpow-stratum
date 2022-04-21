@@ -1,6 +1,6 @@
 import { Notification } from '../notification'
 import { method } from '../method'
-import { Difficulty } from 'boostpow'
+import * as boostpow from 'boostpow'
 
 export type show_message = {
   id: null,
@@ -19,13 +19,13 @@ export class SetDifficulty extends Notification {
     return params.length === 1 && typeof params[0] === 'number' && params[0] > 0
   }
 
-  static difficulty(message): Difficulty {
-    if (SetDifficulty.valid(message)) return new Difficulty(message['params'][0])
+  static difficulty(message): boostpow.Difficulty {
+    if (SetDifficulty.valid(message)) return new boostpow.Difficulty(message['params'][0])
 
     throw "invalid set_difficulty"
   }
 
-  static make(d: Difficulty): show_message {
+  static make(d: boostpow.Difficulty): show_message {
     return {id: null, method: 'mining.set_difficulty', params: [d.number]}
   }
 

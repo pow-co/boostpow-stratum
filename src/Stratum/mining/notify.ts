@@ -2,7 +2,7 @@ import { Notification } from '../notification'
 import { SessionID } from '../sessionID'
 import { message_id } from '../messageID'
 import { method } from '../method'
-import { UInt32Big, Digest32, UInt32Little, Difficulty, Int32Little, Bytes } from 'boostpow'
+import * as boostpow from 'boostpow'
 
 export type notify_params = [string, string, string, string, string[], string, string, string, boolean]
 
@@ -43,62 +43,62 @@ export class NotifyParams {
     throw "invalid notify"
   }
 
-  static prevHash(p: notify_params): Digest32 {
+  static prevHash(p: notify_params): boostpow.Digest32 {
     if (this.valid(p)) {
-      return Digest32.fromHex(p[1])
+      return boostpow.Digest32.fromHex(p[1])
     }
 
     throw "invalid notify"
   }
 
-  static generationTX1(p: notify_params): Bytes {
+  static generationTX1(p: notify_params): boostpow.Bytes {
     if (this.valid(p)) {
-      return new Bytes(Buffer.from(p[2], 'hex'))
+      return new boostpow.Bytes(Buffer.from(p[2], 'hex'))
     }
 
     throw "invalid notify"
   }
 
-  static generationTX2(p: notify_params): Bytes {
+  static generationTX2(p: notify_params): boostpow.Bytes {
     if (this.valid(p)) {
-      return new Bytes(Buffer.from(p[3], 'hex'))
+      return new boostpow.Bytes(Buffer.from(p[3], 'hex'))
     }
 
     throw "invalid notify"
   }
 
-  static merkleBranch(p: notify_params): Digest32[] {
+  static merkleBranch(p: notify_params): boostpow.Digest32[] {
     if (!this.valid(p)) throw "invalid notify"
 
     let path_hex: string[] = p[4]
 
-    let path: Digest32[] = []
+    let path: boostpow.Digest32[] = []
     for (let d of path_hex) {
-      path.push(Digest32.fromHex(d))
+      path.push(boostpow.Digest32.fromHex(d))
     }
 
     return path
   }
 
-  static version(p: notify_params): Int32Little {
+  static version(p: notify_params): boostpow.Int32Little {
     if (this.valid(p)) {
-      return Int32Little.fromHex(p[5])
+      return boostpow.Int32Little.fromHex(p[5])
     }
 
     throw "invalid notify"
   }
 
-  static nbits(p: notify_params): Difficulty {
+  static nbits(p: notify_params): boostpow.Difficulty {
     if (this.valid(p)) {
-      return Difficulty.fromBits(UInt32Little.fromHex(p[6]).number)
+      return boostpow.Difficulty.fromBits(boostpow.UInt32Little.fromHex(p[6]).number)
     }
 
     throw "invalid notify"
   }
 
-  static time(p: notify_params): UInt32Little {
+  static time(p: notify_params): boostpow.UInt32Little {
     if (this.valid(p)) {
-      return UInt32Little.fromHex(p[7])
+      return boostpow.UInt32Little.fromHex(p[7])
     }
 
     throw "invalid notify"
@@ -112,9 +112,16 @@ export class NotifyParams {
     throw "invalid notify"
   }
 
-  static make(job_id: string, prev_hash: Digest32, gtx1: Bytes, gtx2: Bytes,
-    branch: Digest32[], version: Int32Little, bits: Difficulty,
-    time: UInt32Little, clean: boolean): notify_params {
+  static make(
+    job_id: string,
+    prev_hash: boostpow.Digest32,
+    gtx1: boostpow.Bytes,
+    gtx2: boostpow.Bytes,
+    branch: boostpow.Digest32[],
+    version: boostpow.Int32Little,
+    bits: boostpow.Difficulty,
+    time: boostpow.UInt32Little,
+    clean: boolean): notify_params {
 
     let path: string[] = []
     for (let d of branch) {
@@ -142,9 +149,15 @@ export class Notify extends Notification {
     return NotifyParams.valid(message['params'])
   }
 
-  static make(job_id: string, prev_hash: Digest32, gtx1: Bytes, gtx2: Bytes,
-    branch: Digest32[], version: Int32Little, bits: Difficulty,
-    time: UInt32Little, clean: boolean): notify {
+  static make(job_id: string,
+    prev_hash: boostpow.Digest32,
+    gtx1: boostpow.Bytes,
+    gtx2: boostpow.Bytes,
+    branch: boostpow.Digest32[],
+    version: boostpow.Int32Little,
+    bits: boostpow.Difficulty,
+    time: boostpow.UInt32Little,
+    clean: boolean): notify {
 
     return {id: null, method: 'mining.notify',
       params: NotifyParams.make(job_id, prev_hash, gtx1, gtx2, branch, version, bits, time, clean)}

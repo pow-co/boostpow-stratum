@@ -6,7 +6,7 @@ import { method, Method } from '../method'
 import { error } from '../error'
 import { result } from '../message'
 import { is_natural_number } from '../../json'
-import { UInt32Big } from 'boostpow'
+import * as boostpow from 'boostpow'
 
 export type subscribe_request = {
   id: message_id,
@@ -33,10 +33,10 @@ export class SubscribeRequest extends Request {
     throw 'invalid subscribe request'
   }
 
-  static extranonce1(message: subscribe_request): UInt32Big | undefined {
+  static extranonce1(message: subscribe_request): boostpow.UInt32Big | undefined {
     if (SubscribeRequest.valid(message)) {
       if (message['params'].length == 2) {
-        return UInt32Big.fromHex(message['params'][1])
+        return boostpow.UInt32Big.fromHex(message['params'][1])
       } else {
         return
       }
@@ -45,7 +45,7 @@ export class SubscribeRequest extends Request {
     throw 'invalid subscribe response'
   }
 
-  static make(id: message_id, user_agent: string, extranonce1?: UInt32Big): subscribe_request {
+  static make(id: message_id, user_agent: string, extranonce1?: boostpow.UInt32Big): subscribe_request {
     if (extranonce1 === undefined) {
       return {id: id, method: 'mining.subscribe', params: [user_agent]}
     }
@@ -79,7 +79,7 @@ export class SubscribeResponse extends Response {
   static valid(message: response): boolean {
 
     if (!Response.valid(message)) return false
-    
+
     let result = message['result']
     if (Response.is_error(message) && result === null) return true
 
@@ -99,14 +99,14 @@ export class SubscribeResponse extends Response {
     throw "invalid subscribe response"
   }
 
-  static extranonce1(message: subscribe_response): UInt32Big | undefined {
+  static extranonce1(message: subscribe_response): boostpow.UInt32Big | undefined {
     if (SubscribeResponse.valid(message)) {
       let result = message['result']
       if (result === null) {
         return
       }
 
-      return UInt32Big.fromHex(message['result'][1])
+      return boostpow.UInt32Big.fromHex(message['result'][1])
     }
 
     throw 'invalid subscribe response'
@@ -125,7 +125,11 @@ export class SubscribeResponse extends Response {
     throw "invalid set_extranonce"
   }
 
-  static make_subscribe(id: message_id, subscriptions: subscriptions, extranonce1: UInt32Big, extranonce2size: number): subscribe_response {
+  static make_subscribe(
+    id: message_id,
+    subscriptions: subscriptions,
+    extranonce1: boostpow.UInt32Big,
+    extranonce2size: number): subscribe_response {
     return {id: id, result: [subscriptions, extranonce1.hex, extranonce2size], err: null}
   }
 

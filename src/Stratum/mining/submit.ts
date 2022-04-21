@@ -4,7 +4,7 @@ import { message_id } from '../messageID'
 import { SessionID } from '../sessionID'
 import { method } from '../method'
 import { error } from '../error'
-import { UInt32Big, UInt32Little, Int32Little, Bytes } from 'boostpow'
+import * as boostpow from 'boostpow'
 
 export type share = [string, string, string, string, string] |
   [string, string, string, string, string, string]
@@ -34,43 +34,49 @@ export class Share {
     throw "invalid share"
   }
 
-  static timestamp(x: share): UInt32Little {
+  static timestamp(x: share): boostpow.UInt32Little {
     if (this.valid(x)) {
-      return UInt32Little.fromHex(x[2])
+      return boostpow.UInt32Little.fromHex(x[2])
     }
 
     throw "invalid share"
   }
 
-  static nonce(x: share): UInt32Little {
+  static nonce(x: share): boostpow.UInt32Little {
     if (this.valid(x)) {
-      return UInt32Little.fromHex(x[3])
+      return boostpow.UInt32Little.fromHex(x[3])
     }
 
     throw "invalid share"
   }
 
-  static extranonce2(x: share): Bytes {
+  static extranonce2(x: share): boostpow.Bytes {
     if (this.valid(x)) {
-      return Bytes.fromHex(x[4])
+      return boostpow.Bytes.fromHex(x[4])
     }
 
     throw "invalid share"
   }
 
-  static generalPurposeBits(x: share): Int32Little | undefined {
+  static generalPurposeBits(x: share): boostpow.Int32Little | undefined {
     if (this.valid(x)) {
       if (x[5] === undefined) {
         return
       }
 
-      return Int32Little.fromHex(x[5])
+      return boostpow.Int32Little.fromHex(x[5])
     }
 
     throw "invalid share"
   }
 
-  static make(worker_name: string, job_id: string, time: UInt32Little, nonce: UInt32Little, en2: Bytes, gpr?: Int32Little): share {
+  static make(
+    worker_name: string,
+    job_id: string,
+    time: boostpow.UInt32Little,
+    nonce: boostpow.UInt32Little,
+    en2: boostpow.Bytes, gpr?:
+    boostpow.Int32Little): share {
     if (gpr) {
       return [worker_name, job_id, time.hex, nonce.hex, en2.hex, gpr.hex]
     } else {
@@ -95,10 +101,17 @@ export class SubmitRequest extends Request {
     return Share.valid(message['params'])
   }
 
-  static make(id: message_id, worker_name: string, job_id: string, time: UInt32Little, nonce: UInt32Little, en2: Bytes, gpr?: Int32Little): submit_request {
+  static make(
+    id: message_id,
+    worker_name: string,
+    job_id: string,
+    time: boostpow.UInt32Little,
+    nonce: boostpow.UInt32Little,
+    en2: boostpow.Bytes,
+    gpr?: boostpow.Int32Little): submit_request {
     return {id: id, method: 'mining.submit', params: Share.make(worker_name, job_id, time, nonce, en2, gpr)}
   }
 
 }
 
-export let SubmitResponse = BooleanResponse
+export { BooleanResponse as SubmitResponse }

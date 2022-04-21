@@ -1,8 +1,6 @@
 
 import * as http from 'superagent'
 
-import { BoostPowJob } from 'boostpow'
-
 export interface PowcoJob {
   content: string;
   difficulty: number;
@@ -19,7 +17,7 @@ export interface PowcoJob {
 
 export async function listJobs(): Promise<PowcoJob[]> {
 
-  let response = await http.get('https://pow.co/api/v1/jobs')
+  let response = await http.get('https://pow.co/api/v1/boost/jobs')
 
   return response.body.jobs
 
