@@ -25,6 +25,10 @@ export class Share {
     if (Share.valid(<share>params)) return <share>params
   }
 
+  static equal(a: share, b:share): boolean {
+    return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3] && a[4] === b[4]
+  }
+
   static workerName(x: share): string {
     if (this.valid(x)) {
       return x[0]
@@ -41,7 +45,7 @@ export class Share {
     throw "invalid share"
   }
 
-  static timestamp(x: share): boostpow.UInt32Little {
+  static time(x: share): boostpow.UInt32Little {
     if (this.valid(x)) {
       return boostpow.UInt32Little.fromHex(x[2])
     }

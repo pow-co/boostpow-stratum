@@ -32,7 +32,7 @@ export function prove(
       NotifyParams.nbits(n),
       NotifyParams.generationTX1(n),
       NotifyParams.generationTX2(n),
-      boostpow.Int32Little.fromNumber(boostpow.Utils.generalPurposeBitsMask())
+      boostpow.Int32Little.fromHex(version_mask)
     )
   } else {
     p = new boostpow.work.Puzzle(
@@ -47,7 +47,7 @@ export function prove(
   let u: boostpow.work.Solution
   if (x[5]) {
     u = new boostpow.work.Solution(
-      Share.timestamp(x),
+      Share.time(x),
       Extranonce.extranonce1(en),
       Share.extranonce2(x),
       Share.nonce(x),
@@ -55,7 +55,7 @@ export function prove(
     )
   } else {
     u = new boostpow.work.Solution(
-      Share.timestamp(x),
+      Share.time(x),
       Extranonce.extranonce1(en),
       Share.extranonce2(x),
       Share.nonce(x)
@@ -66,4 +66,28 @@ export function prove(
   // we may need to check it against a different difficulty than
   // the one given in the proof.
   return new boostpow.work.Proof(p, u)
+}
+
+export class Proof {
+  jobID: string
+  proof: boostpow.work.Proof
+  string: boostpow.work.PowString
+  hash: boostpow.Digest32
+  constructor (
+    en: extranonce,
+    n: notify_params,
+    x: share,
+    mask?: string) {
+    this.jobID = n[0]
+    this.proof = prove(en, n, x, mask)
+    if (this.proof) {
+      this.string = this.proof.string()
+      this.hash = this.string.hash
+    }
+  }
+
+  valid(d?: boostpow.Difficulty): boolean {
+    if (!this.hash) return false
+    throw 'incomplete method'
+  }
 }
