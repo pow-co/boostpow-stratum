@@ -192,7 +192,7 @@ describe("Stratum Messages", () => {
     let share = Share.make(worker_name, job_id, timestamp, nonce, en2, version)
     expect(Share.workerName(share)).to.be.equal(worker_name)
     expect(Share.jobID(share)).to.be.equal(job_id)
-    expect(Share.timestamp(share).hex).to.be.equal(timestamp.hex)
+    expect(Share.time(share).hex).to.be.equal(timestamp.hex)
     expect(Share.nonce(share).hex).to.be.equal(nonce.hex)
     expect(Share.extranonce2(share).hex).to.be.equal(en2.hex)
     expect(Share.generalPurposeBits(share).hex).to.be.equal(version.hex)

@@ -1,6 +1,7 @@
 import * as boostpow from 'boostpow'
 import { error, Error } from './Stratum/error'
 import { JSONValue } from './json'
+import { now_seconds } from './time'
 import { SessionID, session_id } from './Stratum/sessionID'
 import { message_id } from './Stratum/messageID'
 import { request } from './Stratum/request'
@@ -10,6 +11,7 @@ import { notification } from './Stratum/notification'
 import { extranonce, SetExtranonce } from './Stratum/mining/set_extranonce'
 import { set_difficulty, SetDifficulty } from './Stratum/mining/set_difficulty'
 import { notify, Notify } from './Stratum/mining/notify'
+import { Proof } from './Stratum/proof'
 import { subscriptions, subscribe_request, subscribe_response, SubscribeRequest, SubscribeResponse }
   from './Stratum/mining/subscribe'
 import { configure_request, configure_response, extension_requests,
@@ -18,20 +20,122 @@ import { configure_request, configure_response, extension_requests,
   from './Stratum/mining/configure'
 import { authorize_request, AuthorizeRequest, AuthorizeResponse }
   from './Stratum/mining/authorize'
-import { Share, submit_request, SubmitRequest, SubmitResponse }
+import { share, submit_request, Share, SubmitRequest, SubmitResponse }
   from './Stratum/mining/submit'
 import { notify_params, NotifyParams } from './Stratum/mining/notify'
-import { StratumJob, Worker } from './jobs'
+import { StratumAssignment, Worker } from './jobs'
 import { Local, Remote } from './stratum'
 import { StratumRequest, StratumResponse, StratumHandler, StratumHandlers } from './Stratum/handlers/base'
 import {extend, ExtensionHandlers} from './extensions'
 
+interface Options {
+  // do we require a miner to log in or can he submit shares without it?
+  // if he doesn't log in we don't know how to pay him, so if this is allowed
+  // the miner has to be us.
+  canSubmitWithoutAuthorization?: boolean,
+
+  // max time difference between the reported time of a submitted share and
+  // our local time.
+  maxTimeDifference?: number,
+
+  // how long do we save old jobs in memory?
+  secondsToSaveJobs?: number,
+
+  // how many message ids do we remember to reject duplicates?
+  rememberThisManyMessageIds?: number
+}
+
+let default_options = {
+  canSubmitWithoutAuthorization: false,
+  maxTimeDifference: 5,
+  secondsToSaveJobs: 600,
+  rememberThisManyMessageIds: 10
+}
+
 // Subscribe lets us subscribe to new jobs. The backend could be boost or a mining pool.
-type Subscribe = (w: Worker) => StratumJob | undefined
+type Subscribe = (w: Worker) => undefined | {initial: StratumAssignment, solved: (p: Proof) => void }
+
+interface StratumJob {
+  notify: notify_params,
+  extranonce: extranonce,
+  mask: string
+}
+
+let handle_jobs = (maxTimeDifference: number) => {
+  let jobs: StratumJob[] = []
+
+  let shares: share[] = []
+
+  let find = (jid: string): {stale: boolean, job: StratumJob} => {
+    let stale: boolean = false
+
+    for (let i = jobs.length - 1; i > 0; i--) {
+      let job = jobs[i]
+      let next_stale = stale
+      if (NotifyParams.clean(job.notify)) next_stale = true
+
+      if (NotifyParams.jobID(job.notify) === jid) return {
+        stale: stale,
+        job: job
+      }
+
+      stale = next_stale
+    }
+  }
+
+  return {
+    push: (j: StratumJob) => {
+      if (jobs.length === 0) {
+        jobs.push(j)
+        return
+      }
+
+      let now: number = now_seconds().number
+
+      let i
+      for (i = 0; i < jobs.length; i++) {
+        if (now - NotifyParams.time(jobs[i].notify).number >= maxTimeDifference) break
+      }
+
+      jobs.splice(0, i).push(j)
+    },
+
+    check: (solved: (p: Proof) => void) => {
+      return (x: share, d: boostpow.Difficulty): error => {
+        let now = now_seconds().number
+        let timestamp = Share.time(x).number
+
+        if (now - timestamp > maxTimeDifference) return Error.make(Error.TIME_TOO_OLD);
+        if (timestamp - now > maxTimeDifference) return Error.make(Error.TIME_TOO_NEW);
+
+        let f = find(Share.jobID(x));
+        if (!f) return Error.make(Error.JOB_NOT_FOUND);
+        if (f.stale) return Error.make(Error.STALE_SHARE);
+
+        let p: Proof = new Proof(f.job.extranonce, f.job.notify, x, f.job.mask);
+        if (!p.proof) return Error.make(Error.ILLEGAL_VERMASK);
+
+        for (let i = shares.length; i > 0; i--) {
+          let g = shares[i]
+          if (now - Share.time(g).number > maxTimeDifference) break
+          if (Share.equal(x, g)) return Error.make(Error.DUPLICATE_SHARE)
+        }
+
+        if (!p.valid(d)) return Error.make(Error.INVALID_SOLUTION)
+        solved(p)
+        return null
+      }
+    },
+
+    hashpower: () => {
+      return {hashpower:0, certainty: 0}
+    }
+  }
+}
 
 export function server_session(
   select: Subscribe,
-  can_submit_without_authorization: boolean,
+  options: Options = default_options,
   // undefined indicates that Stratum extensions are not supported.
   // Otherwise there is a list of supported extensions.
   extension_handlers?: ExtensionHandlers
@@ -44,10 +148,9 @@ export function server_session(
       disconnect()
     }
 
-    let extensions = extend(extension_handlers)
+    Object.assign(options, default_options)
 
-    // list of recent jobs.
-    let jobs: StratumJob[] = []
+    let extensions = extend(extension_handlers)
 
     // set during the subscribe method.
     let id: session_id | undefined
@@ -83,7 +186,7 @@ export function server_session(
     }
 
     // when we know of a new job, we have to send a notify message.
-    function notify_new_job(j: StratumJob) {
+    function notify_new_job(j: StratumAssignment) {
       if (extensions.supported("subscribe_extranonce")) send_set_extranonce([id, j.extranonce2Size])
 
       // we always use the same difficulty as the job for now.
@@ -108,6 +211,18 @@ export function server_session(
     function authorized(): boolean {
       return username !== undefined
     }
+
+    function version_mask(): string {
+      let mask = extensions.parameters('version_rolling').mask
+      if (!mask || typeof mask !== 'number') return boostpow.Int32Little.fromNumber(0).hex
+      return boostpow.Int32Little.fromNumber(mask).hex
+    }
+
+    let jobs = handle_jobs(options.maxTimeDifference)
+
+    // set during the subscribe method. We don't know where to send
+    // a solved share until after the worker is registered.
+    let checkShare: (x: share, d: boostpow.Difficulty) => error
 
     // configure is an optional first message that determines wheher
     // extensions and supported and which ones.
@@ -149,16 +264,17 @@ export function server_session(
         // if we use subscribe_extranonce, then the result is different.
         let subscribe_extranonce: boolean = extensions.supported("subscribe_extranonce")
 
-        let job = select({
+        let register = select({
           'subscribe_extranonce': subscribe_extranonce,
           'new_job': notify_new_job,
-          'hashpower':() => { return {'hashpower': 0, 'certainty': 0} },
+          'hashpower': jobs.hashpower,
           'minimum_difficulty': extensions.minimum_difficulty,
           'cancel': close
         })
-        if (!job) return error(Error.INTERNAL_ERROR)
+        if (!register) return error(Error.INTERNAL_ERROR)
+        let job = register.initial
 
-        jobs.push(job)
+        checkShare = jobs.check(register.solved)
 
         subscriptions = subscribe_extranonce ?
           [['mining.notify', SubscribeResponse.random_subscription_id()],
@@ -172,6 +288,12 @@ export function server_session(
         let id = n1 ? n1.hex : SessionID.random()
 
         extranonce = [id, job.extranonce2Size]
+
+        jobs.push({
+          notify: job.notify,
+          extranonce: extranonce,
+          mask: version_mask()
+        })
 
         remote.respond({id: request.id, result: [subscriptions, id, job.extranonce2Size], err: null})
         send_set_difficulty(NotifyParams.nbits(job.notify))
@@ -207,10 +329,11 @@ export function server_session(
 
     function submit(request: parameters): StratumResponse {
       if (!subscribed()) return {result: null, err: Error.make(Error.ILLEGAL_METHOD)}
+      if (!authorized() && !options.canSubmitWithoutAuthorization) Error.make(Error.UNAUTHORIZED)
       let x = Share.read(request)
       if (!x) return {result: null, err: Error.make(Error.ILLEGAL_PARARMS)}
-      // TODO
-      return {result: null, err: Error.make(Error.ILLEGAL_METHOD)}
+      let err = checkShare(x, difficulty)
+      return {result: err === null, err: err}
     }
 
     function handleSubmit(request: request): void {
@@ -250,7 +373,7 @@ export function server_session(
         }
 
         requests_ids.push(r.id)
-        if (requests_ids.length > 10) requests_ids.shift()
+        if (requests_ids.length > options.rememberThisManyMessageIds) requests_ids.shift()
 
         handle(r)
       }
