@@ -1,7 +1,6 @@
 
 import * as http from 'superagent'
 import * as boostpow from 'boostpow'
-import { BoostOutput } from './jobs'
 
 interface PowcoJob {
   content: string;
@@ -17,16 +16,16 @@ interface PowcoJob {
   spent: boolean;
 }
 
-export async function listJobs(): Promise<BoostOutput[]> {
+export async function listJobs(): Promise<boostpow.Output[]> {
 
   let response = await http.get('https://pow.co/api/v1/boost/jobs')
 
-  let jobs: BoostOutput[] = []
+  let jobs: boostpow.Output[] = []
   for (let j of response.body.jobs) {
     if (j.script === null) continue
-    let o: BoostOutput
+    let o: boostpow.Output
     try {
-      o = new BoostOutput(boostpow.Job.fromHex(j.script),
+      o = new boostpow.Output(boostpow.Job.fromHex(j.script),
         j.value, boostpow.Digest32.fromHex(j.txid), j.vout)
       jobs.push(o)
     } catch (x) {}

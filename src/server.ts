@@ -7,6 +7,7 @@ import { log } from './log'
 import { listJobs } from './powco'
 import { JobManager, job_manager } from './jobs'
 import { wallet } from './bitcoin'
+import { extensionHandlers } from './extensions'
 
 interface NewServer {
   name: string;
@@ -28,7 +29,10 @@ export class Server {
 
       // this session is not immediately deleted because it adds itself
       // to a global object called sessions containing all sessions.
-      new Session({ socket }, stratum(server_session(this.jobs.subscribe, true)))
+      new Session({ socket }, stratum(
+        server_session(this.jobs.subscribe,
+          {canSubmitWithoutAuthorization:true},
+          extensionHandlers)))
 
     })
 
