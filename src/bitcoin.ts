@@ -1,6 +1,10 @@
 import * as bsv from 'bsv'
 import * as boostpow from 'boostpow'
 
+export async function broadcast(tx: bsv.Transaction): Promise<boolean> {
+  return false
+}
+
 export function pubKeyToAddress(pubKey: bsv.PubKey): boostpow.Digest20 {
   return new boostpow.Digest20(bsv.Hash.sha256Ripemd160(pubKey.toBuffer()))
 }

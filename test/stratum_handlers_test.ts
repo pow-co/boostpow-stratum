@@ -12,7 +12,7 @@ import { AuthorizeResponse } from '../src/Stratum/mining/authorize'
 import { SetDifficulty } from '../src/Stratum/mining/set_difficulty'
 import { Notify } from '../src/Stratum/mining/notify'
 import { stratum } from '../src/stratum'
-import { BoostOutput, job_manager } from '../src/jobs'
+import { job_manager } from '../src/jobs'
 import { private_key_wallet } from '../src/bitcoin'
 import * as bsv from 'bsv'
 import * as boostpow from 'boostpow'
@@ -116,17 +116,18 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   let txid = boostpow.Digest32.fromHex('abcdef0a0b0c0d0e0f1122330102030405060708090a0b0c')
 
   const outputs = [
-    new BoostOutput(jobContractV1, 1, txid, 1),
-    new BoostOutput(jobContractV2, 1, txid, 2),
-    new BoostOutput(jobBountyV1, 1, txid, 3),
-    new BoostOutput(jobBountyV2, 1, txid, 4)]
+    new boostpow.Output(jobContractV1, 1, txid, 1),
+    new boostpow.Output(jobContractV2, 1, txid, 2),
+    new boostpow.Output(jobBountyV1, 1, txid, 3),
+    new boostpow.Output(jobBountyV2, 1, txid, 4)]
 
   let wallet = private_key_wallet(new bsv.PrivKey(new bsv.Bn(1234567), true))
 
   it("mining.subscribe should return the correct response for the unexteded protocol", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true}))(dummy.connection)
 
     send({
       id: 2,
@@ -156,7 +157,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("mining.configure should return the correct response for extensions not supported", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true}))(dummy.connection)
 
     send({
       id: 2,
@@ -175,7 +177,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("mining.authorize should return the correct response", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true}))(dummy.connection)
 
     send({
       id: 2,
@@ -192,7 +195,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("mining.authorize cannot be called twice", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true}))(dummy.connection)
 
     send({
       id: 2,
@@ -215,7 +219,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("mining.subscribe cannot be called twice", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true}))(dummy.connection)
 
     send({
       id: 2,
@@ -238,7 +243,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("cannot reuse message ids", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true}))(dummy.connection)
 
     send({
       id: 2,
@@ -261,7 +267,10 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("sends an empty response back upon supported extensions and a blank configure message", async () => {
     let jobs = job_manager(outputs, wallet, 1);
     let dummy = dummyConnection();
-    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection);
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true},
+      extensionHandlers))(dummy.connection);
+
     send({
       id: 2,
       method: 'mining.configure',
@@ -278,7 +287,10 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it('Sends a negative response on non supoported extentions', async () => {
     let jobs = job_manager(outputs, wallet, 1);
     let dummy = dummyConnection();
-    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection);
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true},
+      extensionHandlers))(dummy.connection);
+
     send({
       id: 2,
       method: 'mining.configure',
@@ -295,7 +307,9 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("mining.configure should return the correct response for extensions supported", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true},
+      extensionHandlers))(dummy.connection)
 
     send({
       id: 2,
@@ -317,7 +331,9 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("Should accept a valid empty info extension", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true},
+      extensionHandlers))(dummy.connection)
 
     send({
       id: 2,
@@ -335,7 +351,9 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("Should accept a valid info extension", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true},
+      extensionHandlers))(dummy.connection)
 
     send({
       id: 2,
@@ -355,7 +373,9 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("Should not accept an invalid info extension param",async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true},
+      extensionHandlers))(dummy.connection)
 
     send({
       id: 2,
@@ -375,7 +395,9 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("mining.configure cannot be the second message", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true},
+      extensionHandlers))(dummy.connection)
 
     send({
       id: 2,
@@ -401,7 +423,9 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("mining.configure can't be the second message if it's only minimum_difficulty if first was not configure", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true},
+      extensionHandlers))(dummy.connection)
 
     send({
       id: 2,
@@ -429,7 +453,9 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("mining.configure can be the second message if it's only minimum_difficulty if first was  configure", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true},
+      extensionHandlers))(dummy.connection)
 
     send({
       id: 2,
@@ -461,7 +487,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("mining.configure sends an error if it can't support the right min bit count for version_rolling", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true, {
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true}, {
       'version_rolling': versionRollingHandler(0xffff0000)
     }))(dummy.connection)
 
@@ -485,7 +512,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it("mining.configure works with a valid mask for version_rolling", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true, {
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true}, {
       'version_rolling': versionRollingHandler(0xffffff00)
     }))(dummy.connection)
 
@@ -510,7 +538,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   it.skip("mining.subscribe should return the correct response for the extended protocol", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe, {canSubmitWithoutAuthorization:true}))(dummy.connection)
 
     send({
       id: 2,
