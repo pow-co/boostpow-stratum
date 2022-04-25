@@ -11,17 +11,19 @@ export type set_difficulty = {
 
 export class SetDifficulty extends Notification {
 
-  static valid(message: JSONValue): boolean {
-    let n = Notification.read(message)
-    if (!n || n['method'] !== "mining.set_difficulty") {
-      return false
-    }
-
-    let params = message['params']
-    return params.length === 1 && typeof params[0] === 'number' && params[0] > 0
+  static valid(message: set_difficulty): boolean {
+    return message['method'] === "mining.set_difficulty" && message['params'][0] > 0
   }
 
-  static difficulty(message): boostpow.Difficulty {
+  static read(message: JSONValue): set_difficulty | undefined {
+    let n = Notification.read(message)
+    if (!n) return
+
+    let params = message['params']
+    if (params.length === 1 && typeof params[0] === 'number' && SetDifficulty.valid(<set_difficulty>n)) return <set_difficulty>n
+  }
+
+  static difficulty(message: set_difficulty): boostpow.Difficulty {
     if (SetDifficulty.valid(message)) return new boostpow.Difficulty(message['params'][0])
 
     throw "invalid set_difficulty"

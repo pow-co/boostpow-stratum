@@ -18,11 +18,6 @@ export class NotifyParams {
       is_hex(params[2]) && is_hex(params[3]) && Array.isArray(params[4]) &&
       SessionID.valid(params[5]) && SessionID.valid(params[6]) &&
       SessionID.valid(params[7]) && typeof params[8] === 'boolean')) {
-      console.log("invalid notify params x: " + params[1].length + " " +
-        is_hex(params[1]) + (params[1].length == 64) +
-        is_hex(params[2]) + is_hex(params[3]) + Array.isArray(params[4]) +
-        SessionID.valid(params[5]) + SessionID.valid(params[6]) +
-        SessionID.valid(params[7]) + (typeof params[8] === 'boolean'))
       return false
     }
 
@@ -140,11 +135,25 @@ export type notify = {
 
 export class Notify extends Notification {
 
-  static valid(message: JSONValue): boolean {
+  static valid(message: notify): boolean {
     let n = Notification.read(message)
     if (!n || n['method'] !== "mining.notify") return false
 
     return NotifyParams.valid(n['params'])
+  }
+
+  static read(message: JSONValue): notify | undefined {
+    let n = Notification.read(message)
+    if (!n || n['method'] !== "mining.notify" || n.params.length != 9 ||
+      typeof n.params[0] !== 'string' || typeof n.params[1] !== 'string' ||
+      typeof n.params[2] !== 'string' || typeof n.params[3] !== 'string' ||
+      !Array.isArray(n.params[4]) || typeof n.params[5] !== 'string' ||
+      typeof n.params[6] !== 'string' || typeof n.params[7] !== 'string' ||
+      typeof n.params[8] !== 'boolean') return
+
+    for (let x of n.params[4]) if (typeof x !== 'string') return
+    
+    if (NotifyParams.valid(n['params'])) return <notify>n
   }
 
   static make(
