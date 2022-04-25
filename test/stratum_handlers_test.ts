@@ -8,6 +8,8 @@ import { StratumResponse } from '../src/Stratum/handlers/base'
 import { SubscribeResponse } from '../src/Stratum/mining/subscribe'
 import { ConfigureResponse, Extensions } from '../src/Stratum/mining/configure'
 import { AuthorizeResponse } from '../src/Stratum/mining/authorize'
+import { SetDifficulty } from '../src/Stratum/mining/set_difficulty'
+import { Notify } from '../src/Stratum/mining/notify'
 import { stratum } from '../src/stratum'
 import { BoostOutput, job_manager } from '../src/jobs'
 import { private_key_wallet } from '../src/bitcoin'
@@ -135,6 +137,19 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     expect(response).to.not.equal(undefined)
     expect(SubscribeResponse.valid(response)).to.equal(true)
     expect(Response.error(response)).to.equal(null)
+
+    // we should get two more messages at this point, one for set_difficulty and
+    // another for notify.
+
+    let notification1 = dummy.end.read()
+    expect(notification1).to.not.equal(undefined)
+
+    let notification2 = dummy.end.read()
+    expect(notification2).to.not.equal(undefined)
+
+    expect(
+      (!!SetDifficulty.read(notification1) && !!Notify.read(notification2)) ||
+      (!!SetDifficulty.read(notification2) && !!Notify.read(notification1))).to.equal(true)
   })
 
   it("mining.configure should return the correct response for extensions not supported", async () => {
