@@ -120,8 +120,6 @@ describe("Stratum Messages", () => {
   it("should distinguish valid and invalid set_difficulty messages", async () => {
     expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: [1]})).to.be.equal(true)
     expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: [1.1]})).to.be.equal(true)
-    expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: []})).to.be.equal(false)
-    expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: [""]})).to.be.equal(false)
     expect(SetDifficulty.valid({id:null, method: '', params: [1]})).to.be.equal(false)
   })
 
