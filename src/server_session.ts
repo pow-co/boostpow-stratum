@@ -30,9 +30,9 @@ type Subscribe = (w: Worker) => StratumJob | undefined
 // Parameters we keep in memory for a given extension.
 type ExtensionParameters = {[key: string]: JSONValue;}
 
-// We take the parameters that are requested for a given extension and
-// return the parameters we want to remember and those we want to send back
-// to the client.
+// an extension handler takes some requested extension parameters from
+// the client and tells us what parameters we need to return to him and
+// what we need to remember.
 type HandleExtension = (requested: ExtensionParameters) =>
   {'reply': extension_result, 'keep'?: ExtensionParameters}
 
@@ -95,11 +95,43 @@ export function server_session(
     // set during the subscribe method.
     let id: session_id | undefined
 
-    function new_job(j: StratumJob) {
-      if (extension_supported("subscribe_extranonce"))
-        remote.notify({id:null, method:'mining.set_extranonce', params: [id, j.extranonce2Size]})
-      remote.notify(SetDifficulty.make(NotifyParams.nbits(j.notify)))
-      remote.notify({id: null, method:'mining.notify', params: j.notify})
+    let difficulty: boostpow.Difficulty
+    let next_difficulty: boostpow.Difficulty
+
+    let extranonce: extranonce
+    let next_extranonce: extranonce
+
+    // send a set difficulty message to the client and remember
+    // for when he submits a share later. The setting is not
+    // applied until after the next notify message is sent.
+    function send_set_difficulty(d: boostpow.Difficulty) {
+      next_difficulty = d
+      remote.notify(SetDifficulty.make(d))
+    }
+
+    // send a set extranonce message to the client and remember
+    // for when he submits a share later. The setting is not
+    // applied until after the next notify message is sent.
+    function send_set_extranonce(en: extranonce) {
+      next_extranonce = en
+      remote.notify({id:null, method:'mining.set_extranonce', params: en})
+    }
+
+    // send a notify message to the client.
+    function send_mining_notify(p: notify_params) {
+      // apply latest difficulty and extra nonces.
+      if (next_difficulty) difficulty = next_difficulty
+      if (next_extranonce) extranonce = next_extranonce
+      remote.notify({id: null, method:'mining.notify', params: p})
+    }
+
+    // when we know of a new job, we have to send a notify message.
+    function notify_new_job(j: StratumJob) {
+      if (extension_supported("subscribe_extranonce")) send_set_extranonce([id, j.extranonce2Size])
+
+      // we always use the same difficulty as the job for now.
+      send_set_difficulty(NotifyParams.nbits(j.notify))
+      send_mining_notify(j.notify)
     }
 
     // the user agent string sent in the subscribe method.
@@ -190,7 +222,7 @@ export function server_session(
 
         let job = select({
           'subscribe_extranonce': subscribe_extranonce,
-          'new_job': new_job,
+          'new_job': notify_new_job,
           'hashpower':() => { return {'hashpower': 0, 'certainty': 0} },
           'minimum_difficulty': minimum_difficulty,
           'cancel': close
@@ -210,9 +242,11 @@ export function server_session(
         let n1 = SubscribeRequest.extranonce1(sub)
         let id = n1 ? n1.hex : SessionID.random()
 
+        extranonce = [id, job.extranonce2Size]
+
         remote.respond({id: request.id, result: [subscriptions, id, job.extranonce2Size], err: null})
-        remote.notify(SetDifficulty.make(NotifyParams.nbits(job.notify)))
-        remote.notify({id:null, params: job.notify, method: 'mining.notify'})
+        send_set_difficulty(NotifyParams.nbits(job.notify))
+        send_mining_notify(job.notify)
       })(SubscribeRequest.read(request),
       (err: number) => {
         remote.respond({id: request.id, result: null, err: Error.make(err)})
