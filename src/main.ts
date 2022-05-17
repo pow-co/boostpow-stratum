@@ -23,17 +23,23 @@ export async function start() {
   let key
 
   if (args.length !== 3) {
-    console.log("expecting one argument; " + (args.length - 2) + " provided")
+    console.log("expecting one argument; " + (args.length - 2) + " provided.")
     console.log("the first argument should be a WIF private key that will be used as a wallet.")
     return
   } else {
     try {
       key = new bsv.PrivKey().fromWif(args[2])
-      key.validate()
     } catch (er) {
-      console.log("could not read WIF")
+      console.log("could not read WIF: " + er.name + ", " + er.message)
       return
     }
+  }
+
+  try {
+    key.validate()
+  } catch (er) {
+    console.log("Key is invalid: " + er.name + ", " + er.message)
+    return
   }
 
   log.info('main.start')

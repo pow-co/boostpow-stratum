@@ -138,6 +138,7 @@ describe("Stratum Messages", () => {
   it("should distinguish valid and invalid subscribe request messages", async () => {
     expect(SubscribeRequest.valid({id:55, method: 'mining.subscribe', params: [""]})).to.be.equal(true)
     expect(SubscribeRequest.valid({id:55, method: 'mining.subscribe', params: ["", "00000000"]})).to.be.equal(true)
+    expect(SubscribeRequest.valid({id:55, method: 'mining.subscribe', params: []})).to.be.equal(true)
     expect(SubscribeRequest.valid({id:55, method: '', params: [""]})).to.be.equal(false)
     expect(SubscribeRequest.valid({id:55, method: 'mining.subscribe', params: ["", "000000000"]})).to.be.equal(false)
   })

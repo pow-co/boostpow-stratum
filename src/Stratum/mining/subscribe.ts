@@ -1,4 +1,4 @@
-import { Request } from '../request'
+import { Request, request } from '../request'
 import { response, Response, BooleanResponse } from '../response'
 import { SessionID } from '../sessionID'
 import { message_id } from '../messageID'
@@ -11,7 +11,7 @@ import * as boostpow from 'boostpow'
 export type subscribe_request = {
   id: message_id,
   method: method,
-  params: [string] | [string, string]
+  params: [] | [string] | [string, string]
 }
 
 export class SubscribeRequest extends Request {
@@ -22,12 +22,20 @@ export class SubscribeRequest extends Request {
     }
 
     let params = message['params']
-    return typeof params[0] === 'string' && (params.length === 1 || (params.length === 2 && SessionID.valid(params[1])))
+    return (params.length === 0 ||
+      (typeof params[0] === 'string' && (params.length === 1 || (params.length === 2 && SessionID.valid(params[1])))))
   }
 
-  static userAgent(message: subscribe_request): string {
+  static read(message: request): subscribe_request | undefined {
+    if (message.params.length > 2) return
+
+    if (SubscribeRequest.valid(<subscribe_request>message)) return <subscribe_request>message
+  }
+
+  static userAgent(message: subscribe_request): string | undefined {
     if (SubscribeRequest.valid(message)) {
-      return message['params'][0]
+      if (message.params.length < 1) return
+      return message.params[0]
     }
 
     throw 'invalid subscribe request'
