@@ -10,6 +10,7 @@ import { AuthorizeResponse } from '../src/Stratum/mining/authorize'
 import { handleStratumRequest } from '../src/stratum'
 import { notify_params } from '../src/Stratum/mining/notify'
 import { BoostOutput, job_manager } from '../src/jobs'
+import { private_key_wallet } from '../src/bitcoin'
 import * as bsv from 'bsv'
 import * as boostpow from 'boostpow'
 
@@ -90,8 +91,10 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     new BoostOutput(jobBountyV1, 1, txid, 3),
     new BoostOutput(jobBountyV2, 1, txid, 4)]
 
+  let wallet = private_key_wallet(new bsv.PrivKey(new bsv.Bn(1234567), true))
+
   it("mining.subscribe should return the correct response for the unexteded protocol", async () => {
-    let jobs = job_manager(outputs, new bsv.PrivKey(new bsv.Bn(1234567), true), 1)
+    let jobs = job_manager(outputs, wallet, 1)
     let handle = handleStratumRequest(server_session(jobs.subscribe, true))
 
     let response = await handle({
@@ -105,7 +108,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("mining.configure should return the correct response for extensions not supported", async () => {
-    let jobs = job_manager(outputs, new bsv.PrivKey(new bsv.Bn(1234567), true), 1)
+    let jobs = job_manager(outputs, wallet, 1)
     let handle = handleStratumRequest(server_session(jobs.subscribe, true))
 
     let response = await handle({
@@ -121,7 +124,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("mining.authorize should return the correct response", async () => {
-    let jobs = job_manager(outputs, new bsv.PrivKey(new bsv.Bn(1234567), true), 1)
+    let jobs = job_manager(outputs, wallet, 1)
     let handle = handleStratumRequest(server_session(jobs.subscribe, true))
 
     let response = await handle({
@@ -135,7 +138,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("mining.authorize cannot be called twice", async () => {
-    let jobs = job_manager(outputs, new bsv.PrivKey(new bsv.Bn(1234567), true), 1)
+    let jobs = job_manager(outputs, wallet, 1)
     let handle = handleStratumRequest(server_session(jobs.subscribe, true))
 
     handle({
@@ -154,7 +157,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("mining.subscribe cannot be called twice", async () => {
-    let jobs = job_manager(outputs, new bsv.PrivKey(new bsv.Bn(1234567), true), 1)
+    let jobs = job_manager(outputs, wallet, 1)
     let handle = handleStratumRequest(server_session(jobs.subscribe, true))
 
     handle({
@@ -173,7 +176,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it.skip("cannot reuse message ids", async () => {
-    let jobs = job_manager(outputs, new bsv.PrivKey(new bsv.Bn(1234567), true), 1)
+    let jobs = job_manager(outputs, wallet, 1)
     let handle = handleStratumRequest(server_session(jobs.subscribe, true))
 
     handle({
@@ -192,7 +195,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it.skip("mining.configure should return the correct response for extensions supported", async () => {
-    let jobs = job_manager([], new bsv.PrivKey(new bsv.Bn(1234567), true), 1)
+    let jobs = job_manager([], wallet, 1)
     let handle = handleStratumRequest(server_session(jobs.subscribe, true, {
       'info': {},
       'subscribe_extranonce': {},
@@ -224,7 +227,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it.skip("mining.subscribe should return the correct response for the extended protocol", async () => {
-    let jobs = job_manager(outputs, new bsv.PrivKey(new bsv.Bn(1234567), true), 1)
+    let jobs = job_manager(outputs, wallet, 1)
     let handle = handleStratumRequest(server_session(jobs.subscribe, true))
 
     let response = await handle({

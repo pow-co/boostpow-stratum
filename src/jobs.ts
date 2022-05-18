@@ -64,16 +64,13 @@ export interface JobManager {
 // this has been implemented as a function rather than a class in order to avoid
 // the use of 'this'. There is a problem with passing on a member function of a
 // class and calling it in some other function if it uses 'this'.
-export function job_manager(initial_jobs: BoostOutput[], wallet: wallet, maxDifficulty: number): JobManager {
+export function job_manager(initial_jobs: BoostOutput[], w: wallet, maxDifficulty: number): JobManager {
 
   // this will contain all boost jobs that we are keeping track of.
   let jobs: {[key: string]: BoostJob} = {}
 
   // the workers who are working on the jobs.
   let workers: {[key: number]: Worker} = {}
-
-  // this should be a real wallet some day.
-  wallet: bsv.PrivKey
 
   let nextJobID: number = 0
 
@@ -82,7 +79,7 @@ export function job_manager(initial_jobs: BoostOutput[], wallet: wallet, maxDiff
     // or we can't tell if he boost is worth doing.
     if (o.script.isContract()) return
 
-    jobs[o.index()] = new BoostJob(nextJobID, o, wallet)
+    jobs[o.index()] = new BoostJob(nextJobID, o, w.nextBoost())
     nextJobID++
   }
 

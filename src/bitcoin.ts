@@ -16,7 +16,7 @@ export function hdToAddress(hd: bsv.Bip32.Mainnet): boostpow.Digest20 {
 export interface wallet {
   nextReceive: () => boostpow.Digest20,
   nextChange: () => boostpow.Digest20,
-  nextBoost: () => boostpow.Digest20
+  nextBoost: () => bsv.PrivKey
 }
 
 // a really basic wallet that only uses one key.
@@ -29,7 +29,7 @@ export function private_key_wallet(p: bsv.PrivKey): wallet {
       return privKeyToAddress(p)
     },
     nextBoost: () => {
-      return privKeyToAddress(p)
+      return p
     }
   }
 }
