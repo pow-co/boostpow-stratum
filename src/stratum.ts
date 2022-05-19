@@ -44,7 +44,7 @@ export function handleStratumRequest(handlers: StratumHandlers): (request: reque
     } catch(error) {
 
       response = { err: Error.make(Error.UNKNOWN), result: null }
-      
+
       log.error('stratum.message.error: name = ' + error.name + "; message = " + error.msg)
       log.info('stratum.message.error: name = ' + error.name + "; message = " + error.msg)
 
@@ -65,6 +65,9 @@ export function handleStratumMessage(handleRequest: (request: request) => Promis
       socket.end()
     }
 
-    socket.write(`${JSON.stringify(handleRequest(request))}\n`)
+    var response: response = await handleRequest(request)
+    log.info('socket.message.response', {data: response.toString() })
+
+    socket.write(`${JSON.stringify(response)}\n`)
   }
 }
