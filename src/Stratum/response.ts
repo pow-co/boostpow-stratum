@@ -1,12 +1,12 @@
 import { message_id, MessageID } from './messageID'
 import { method } from './method'
 import { error, Error } from './error'
-import { JSONValue } from './message'
+import { result } from './message'
 
-// A response is a reply to a request. 
-export type response = {
+// A response is a reply to a request.
+export interface response {
   id: message_id,
-  result: JSONValue,
+  result: result,
   err: error
 }
 
@@ -32,7 +32,7 @@ export class Response {
     throw "invalid response"
   }
 
-  static result(message: response): JSONValue {
+  static result(message: response): result {
     if (Response.valid(message)) {
       return message['result']
     }
@@ -52,7 +52,7 @@ export class Response {
     return Response.error(message) !== null
   }
 
-  static make(id: message_id, result: JSONValue, err?: error): response {
+  static make(id: message_id, result: result  , err?: error): response {
     if (err === undefined) {
       return {id: id, result: result, err: null}
     }
@@ -60,6 +60,12 @@ export class Response {
     return {id: id, result: result, err: err}
   }
 
+}
+
+export interface boolean_response {
+  id: message_id,
+  result: null | boolean,
+  err: error
 }
 
 export class BooleanResponse extends Response {
@@ -79,8 +85,8 @@ export class BooleanResponse extends Response {
     throw "invalid response"
   }
 
-  static make(id: message_id, result: boolean, err?: error): response {
-    return Response.make(id, result, err)
+  static make(id: message_id, result: boolean, err?: error): boolean_response {
+    return <boolean_response>Response.make(id, result, err)
   }
 
 }

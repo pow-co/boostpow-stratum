@@ -7,8 +7,6 @@ import * as net from 'net'
 
 import * as uuid from 'uuid'
 
-import { handleStratumMessage } from './stratum'
-
 interface HostPort {
   ip: string;
   port: number;
@@ -23,28 +21,32 @@ const sessions: Sessions = {}
 type SessionId = string;
 
 interface NewSession {
-  socket: net.Socket;
+  socket: net.Socket
 }
 
 export class Session {
 
-  sessionId: SessionId;
+  sessionId: SessionId
 
-  connectedAt: Date;
+  connectedAt: Date
 
-  socket: net.Socket;
+  socket: net.Socket
 
-  open: boolean;
+  open: boolean
 
-  constructor({ socket }: NewSession) {
+  handleMessage: (data: Buffer, socket: net.Socket) => void
+
+  constructor({ socket }: NewSession, messageHandler: (data: Buffer, socket: net.Socket) => void) {
 
     this.connectedAt = new Date()
 
     this.sessionId = uuid.v4()
 
-    this.socket = socket;
+    this.socket = socket
 
     this.open = true
+
+    this.handleMessage = messageHandler
 
     log.info('socket.connect', {
 
@@ -72,9 +74,11 @@ export class Session {
 
     this.socket.on('data', data => {
 
-      handleStratumMessage(data, this.socket)
+      this.handleMessage(data, this.socket)
 
     })
+
+    sessions[this.sessionId] = this
 
   }
   disconnect() {
@@ -98,20 +102,8 @@ export class Session {
 
 }
 
-
-export function startSession({socket}: NewSession): Session {
-
-  let session = new Session({ socket })
-
-  sessions[session.sessionId] = session
-
-  return session
-
-}
-
 export async function listSessions(): Promise<Sessions> {
 
   return sessions
 
 }
-

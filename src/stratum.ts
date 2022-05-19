@@ -1,75 +1,73 @@
-
-import { Socket } from 'net'
+import * as net from 'net'
 
 import { log } from './log'
 
 import { join } from 'path'
 
-// Stratum protocol documentation: 
-// https://docs.google.com/document/d/1ocEC8OdFYrvglyXbag1yi8WoskaZoYuR5HGhwf0hWAY/edit
-
-import { StratumHandler, StratumHandlers, StratumResponse, StratumRequest } from './Stratum/handlers/base'
-
-export const handlers: StratumHandlers = require('require-all')({
-  dirname: join(__dirname, 'Stratum/handlers'),
-  filter:  /(mining.+)\.ts$/,
-  resolve: (handler) => {
-    return handler.default
-  }
-})
-
 import * as Joi from 'joi'
 
-const schema = Joi.object({
-  id: [Joi.string().required(), Joi.number().required()], // string or number
-  method: Joi.string().required(),
-  params: Joi.array().required()
-})
+// Stratum protocol documentation:
+// https://docs.google.com/document/d/1ocEC8OdFYrvglyXbag1yi8WoskaZoYuR5HGhwf0hWAY/edit
 
-export async function handleStratumMessage(data: Buffer, socket: Socket) {
+import { error, Error } from './Stratum/error'
+import { request, Request } from './Stratum/request'
+import { response, Response } from './Stratum/response'
 
-  log.info('socket.message.data', {data: data.toString() })
+import { StratumRequest, StratumResponse, StratumHandler, StratumHandlers } from './Stratum/handlers/base'
 
-  var response: StratumResponse;
+export function handleStratumRequest(handlers: StratumHandlers): (request: request) => Promise<response> {
+  return async (request: request) => {
 
-  var request: StratumRequest;;
+    var response: StratumResponse
 
-  try {
-
-    request = JSON.parse(data.toString())
-
-    await schema.validateAsync(request)
-
-    if (request.method && handlers[request.method]) {
-
-      log.info(`stratum.request.${request.method}`, request.params)
+    try {
 
       let handler: StratumHandler = handlers[request.method]
 
-      response = await handler(request)
+      if (handler) {
 
-      log.info(`stratum.response.${request.method}`, response)
+        log.info(`stratum.request.${request.method}`, request.params)
 
-    } else {
+        response = await handler(request)
 
-      response = {
-        error: ["notfound", "stratum method not found"],
-        result: null
+        log.info(`stratum.response.${request.method}`, response)
+
+      } else {
+
+        response = {
+          err: Error.make(Error.ILLEGAL_METHOD),
+          result: null
+        }
+
       }
+
+    } catch(error) {
+
+      response = { err: Error.make(Error.UNKNOWN), result: null }
+
+      log.error('stratum.message.error: name = ' + error.name + "; message = " + error.msg)
+      log.info('stratum.message.error: name = ' + error.name + "; message = " + error.msg)
 
     }
 
-    Object.assign({ id: request.id, error: null }, response)
-
-  } catch(error) {
-
-    response = { id: request?.id, error: [500, error.message], result: null }
-
-    log.error('stratum.message.error', error)
-    log.info('stratum.message.error', error)
-
+    response['id'] = request.id
+    return <response>response
   }
+}
 
-  socket.write(`${JSON.stringify(response)}\n`)
+export function handleStratumMessage(handleRequest: (request: request) => Promise<response>): (data: Buffer, socket: net.Socket) => void {
+  return async (data: Buffer, socket: net.Socket) => {
+    log.info('socket.message.data', {data: data.toString() })
 
+    var request: request = <request>JSON.parse(data.toString())
+    if (!Request.valid(request)) {
+      log.info('invalid message.')
+      socket.end()
+    }
+
+    var response: response = await handleRequest(request)
+    log.info('socket.message.response', {data: response.toString() })
+
+    socket.write(`${JSON.stringify(response)}\n`)
+  }
 }

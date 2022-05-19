@@ -1,7 +1,7 @@
 import { Notification } from '../notification'
 import { method } from '../method'
 import { SessionID } from '../sessionID'
-import { UInt32Big } from 'boostpow'
+import * as boostpow from 'boostpow'
 
 export type extranonce = [string, number]
 
@@ -11,9 +11,9 @@ export class Extranonce  {
     return SessionID.valid(x[0]) && Number.isInteger(x[1]) && x[1] >= 0
   }
 
-  static extranonce1(x: extranonce): UInt32Big {
+  static extranonce1(x: extranonce): boostpow.UInt32Big {
     if (Extranonce.valid(x)) {
-      return UInt32Big.fromHex(x[0])
+      return boostpow.UInt32Big.fromHex(x[0])
     }
 
     throw "invalid extranonce"
@@ -27,7 +27,7 @@ export class Extranonce  {
     throw "invalid extranonce"
   }
 
-  static make(ex1: UInt32Big, s: number): extranonce {
+  static make(ex1: boostpow.UInt32Big, s: number): extranonce {
     return [ex1.hex, s]
   }
 
@@ -46,14 +46,14 @@ export class SetExtranonce extends Notification {
   }
 
   static valid(message: set_extranonce): boolean {
-    if (!(Notification.valid(message) && message['method'] === 'mining.set_extranonce')) {
+    if (message['method'] !== 'mining.set_extranonce') {
       return false
     }
 
     return this.valid_extranonce(message['params'])
   }
 
-  static make(ex1: UInt32Big, s: number): set_extranonce {
+  static make(ex1: boostpow.UInt32Big, s: number): set_extranonce {
     return {id: null, method: 'mining.set_extranonce', params: Extranonce.make(ex1, s)}
   }
 

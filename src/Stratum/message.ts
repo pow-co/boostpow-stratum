@@ -1,7 +1,5 @@
-export type JSONValue = null | string | number | boolean | JSONObject | JSONArray
+import * from '../json'
 
-export interface JSONObject {
-    [x: string]: JSONValue;
-}
+export type result = JSONValue
 
-export interface JSONArray extends Array<JSONValue> { }
+export type parameters = JSONArray

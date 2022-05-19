@@ -1,11 +1,12 @@
-import { Request } from '../request'
+import { request, Request } from '../request'
 import { Response } from '../response'
 import { message_id } from '../messageID'
 import { SessionID } from '../sessionID'
 import { method } from '../method'
-import { JSONValue } from '../message'
+import { JSONValue } from '../../json'
 import { error } from '../error'
-import { Difficulty, Int32Little } from 'boostpow'
+import * as boostpow from 'boostpow'
+import * as Joi from 'joi'
 
 // https://github.com/slushpool/stratumprotocol/blob/master/stratum-extensions.mediawiki
 
@@ -151,11 +152,11 @@ export class ExtensionVersionRolling {
     return SessionID.valid(r['mask'])
   }
 
-  static requestParams(mask: Int32Little, minBitCount: number): object {
+  static requestParams(mask: boostpow.Int32Little, minBitCount: number): object {
     return {mask: mask.hex, 'min-bit-count': minBitCount}
   }
 
-  static result(success: boolean | string, mask?: Int32Little): object {
+  static result(success: boolean | string, mask?: boostpow.Int32Little): object {
     if (success === true) {
       if (mask) {
         return [success, mask.hex]
@@ -177,7 +178,7 @@ export class ExtensionMinimumDifficulty {
     return true
   }
 
-  static requestParams(d: Difficulty): object {
+  static requestParams(d: boostpow.Difficulty): object {
     return {}
   }
 
@@ -232,16 +233,17 @@ export class ExtensionInfo {
 }
 
 export class ConfigureRequest {
-  static valid(r: configure_request): boolean {
-    if (r.method !== 'mining.configure') {
-      return false
-    }
 
-    let exq = Extensions.extension_requests(r['params'])
+  static valid(r: request): boolean {
+    if (!Request.valid(r)) return false
 
-    if (!exq) {
-      return false
-    }
+    if (r.method !== 'mining.configure') return false
+
+    let params = r['params']
+
+    let exq = Extensions.extension_requests(params)
+
+    if (!exq) return false
 
     let known_extensions = {
       'version-rolling': ExtensionVersionRolling.valid_params,

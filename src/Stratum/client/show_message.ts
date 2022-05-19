@@ -10,7 +10,7 @@ export type show_message = {
 export class ShowMessage extends Notification {
 
   static valid(m: show_message): boolean {
-    return Notification.valid(m) && m['method'] === 'client.show_message' 
+    return m['method'] === 'client.show_message' 
   }
 
   static message(m: show_message): string {
