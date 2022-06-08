@@ -57,6 +57,8 @@ export class Session {
 
   handleMessage: Receive
 
+  incompleteMsgs: string
+
   constructor({ socket }: NewSession, remote: Protocol) {
 
     this.connectedAt = new Date()
@@ -66,6 +68,8 @@ export class Session {
     this.socket = socket
 
     this.open = true
+
+    this.incompleteMsgs=""
 
     this.handleMessage = remote({send: this.sendJSON.bind(this), close: this.disconnect.bind(this)})
 
@@ -97,8 +101,13 @@ export class Session {
     })
 
     this.socket.on('data', data => {
-      this.handleMessage(JSON.parse(data.toString()))
-
+      this.incompleteMsgs+=data.toString();
+      while(this.incompleteMsgs.includes('\n')) {
+        const curPoint=this.incompleteMsgs.indexOf('\n');
+        const msg=this.incompleteMsgs.substring(0,curPoint)
+        this.incompleteMsgs=this.incompleteMsgs.substring(curPoint+1)
+        this.handleMessage(JSON.parse(msg))
+      }
     })
 
     sessions[this.sessionId] = this
