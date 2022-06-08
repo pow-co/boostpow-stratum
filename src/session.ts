@@ -67,7 +67,7 @@ export class Session {
 
     this.open = true
 
-    this.handleMessage = remote({send: this.sendJSON, close: this.disconnect})
+    this.handleMessage = remote({send: this.sendJSON.bind(this), close: this.disconnect.bind(this)})
 
     log.info('socket.connect', {
 
@@ -97,7 +97,6 @@ export class Session {
     })
 
     this.socket.on('data', data => {
-
       this.handleMessage(JSON.parse(data.toString()))
 
     })
