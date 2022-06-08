@@ -16,11 +16,11 @@ export class AuthorizeRequest extends Request {
 
   static read_params(params: parameters): authorization | undefined {
     if ((params.length === 1 && typeof params[0] === 'string') ||
-      (params.length === 2 && typeof params[0] === 'string' && typeof params[1] !== 'string')) return <authorization>params
+      (params.length === 2 && typeof params[0] === 'string' && typeof params[1] === 'string')) return <authorization>params
   }
 
   static valid(message: authorize_request): boolean {
-    return message['method'] === 'mining.authorize'
+    return message['method'] === 'mining.authorize' && this.read_params(message['params'])!=undefined
   }
 
   static username(message: authorize_request): string {
