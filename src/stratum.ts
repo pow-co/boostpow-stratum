@@ -100,8 +100,8 @@ export function stratum(local: Local): Protocol {
         log.info('invalid message.')
         conn.close()
       } catch (error) {
-        log.error('stratum.message.error: name = ' + error.name + "; message = " + error.msg)
-        log.info('stratum.message.error: name = ' + error.name + "; message = " + error.msg)
+        await log.error('stratum.message.error: name = ' + error.name + "; message = " + error.msg+"; trace = "+error.stack)
+        //log.info('stratum.message.error: name = ' + error.name + "; message = " + error.msg)
       }
     }
   }

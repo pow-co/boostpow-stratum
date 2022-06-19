@@ -63,7 +63,7 @@ function extend(handlers?: ExtensionHandlers) {
 
   return {
     configured: (): boolean => {
-      return extended_protocol !== true
+      return extended_protocol !=undefined
     },
     parameters: parameters,
     // is a given extension supported?
@@ -123,7 +123,7 @@ function extend(handlers?: ExtensionHandlers) {
 
 // version rolling is the most important extension because it's needed to
 // support ASICBoost.
-function versionRollingHandler(mask: number): HandleExtension {
+export function versionRollingHandler(mask: number): HandleExtension {
   return (requested: ExtensionParameters) => {
     if (Object.keys(requested).length != 2) return {reply: ['invalid parameters', {}]}
 
@@ -133,7 +133,8 @@ function versionRollingHandler(mask: number): HandleExtension {
       !SessionID.valid(requested_mask) || typeof minBitCount !== 'number')
       return {reply: ['invalid parameters', {}]}
 
-    let new_mask = mask & boostpow.Int32Little.fromHex(requested_mask).number
+    const requested_mask_number = boostpow.UInt32Big.fromHex(requested_mask).number
+    let new_mask = mask & requested_mask_number
     let counter = new_mask
     let bit_count = 0
 
@@ -175,14 +176,16 @@ function minimumDifficultyHandler(): HandleExtension {
 // about itself that we don't use.
 function infoHandler(): HandleExtension {
   return (requested: ExtensionParameters) => {
-    if (Object.keys(requested).length != 4 || !requested['connection-url'] ||
-      !requested['hw-version'] || !requested['sw-version'] || !requested['hw-id'])
-      return {reply: ['invalid parameters', {}]}
+    for(const key of Object.keys(requested))
+    {
+      if(key!=='connection-url' && key!=='hw-version' && key!=='sw-version' && key!=='hw-id' )
+        return {reply: ['invalid parameters', {}]};
+    }
     return {reply: [true, {}], keep: requested}
   }
 }
 
-let extensionHandlers: ExtensionHandlers = {
+export let extensionHandlers: ExtensionHandlers = {
   'version_rolling': versionRollingHandler(boostpow.Utils.generalPurposeBitsMask()),
   'minimum_difficulty': minimumDifficultyHandler(),
   'subscribe_extranonce': subscribeExtranonceHandler(),
@@ -271,18 +274,18 @@ export function server_session(
 
     // configure is an optional first message that determines wheher
     // extensions and supported and which ones.
-    function configure(request: parameters): StratumResponse {
+    function configure(params: parameters): StratumResponse {
       // If extensions are not supported, then we are not using the extended
       // protocol, we don't know about this message, and it is an error.
       if (!extension_handlers) return {result: null, err: Error.make(Error.ILLEGAL_METHOD)}
 
-      let requested = Extensions.extension_requests(request.params)
+      let requested = Extensions.extension_requests(params)
       if (!requested) return {result: null, err: Error.make(Error.ILLEGAL_PARARMS)}
 
       // If we have already received the configure method, then only minimum_difficulty is allowed.
       if (extensions.configured() && !(extensions.supported('minimum_difficulty') &&
         requested['minimum_difficulty'] && Object.keys(requested).length === 1))
-          return {result: null, err: Error.make(Error.ILLEGAL_PARARMS)}
+          return {result: null, err: Error.make(Error.ILLEGAL_METHOD)}
 
       return {result: Extensions.configure_response_result(extensions.handle(requested)), err: null}
     }
@@ -393,10 +396,13 @@ export function server_session(
       },
       'request': (r: request) => {
         let handle = handleRequest[r.method]
+        if(!extensions.configured() && r.method !=='mining.configure')
+          extensions.handle();
         if (!handle) {
           remote.respond({id: r.id, result: null, err: Error.make(Error.ILLEGAL_METHOD)})
           return
         }
+
         handle(r)
       }
     }
