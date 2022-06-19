@@ -1,6 +1,6 @@
 import { expect } from './utils'
 import { JSONValue } from '../src/json'
-import { server_session } from '../src/server_session'
+import {extensionHandlers, server_session, versionRollingHandler} from '../src/server_session'
 import { message_id } from '../src/Stratum/messageID'
 import { response, Response } from '../src/Stratum/response'
 import { Error } from '../src/Stratum/error'
@@ -234,7 +234,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     expect(Error.is_error(response.err)).to.equal(true)
   })
 
-  it.skip("cannot reuse message ids", async () => {
+  it("cannot reuse message ids", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe, true))(dummy.connection)
@@ -252,18 +252,49 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     })
 
     let response = Response.read(dummy.end.read())
+    console.log(response);
     expect(response).to.not.equal(undefined)
     expect(Error.is_error(response.err)).to.equal(true)
   })
-/*
-  it.skip("mining.configure should return the correct response for extensions supported", async () => {
+
+  it("sends an empty response back upon supported extensions and a blank configure message", async () => {
+    let jobs = job_manager(outputs, wallet, 1);
+    let dummy = dummyConnection();
+    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection);
+    send({
+      id: 2,
+      method: 'mining.configure',
+      params: Extensions.configure_request_params({
+
+      })
+    })
+
+    let response = Response.read(dummy.end.read());
+    expect(response.result).to.eql({});
+    expect(Response.is_error(response)).to.eql(false)
+  });
+
+  it('Sends a negative response on non supoported extentions', async () => {
+    let jobs = job_manager(outputs, wallet, 1);
+    let dummy = dummyConnection();
+    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection);
+    send({
+      id: 2,
+      method: 'mining.configure',
+      params: Extensions.configure_request_params({
+          "silly_extension": {"Sillyness": "Max"}
+      })
+    })
+    let response = Response.read(dummy.end.read());
+    expect(response.result).to.not.eql({})
+    expect(response.result['silly_extension']).to.be.false;
+    expect(Response.is_error(response)).to.be.false;
+  });
+
+  it("mining.configure should return the correct response for extensions supported", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, true, {
-      'info': {},
-      'subscribe_extranonce': {},
-      'minimum_difficulty': {},
-      'version_rolling': {'mask': 'ffffffff'}}))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
 
     send({
       id: 2,
@@ -280,17 +311,200 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     expect(Response.is_error(response)).to.equal(false)
 
     // TODO check that we have the correct results here.
-  })*/
-
-  it.skip("mining.configure cannot be the second message", async () => {
   })
 
-  it.skip("mining.configure CAN be the second message if it's only minimum_difficulty", async () => {
+  it("Should accept a valid empty info extension", async () => {
+    let jobs = job_manager(outputs, wallet, 1)
+    let dummy = dummyConnection()
+    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+
+    send({
+      id: 2,
+      method: 'mining.configure',
+      params: Extensions.configure_request_params({
+        "info": {}
+    })});
+
+      let response = Response.read(dummy.end.read());
+      expect(response.result).to.haveOwnProperty('info');
+      expect(response.result['info']).to.be.true;
+      expect(Response.is_error(response)).to.not.be.true;
   })
 
-  it.skip("mining.configure sends an error if it can't support the right min bit count for version_rolling", async () => {
+  it("Should accept a valid info extension", async () => {
+    let jobs = job_manager(outputs, wallet, 1)
+    let dummy = dummyConnection()
+    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+
+    send({
+      id: 2,
+      method: 'mining.configure',
+      params: Extensions.configure_request_params({
+        "info": {
+          'hw-id': 42069
+        }
+      })});
+
+    let response = Response.read(dummy.end.read());
+    expect(response.result).to.haveOwnProperty('info');
+    expect(response.result['info']).to.be.true;
+    expect(Response.is_error(response)).to.not.be.true;
   })
 
+  it("Should not accept an invalid info extension param",async () => {
+    let jobs = job_manager(outputs, wallet, 1)
+    let dummy = dummyConnection()
+    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+
+    send({
+      id: 2,
+      method: 'mining.configure',
+      params: Extensions.configure_request_params({
+        "info": {
+          "silly_ext": 99
+        }
+      })});
+
+    let response = Response.read(dummy.end.read());
+    expect(response.result).to.haveOwnProperty('info')
+    expect(response.result['info']).to.not.be.true;
+    expect(response.result['info']).to.equal('invalid parameters');
+  })
+
+  it("mining.configure cannot be the second message", async () => {
+    let jobs = job_manager(outputs, wallet, 1)
+    let dummy = dummyConnection()
+    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+
+    send({
+      id: 2,
+      method: 'mining.subscribe',
+      params: ['daniel']
+    })
+
+    send({
+      id: 3,
+      method: 'mining.configure',
+      params: Extensions.configure_request_params({
+        "info": {
+        }
+      })});
+    dummy.end.read();
+    dummy.end.read();
+    dummy.end.read();
+    let response = Response.read(dummy.end.read());
+    expect(Response.is_error(response)).to.be.true;
+    expect(response['err'][0]).to.equal(26);
+  })
+
+  it("mining.configure can't be the second message if it's only minimum_difficulty if first was not configure", async () => {
+    let jobs = job_manager(outputs, wallet, 1)
+    let dummy = dummyConnection()
+    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+
+    send({
+      id: 2,
+      method: 'mining.subscribe',
+      params: ['daniel']
+    })
+
+    send({
+      id: 3,
+      method: 'mining.configure',
+      params: Extensions.configure_request_params({
+        "minimum_difficulty": {
+          "value":10
+        }
+      })});
+    dummy.end.read();
+    dummy.end.read();
+    dummy.end.read();
+
+    let response = Response.read(dummy.end.read());
+    expect(Response.is_error(response)).to.be.true;
+    expect(response['err'][0]).to.equal(26);
+  })
+
+  it("mining.configure can be the second message if it's only minimum_difficulty if first was  configure", async () => {
+    let jobs = job_manager(outputs, wallet, 1)
+    let dummy = dummyConnection()
+    let send = stratum(server_session(jobs.subscribe, true, extensionHandlers))(dummy.connection)
+
+    send({
+      id: 2,
+      method: 'mining.configure',
+      params: Extensions.configure_request_params({
+        "info": {
+        },
+        "minimum_difficulty": {
+          "value":1
+        }
+      })
+    })
+
+    send({
+      id: 3,
+      method: 'mining.configure',
+      params: Extensions.configure_request_params({
+        "minimum_difficulty": {
+          "value":10
+        }
+      })});
+    dummy.end.read();
+    let response = Response.read(dummy.end.read());
+    expect(Response.is_error(response)).to.be.false;
+    expect(response.result).to.haveOwnProperty('minimum_difficulty');
+    expect(response.result['minimum_difficulty']).to.be.true;
+  })
+
+  it("mining.configure sends an error if it can't support the right min bit count for version_rolling", async () => {
+    let jobs = job_manager(outputs, wallet, 1)
+    let dummy = dummyConnection()
+    let send = stratum(server_session(jobs.subscribe, true, {
+      'version_rolling': versionRollingHandler(0xffff0000)
+    }))(dummy.connection)
+
+    send({
+      id: 2,
+      method: 'mining.configure',
+      params: Extensions.configure_request_params({
+        "version_rolling": {
+          "mask":"0000ffff",
+          "min-bit-count": 2
+        }
+      })
+    })
+
+    let response = Response.read(dummy.end.read());
+    expect(Response.is_error(response)).to.be.false;
+    expect(response.result).to.haveOwnProperty('version_rolling');
+    expect(response.result['version_rolling']).to.be.eql('could not satisfy min-bit-count');
+  })
+
+  it("mining.configure works with a valid mask for version_rolling", async () => {
+    let jobs = job_manager(outputs, wallet, 1)
+    let dummy = dummyConnection()
+    let send = stratum(server_session(jobs.subscribe, true, {
+      'version_rolling': versionRollingHandler(0xffffff00)
+    }))(dummy.connection)
+
+    send({
+      id: 2,
+      method: 'mining.configure',
+      params: Extensions.configure_request_params({
+        "version_rolling": {
+          "mask":"00ffffff",
+          "min-bit-count": 8
+        }
+      })
+    })
+
+    let response = Response.read(dummy.end.read());
+    expect(Response.is_error(response)).to.be.false;
+    expect(response.result).to.haveOwnProperty('version_rolling');
+    expect(response.result['version_rolling']).to.be.true;
+    expect(response.result['version_rolling.mask']).to.equal(16776960);
+  })
   it.skip("mining.subscribe should return the correct response for the extended protocol", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
