@@ -52,6 +52,8 @@ export class Error {
   public static JOB_NOT_FOUND = 36
   public static STALE_SHARE = 37
 
+  public static DUPLICATE_MESSAGE_ID = 755
+
   public static UNKNOWN = 2147483647 // bin(01111111 11111111 11111111 11111111)
 
   static message_from_code(code: number): string {
@@ -111,7 +113,10 @@ export class Error {
       return 'job not found'
     }
     if(code === Error.STALE_SHARE) {
-      return 'stale shar'
+      return 'stale share'
+    }
+    if(code === Error.DUPLICATE_MESSAGE_ID) {
+      return 'duplicate message id.'
     }
 
     return "unknown error"

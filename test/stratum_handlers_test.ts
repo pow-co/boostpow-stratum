@@ -1,6 +1,7 @@
 import { expect } from './utils'
 import { JSONValue } from '../src/json'
-import {extensionHandlers, server_session, versionRollingHandler} from '../src/server_session'
+import { server_session } from '../src/server_session'
+import { extensionHandlers, versionRollingHandler } from '../src/extensions'
 import { message_id } from '../src/Stratum/messageID'
 import { response, Response } from '../src/Stratum/response'
 import { Error } from '../src/Stratum/error'
@@ -241,20 +242,20 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
     send({
       id: 2,
-      method: 'mining.subscribe',
+      method: 'mining.authorize',
       params: ['daniel']
     })
 
     send({
       id: 2,
-      method: 'mining.authorize',
+      method: 'mining.subscribe',
       params: ['daniel']
     })
 
-    let response = Response.read(dummy.end.read())
-    console.log(response);
-    expect(response).to.not.equal(undefined)
-    expect(Error.is_error(response.err)).to.equal(true)
+    let response1 = Response.read(dummy.end.read())
+    let response2 = Response.read(dummy.end.read())
+    expect(response2).to.not.equal(undefined)
+    expect(Error.is_error(response2.err)).to.equal(true)
   })
 
   it("sends an empty response back upon supported extensions and a blank configure message", async () => {
@@ -505,6 +506,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     expect(response.result['version_rolling']).to.be.true;
     expect(response.result['version_rolling.mask']).to.equal(16776960);
   })
+
   it.skip("mining.subscribe should return the correct response for the extended protocol", async () => {
     let jobs = job_manager(outputs, wallet, 1)
     let dummy = dummyConnection()
