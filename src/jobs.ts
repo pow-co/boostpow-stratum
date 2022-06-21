@@ -1,5 +1,5 @@
 import * as bsv from 'bsv'
-import { broadcast, privKeyToAddress, wallet } from './bitcoin'
+import { privKeyToAddress, Keys, Network } from './bitcoin'
 import { notify_params, NotifyParams } from './Stratum/mining/notify'
 import { share } from './Stratum/mining/submit'
 import { now_seconds } from './time'
@@ -81,7 +81,11 @@ export interface JobManager {
 // the use of 'this'. There is a problem with passing on a member function of a
 // class and calling it in some other function if it uses 'this'.
 // this problem can be fixed by using bind properly but I like this way better.
-export function job_manager(initial_jobs: boostpow.Output[], wallet: wallet, maxDifficulty: number): JobManager {
+export function job_manager(
+  initial_jobs: boostpow.Output[],
+  keys: Keys,
+  network: Network,
+  maxDifficulty: number): JobManager {
 
   // this will contain all boost jobs that we are keeping track of.
   let jobs: {[key: string]: BoostJob} = {}
@@ -96,7 +100,8 @@ export function job_manager(initial_jobs: boostpow.Output[], wallet: wallet, max
     // or we can't tell if he boost is worth doing.
     if (o.script.isContract()) return
 
-    jobs[boost_output_index(o)] = new BoostJob(nextJobID, new boostpow.Puzzle(o, wallet.nextBoost()))
+    jobs[boost_output_index(o)] = new BoostJob(nextJobID,
+      new boostpow.Puzzle(o, boostpow.bsv.PrivateKey(keys.nextBoost().toWif())))
     nextJobID++
   }
 
@@ -142,14 +147,8 @@ export function job_manager(initial_jobs: boostpow.Output[], wallet: wallet, max
     return job
   }
 
-  let complete = async (j: BoostJob, x: boostpow.work.Solution): Promise<void> => {
-    // TODO get sats per byte from MAPI
-    // for now we use this fixed rate.
-    let satsPerByte = .5
-
-    let tx = j.complete(x, wallet.nextReceive(), satsPerByte)
-    if (!(await broadcast(tx)))
-      throw "could not broadcast transaction";
+  let complete = async (j: BoostJob, x: boostpow.work.Solution): Promise<boolean> => {
+    return network.broadcast(j.complete(x, keys.nextReceive(), await network.satsPerByte()))
   }
 
   return {

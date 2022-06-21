@@ -13,7 +13,7 @@ import { SetDifficulty } from '../src/Stratum/mining/set_difficulty'
 import { Notify } from '../src/Stratum/mining/notify'
 import { stratum } from '../src/stratum'
 import { job_manager } from '../src/jobs'
-import { private_key_wallet } from '../src/bitcoin'
+import { private_key_wallet, nonfunctional_network } from '../src/bitcoin'
 import * as bsv from 'bsv'
 import * as boostpow from 'boostpow'
 
@@ -123,8 +123,10 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
   let wallet = private_key_wallet(new bsv.PrivKey(new bsv.Bn(1234567), true))
 
-  it("mining.subscribe should return the correct response for the unexteded protocol", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+  let network = nonfunctional_network()
+
+  it("mining.subscribe should return a subscribe response and a new job using the unexteded protocol", async () => {
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true}))(dummy.connection)
@@ -154,8 +156,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       (!!SetDifficulty.read(notification2) && !!Notify.read(notification1))).to.equal(true)
   })
 
-  it("mining.configure should return the correct response for extensions not supported", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+  it("mining.configure should return an error when extensions are not supported", async () => {
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true}))(dummy.connection)
@@ -174,8 +176,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     expect(Response.is_error(response)).to.equal(true)
   })
 
-  it("mining.authorize should return the correct response", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+  it("mining.authorize should return true", async () => {
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true}))(dummy.connection)
@@ -193,7 +195,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("mining.authorize cannot be called twice", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true}))(dummy.connection)
@@ -217,7 +219,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("mining.subscribe cannot be called twice", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true}))(dummy.connection)
@@ -241,7 +243,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("cannot reuse message ids", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true}))(dummy.connection)
@@ -264,8 +266,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     expect(Error.is_error(response2.err)).to.equal(true)
   })
 
-  it("sends an empty response back upon supported extensions and a blank configure message", async () => {
-    let jobs = job_manager(outputs, wallet, 1);
+  it("mining.configure returns an empty response back upon an empty configure message when extensions are supported", async () => {
+    let jobs = job_manager(outputs, wallet, network, 1);
     let dummy = dummyConnection();
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true},
@@ -284,8 +286,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     expect(Response.is_error(response)).to.eql(false)
   });
 
-  it('Sends a negative response on non supoported extentions', async () => {
-    let jobs = job_manager(outputs, wallet, 1);
+  it('mining.configure returns a negative response for non-supoported extentions', async () => {
+    let jobs = job_manager(outputs, wallet, network, 1);
     let dummy = dummyConnection();
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true},
@@ -298,6 +300,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
           "silly_extension": {"Sillyness": "Max"}
       })
     })
+
     let response = Response.read(dummy.end.read());
     expect(response.result).to.not.eql({})
     expect(response.result['silly_extension']).to.be.false;
@@ -305,7 +308,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   });
 
   it("mining.configure should return the correct response for extensions supported", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true},
@@ -329,7 +332,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("Should accept a valid empty info extension", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true},
@@ -349,7 +352,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("Should accept a valid info extension", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true},
@@ -371,7 +374,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("Should not accept an invalid info extension param",async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true},
@@ -393,7 +396,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("mining.configure cannot be the second message", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true},
@@ -421,7 +424,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("mining.configure can't be the second message if it's only minimum_difficulty if first was not configure", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true},
@@ -451,7 +454,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("mining.configure can be the second message if it's only minimum_difficulty if first was  configure", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true},
@@ -485,7 +488,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("mining.configure sends an error if it can't support the right min bit count for version_rolling", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true}, {
@@ -510,7 +513,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   })
 
   it("mining.configure works with a valid mask for version_rolling", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true}, {
@@ -535,22 +538,91 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     expect(response.result['version_rolling.mask']).to.equal(16776960);
   })
 
-  it.skip("mining.subscribe should return the correct response for the extended protocol", async () => {
-    let jobs = job_manager(outputs, wallet, 1)
+  it("mining.subscribe should return the correct response for the extended protocol", async () => {
+    let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe, {canSubmitWithoutAuthorization:true}))(dummy.connection)
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true}, extensionHandlers))(dummy.connection)
 
     send({
       id: 2,
       method: 'mining.configure',
-      params: Extensions.configure_request_params({'subscribe_extranonce': {}})
+      params: Extensions.configure_request_params({
+        'subscribe_extranonce': {}})
     })
 
-    let response = Response.read(dummy.end.read())
-    expect(response).to.not.equal(undefined)
-    expect(ConfigureResponse.valid(response)).to.equal(true)
-    expect(Response.is_error(response)).to.equal(false)
+    let response1 = Response.read(dummy.end.read())
+    expect(response1).to.not.equal(undefined)
+    expect(ConfigureResponse.valid(response1)).to.equal(true)
+    expect(Response.is_error(response1)).to.equal(false)
 
+    send({
+      id: 3,
+      method: 'mining.subscribe',
+      params: ['daniel']
+    })
+
+    let response2 = Response.read(dummy.end.read())
+    expect(response2).to.not.equal(undefined)
+    expect(SubscribeResponse.valid(response2)).to.equal(true)
+    expect(Response.error(response2)).to.equal(null)
+
+  })
+
+  it("mining.submit original protocol", async () => {
+    let jobs = job_manager(outputs, wallet, network, 1)
+    let dummy = dummyConnection()
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true},
+      extensionHandlers))(dummy.connection)
+
+    send({
+      id: 2,
+      method: 'mining.subscribe',
+      params: ['daniel']
+    })
+
+    let subscribe_response = Response.read(dummy.end.read())
+    expect(subscribe_response).to.not.equal(undefined)
+    expect(SubscribeResponse.valid(subscribe_response)).to.equal(true)
+    expect(Response.error(subscribe_response)).to.equal(null)
+
+
+  })
+
+  it("mining.submit extended protocol", async () => {
+    let jobs = job_manager(outputs, wallet, network, 1)
+    let dummy = dummyConnection()
+    let send = stratum(server_session(jobs.subscribe,
+      {canSubmitWithoutAuthorization:true},
+      extensionHandlers))(dummy.connection)
+
+    send({
+      id: 2,
+      method: 'mining.configure',
+      params: Extensions.configure_request_params({
+        'subscribe_extranonce': {},
+        'version_rolling': {
+          'mask': boostpow.Int32Little.fromNumber(boostpow.Utils.generalPurposeBitsMask()).hex,
+          'min-bit-count': 8
+        }})
+    })
+
+    let config_response = Response.read(dummy.end.read())
+    expect(config_response).to.not.equal(undefined)
+    expect(ConfigureResponse.valid(config_response)).to.equal(true)
+    expect(Response.is_error(config_response)).to.equal(false)
+
+    send({
+      id: 3,
+      method: 'mining.subscribe',
+      params: ['daniel']
+    })
+
+    let subscribe_response = Response.read(dummy.end.read())
+    expect(subscribe_response).to.not.equal(undefined)
+    expect(SubscribeResponse.valid(subscribe_response)).to.equal(true)
+    expect(Response.error(subscribe_response)).to.equal(null)
   })
 
 })
