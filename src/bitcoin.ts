@@ -1,10 +1,6 @@
 import * as bsv from 'bsv'
 import * as boostpow from 'boostpow'
 
-export async function broadcast(tx: bsv.Transaction): Promise<boolean> {
-  return false
-}
-
 export function pubKeyToAddress(pubKey: bsv.PubKey): boostpow.Digest20 {
   return new boostpow.Digest20(bsv.Hash.sha256Ripemd160(pubKey.toBuffer()))
 }
@@ -17,14 +13,30 @@ export function hdToAddress(hd: bsv.Bip32.Mainnet): boostpow.Digest20 {
   return pubKeyToAddress(hd.pubKey)
 }
 
-export interface wallet {
+export interface Network {
+  satsPerByte: () => Promise<number>,
+  broadcast: (tx: bsv.Transaction) => Promise<boolean>
+}
+
+export function nonfunctional_network(): Network {
+  return {
+    satsPerByte: async () => {
+      return .5
+    },
+    broadcast: async (tx: bsv.Transaction) => {
+      return false;
+    }
+  }
+}
+
+export interface Keys {
   nextReceive: () => boostpow.Digest20,
   nextChange: () => boostpow.Digest20,
   nextBoost: () => bsv.PrivKey
 }
 
 // a really basic wallet that only uses one key.
-export function private_key_wallet(p: bsv.PrivKey): wallet {
+export function private_key_wallet(p: bsv.PrivKey): Keys {
   return {
     nextReceive: () => {
       return privKeyToAddress(p)
@@ -38,7 +50,7 @@ export function private_key_wallet(p: bsv.PrivKey): wallet {
   }
 }
 
-export function hd_wallet(master: bsv.Bip32.Mainnet, pathBIP44: string): wallet {
+export function hd_wallet(master: bsv.Bip32.Mainnet, pathBIP44: string): Keys {
 
   function receive(i: number): bsv.Bip32.Mainnet {
     throw 'incomplete method'
