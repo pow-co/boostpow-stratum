@@ -22,9 +22,14 @@ export async function start() {
 
   let key
 
-  if (args.length !== 3) {
+  if (process.env.PRIVATE_KEY_WIF) {
+
+    key = new bsv.PrivKey().fromWif(process.env.PRIVATE_KEY_WIF)
+
+  } else if (args.length !== 3) {
     console.log("expecting one argument; " + (args.length - 2) + " provided.")
     console.log("the first argument should be a WIF private key that will be used as a wallet.")
+    console.log("alternatively use the PRIVATE_KEY_WIF environment variable.")
     return
   } else {
     try {
