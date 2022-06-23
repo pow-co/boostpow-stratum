@@ -4,6 +4,36 @@ import {notify_params, NotifyParams} from './mining/notify'
 import {share, Share} from './mining/submit'
 import * as boostpow from 'boostpow'
 
+export function work_puzzle(
+  en: extranonce,
+  n: notify_params,
+  version_mask?: string): boostpow.work.Puzzle | undefined {
+
+  if (!Extranonce.valid(en) || !NotifyParams.valid(n) ||
+    (version_mask && !SessionID.valid(version_mask))) {
+    return
+  }
+
+  if (version_mask) {
+    return new boostpow.work.Puzzle(
+      NotifyParams.version(n),
+      NotifyParams.prevHash(n),
+      NotifyParams.nbits(n),
+      NotifyParams.generationTX1(n),
+      NotifyParams.generationTX2(n),
+      boostpow.Int32Little.fromHex(version_mask)
+    )
+  } else {
+    return new boostpow.work.Puzzle(
+      NotifyParams.version(n),
+      NotifyParams.prevHash(n),
+      NotifyParams.nbits(n),
+      NotifyParams.generationTX1(n),
+      NotifyParams.generationTX2(n)
+    )
+  }
+}
+
 // construct a work proof from
 //   * an extra nonce, provided in the subscribe response
 //   * notify params
@@ -15,8 +45,7 @@ export function prove(
   x: share,
   version_mask?: string): boostpow.work.Proof | undefined {
 
-  if (!Extranonce.valid(en) || !NotifyParams.valid(n) || !Share.valid(x) ||
-    (version_mask && !SessionID.valid(version_mask)) ||
+  if (!Share.valid(x) ||
     NotifyParams.jobID(n) != Share.jobID(x) ||
     en[1] != Share.extranonce2(x).length ||
     (version_mask && !x[5]) ||
@@ -24,25 +53,8 @@ export function prove(
     return
   }
 
-  let p: boostpow.work.Puzzle
-  if (version_mask) {
-    p = new boostpow.work.Puzzle(
-      NotifyParams.version(n),
-      NotifyParams.prevHash(n),
-      NotifyParams.nbits(n),
-      NotifyParams.generationTX1(n),
-      NotifyParams.generationTX2(n),
-      boostpow.Int32Little.fromHex(version_mask)
-    )
-  } else {
-    p = new boostpow.work.Puzzle(
-      NotifyParams.version(n),
-      NotifyParams.prevHash(n),
-      NotifyParams.nbits(n),
-      NotifyParams.generationTX1(n),
-      NotifyParams.generationTX2(n)
-    )
-  }
+  let p: boostpow.work.Puzzle = work_puzzle(en, n, version_mask)
+  if (!p) return
 
   let u: boostpow.work.Solution
   if (x[5]) {
