@@ -262,10 +262,11 @@ export function server_session(
         user_agent = SubscribeRequest.userAgent(sub)
 
         // if we use subscribe_extranonce, then the result is different.
+        let version_rolling: boolean = extensions.supported("version_rolling")
         let subscribe_extranonce: boolean = extensions.supported("subscribe_extranonce")
 
         let register = select({
-          'subscribe_extranonce': subscribe_extranonce,
+          'version_rolling': version_rolling,
           'new_job': notify_new_job,
           'hashpower': jobs.hashpower,
           'minimum_difficulty': extensions.minimum_difficulty,

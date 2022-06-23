@@ -3,7 +3,7 @@ import { JSONValue } from '../src/json'
 import { server_session } from '../src/server_session'
 import { extensionHandlers, versionRollingHandler } from '../src/extensions'
 import { message_id } from '../src/Stratum/messageID'
-import { response, Response } from '../src/Stratum/response'
+import { response, Response, BooleanResponse } from '../src/Stratum/response'
 import { Notification } from '../src/Stratum/notification'
 import { Error } from '../src/Stratum/error'
 import { StratumResponse } from '../src/Stratum/handlers/base'
@@ -12,10 +12,11 @@ import { ConfigureResponse, Extensions } from '../src/Stratum/mining/configure'
 import { AuthorizeResponse } from '../src/Stratum/mining/authorize'
 import { SetDifficulty } from '../src/Stratum/mining/set_difficulty'
 import { Notify, notify_params } from '../src/Stratum/mining/notify'
-import { work_puzzle } from '../src/Stratum/proof'
+import { work_puzzle, prove } from '../src/Stratum/proof'
 import { stratum } from '../src/stratum'
 import { job_manager } from '../src/jobs'
 import { extranonce, SetExtranonce } from '../src/Stratum/mining/set_extranonce'
+import { Share } from '../src/Stratum/mining/submit'
 import { private_key_wallet, nonfunctional_network, privKeyToAddress } from '../src/bitcoin'
 import * as bsv from 'bsv'
 import * as boostpow from 'boostpow'
@@ -131,7 +132,10 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
   let network = nonfunctional_network()
 
-  let now = () => boostpow.UInt32Little.fromNumber(25)
+  let time_now = boostpow.UInt32Little.fromNumber(151007250)
+  let now = () => time_now
+
+  let worker_name: string = 'daniel'
 
   it("mining.subscribe should return a subscribe response and a new job using the unexteded protocol", async () => {
     let jobs = job_manager(outputs, wallet, now, network, 1)
@@ -142,7 +146,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     send({
       id: 2,
       method: 'mining.subscribe',
-      params: ['daniel']
+      params: [worker_name]
     })
 
     let response = Response.read(dummy.end.read())
@@ -193,7 +197,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     send({
       id: 2,
       method: 'mining.authorize',
-      params: ['daniel']
+      params: [worker_name]
     })
 
     let response = Response.read(dummy.end.read())
@@ -211,13 +215,13 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     send({
       id: 2,
       method: 'mining.authorize',
-      params: ['daniel']
+      params: [worker_name]
     })
 
     send({
       id: 3,
       method: 'mining.authorize',
-      params: ['daniel']
+      params: [worker_name]
     })
 
     dummy.end.read()
@@ -235,13 +239,13 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     send({
       id: 2,
       method: 'mining.authorize',
-      params: ['daniel']
+      params: [worker_name]
     })
 
     send({
       id: 3,
       method: 'mining.authorize',
-      params: ['daniel']
+      params: [worker_name]
     })
 
     dummy.end.read()
@@ -259,13 +263,13 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     send({
       id: 2,
       method: 'mining.authorize',
-      params: ['daniel']
+      params: [worker_name]
     })
 
     send({
       id: 2,
       method: 'mining.subscribe',
-      params: ['daniel']
+      params: [worker_name]
     })
 
     let response1 = Response.read(dummy.end.read())
@@ -413,7 +417,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     send({
       id: 2,
       method: 'mining.subscribe',
-      params: ['daniel']
+      params: [worker_name]
     })
 
     send({
@@ -441,7 +445,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     send({
       id: 2,
       method: 'mining.subscribe',
-      params: ['daniel']
+      params: [worker_name]
     })
 
     send({
@@ -567,7 +571,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     send({
       id: 3,
       method: 'mining.subscribe',
-      params: ['daniel']
+      params: [worker_name]
     })
 
     let response2 = Response.read(dummy.end.read())
@@ -583,12 +587,15 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
 
   })
-/*
-  const solutions = [
-    boostpow.Job.puzzle(jobContractV1),
-    boostpow.Job.puzzle(jobContractV2),
-    boostpow.Job.puzzle(jobBountyV1),
-      boostpow.Job.puzzle(jobBountyV2)]*/
+
+  let extra_nonce_1_hex: string = "02000000"
+  let extra_nonce_1 = boostpow.UInt32Big.fromHex(extra_nonce_1_hex)
+
+  let extra_nonce_2_v1: boostpow.Bytes = boostpow.Bytes.fromHex("0000000300000003");
+  let extra_nonce_2_v2: boostpow.Bytes = boostpow.Bytes.fromHex("0000000000000000000000000000000000000000000000000000000300000003");
+
+  let nonce_v1 = boostpow.UInt32Little.fromNumber(151906)
+  let nonce_v2 = boostpow.UInt32Little.fromNumber(2768683)
 
   it("mining.submit original protocol", async () => {
     let jobs = job_manager(outputs, wallet, now, network, 1)
@@ -598,9 +605,9 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       extensionHandlers))(dummy.connection)
 
     send({
-      id: 2,
+      id: 3,
       method: 'mining.subscribe',
-      params: ['daniel']
+      params: [worker_name, extra_nonce_1.hex]
     })
 
     let subscribe_result = Response.read(dummy.end.read()).result
@@ -611,8 +618,31 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     dummy.end.read()
     let np: notify_params = Notification.read(dummy.end.read()).params
 
-    // the work we have been assigned.
-    let puz = work_puzzle(en, np)
+    let valid_share = Share.make(worker_name, np[0], time_now, nonce_v1, extra_nonce_2_v1)
+    let invalid_share = Share.make(worker_name, np[0], time_now, nonce_v2, extra_nonce_2_v1)
+
+    expect(prove(en, np, valid_share)).to.not.equal(undefined)
+    expect(prove(en, np, invalid_share)).to.equal(undefined)
+
+    send({
+      id: 4,
+      method: 'mining.submit',
+      params: invalid_share
+    })
+
+    send({
+      id: 5,
+      method: 'mining.submit',
+      params: valid_share
+    })
+
+    let submit_response_1 = Response.read(dummy.end.read())
+    expect(submit_response_1).to.not.equal(undefined)
+    expect(BooleanResponse.result(submit_response_1)).to.equal(false)
+
+    let submit_response_2 = Response.read(dummy.end.read())
+    expect(submit_response_2).to.not.equal(undefined)
+    expect(BooleanResponse.result(submit_response_2)).to.equal(true)
 
   })
 
@@ -639,7 +669,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     send({
       id: 3,
       method: 'mining.subscribe',
-      params: ['daniel']
+      params: [worker_name, extra_nonce_1.hex]
     })
 
     let subscribe_result = Response.read(dummy.end.read()).result
@@ -669,10 +699,33 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       np = n2.params
     }
 
-    // the work we have been assigned.
-    let puz = work_puzzle(en, np, version_mask)
+    let gpr = boostpow.Int32Little.fromHex('ffffffff')
 
-    // find the solution that solves this puzzle and one that does not.
+    let valid_share = Share.make(worker_name, np[0], time_now, nonce_v2, extra_nonce_2_v2, gpr)
+    let invalid_share = Share.make(worker_name, np[0], time_now, nonce_v1, extra_nonce_2_v2, gpr)
+
+    expect(prove(en, np, valid_share, gpr.hex)).to.not.equal(undefined)
+    expect(prove(en, np, invalid_share, gpr.hex)).to.equal(undefined)
+
+    send({
+      id: 4,
+      method: 'mining.submit',
+      params: invalid_share
+    })
+
+    send({
+      id: 5,
+      method: 'mining.submit',
+      params: valid_share
+    })
+
+    let submit_response_1 = Response.read(dummy.end.read())
+    expect(submit_response_1).to.not.equal(undefined)
+    expect(BooleanResponse.result(submit_response_1)).to.equal(false)
+
+    let submit_response_2 = Response.read(dummy.end.read())
+    expect(submit_response_2).to.not.equal(undefined)
+    expect(BooleanResponse.result(submit_response_2)).to.equal(true)
 
   })
 
