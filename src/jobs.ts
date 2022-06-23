@@ -63,7 +63,7 @@ export interface HashpowerEstimate {hashpower: number, certainty: number}
 
 // someone working on a job via stratum.
 export interface Worker {
-  subscribe_extranonce: boolean,
+  version_rolling: boolean,
   new_job: (job: StratumAssignment) => void,
   hashpower: () => HashpowerEstimate,
   minimum_difficulty: () => number,
@@ -86,7 +86,7 @@ export function job_manager(
   keys: Keys,
   // something that tells us what time it is.
   now_seconds: () => boostpow.UInt32Little,
-  // a way to broadcast to the bitcoin network. 
+  // a way to broadcast to the bitcoin network.
   network: Network,
   maxDifficulty: number): JobManager {
 
@@ -114,7 +114,7 @@ export function job_manager(
 
   // select a job for a worker.
   let select: (boolean, HashpowerEstimate, number) => BoostJob | undefined =
-    (subscribe_extranonce: boolean,
+    (version_rolling: boolean,
       // we ignore hashpower and minimum difficulty for now.
       h: HashpowerEstimate,
       minimum_difficulty: number) => {
@@ -125,7 +125,7 @@ export function job_manager(
       if (difficulty > maxDifficulty) continue
 
       // we can't do boost version 2 with the non extended Stratum protocol.j.output.script.scriptVersion
-      if (!subscribe_extranonce && j.puzzle.output.script.scriptVersion > 1) continue
+      if (!version_rolling && j.puzzle.output.script.scriptVersion > 1) continue
 
       // script version 1 can't do very high difficulties.
       if (j.puzzle.output.script.scriptVersion == 1 && difficulty > 4000000000) continue
@@ -139,7 +139,7 @@ export function job_manager(
   }
 
   let assign: (Worker) => BoostJob | undefined = (w: Worker) => {
-    let job = select(w.subscribe_extranonce, w.hashpower(), w.minimum_difficulty())
+    let job = select(w.version_rolling, w.hashpower(), w.minimum_difficulty())
     if (!job) {
       w.cancel()
       return
@@ -171,7 +171,7 @@ export function job_manager(
     },
 
     subscribe: (w: Worker) => {
-      let job = select(w.subscribe_extranonce, w.hashpower(), w.minimum_difficulty())
+      let job = select(w.version_rolling, w.hashpower(), w.minimum_difficulty())
       if (!job) return
       workers[job.jobID] = w
       return {
@@ -188,10 +188,6 @@ export function job_manager(
           // assign a new job to the worker.
           let new_job = assign(w)
           if (new_job) job = new_job
-
-
-          // TODO estimate tx size
-          let estimated_size = 0
         }
       }
     }
