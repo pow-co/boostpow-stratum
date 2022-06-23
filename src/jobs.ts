@@ -2,7 +2,6 @@ import * as bsv from 'bsv'
 import { privKeyToAddress, Keys, Network } from './bitcoin'
 import { notify_params, NotifyParams } from './Stratum/mining/notify'
 import { share } from './Stratum/mining/submit'
-import { now_seconds } from './time'
 import { Proof } from './Stratum/proof'
 import * as boostpow from 'boostpow'
 
@@ -83,7 +82,11 @@ export interface JobManager {
 // this problem can be fixed by using bind properly but I like this way better.
 export function job_manager(
   initial_jobs: boostpow.Output[],
+  // a way of assigning keys to jobs.
   keys: Keys,
+  // something that tells us what time it is.
+  now_seconds: () => boostpow.UInt32Little,
+  // a way to broadcast to the bitcoin network. 
   network: Network,
   maxDifficulty: number): JobManager {
 
