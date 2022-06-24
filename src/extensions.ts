@@ -112,7 +112,7 @@ export function versionRollingHandler(mask: number): HandleExtension {
       !SessionID.valid(requested_mask) || typeof minBitCount !== 'number')
       return {reply: ['invalid parameters', {}]}
 
-    const requested_mask_number = boostpow.UInt32Big.fromHex(requested_mask).number
+    const requested_mask_number = boostpow.Int32Little.fromHex(requested_mask).number
     let new_mask = mask & requested_mask_number
     let counter = new_mask
     let bit_count = 0
@@ -123,10 +123,11 @@ export function versionRollingHandler(mask: number): HandleExtension {
     }
 
     if (bit_count < minBitCount) return {reply: ['could not satisfy min-bit-count', {}]}
+    let new_mask_hex = boostpow.Int32Little.fromNumber(new_mask).hex
 
     return {
-      reply: [true, {mask: new_mask}],
-      keep: {mask: new_mask}
+      reply: [true, {mask: new_mask_hex}],
+      keep: {mask: new_mask_hex}
     }
   }
 }

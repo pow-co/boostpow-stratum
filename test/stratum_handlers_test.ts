@@ -501,7 +501,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true}, {
-      'version_rolling': versionRollingHandler(0xffff0000)
+      'version_rolling': versionRollingHandler(-256*256)
     }))(dummy.connection)
 
     send({
@@ -509,7 +509,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       method: 'mining.configure',
       params: Extensions.configure_request_params({
         "version_rolling": {
-          "mask":"0000ffff",
+          "mask":"ffff0000",
           "min-bit-count": 2
         }
       })
@@ -526,7 +526,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     let dummy = dummyConnection()
     let send = stratum(server_session(jobs.subscribe,
       {canSubmitWithoutAuthorization:true}, {
-      'version_rolling': versionRollingHandler(0xffffff00)
+      'version_rolling': versionRollingHandler(-256)
     }))(dummy.connection)
 
     send({
@@ -544,7 +544,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     expect(Response.is_error(response)).to.be.false;
     expect(response.result).to.haveOwnProperty('version_rolling');
     expect(response.result['version_rolling']).to.be.true;
-    expect(response.result['version_rolling.mask']).to.equal(16776960);
+    expect(response.result['version_rolling.mask']).to.equal("00ffffff");
   })
 
   it("mining.subscribe should return the correct response for the extended protocol", async () => {
@@ -581,7 +581,6 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     // we should get 2 notifications here.
     expect(dummy.end.read()).to.not.equal(undefined)
     expect(dummy.end.read()).to.not.equal(undefined)
-
 
   })
 
@@ -664,7 +663,10 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
         }})
     })
 
-    let version_mask = Extensions.extension_results(Response.read(dummy.end.read()).result).version_rolling['mask']
+    let version_rolling_result = Extensions.extension_results(Response.read(dummy.end.read()).result).version_rolling
+    expect(version_rolling_result[0]).to.equal(true)
+    let version_mask = <string>version_rolling_result[1]['mask']
+    expect(version_mask).to.not.equal(undefined)
 
     send({
       id: 3,
@@ -689,13 +691,16 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
     if (!!en1 || !!en2) {
       if (en1) {
+        console.log("case A1")
         en = en1.params
       } else {
+        console.log("case A1")
         en = en2.params
       }
       np = Notification.read(dummy.end.read()).params
     } else {
-      en = <extranonce>[subscribe_result[1], subscribe_result[3]]
+      console.log("case B ", subscribe_result[1])
+      en = <extranonce>[subscribe_result[1], subscribe_result[2]]
       np = n2.params
     }
 
