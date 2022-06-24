@@ -10,10 +10,7 @@ export function work_puzzle(
   version_mask?: string): boostpow.work.Puzzle | undefined {
 
   if (!Extranonce.valid(en) || !NotifyParams.valid(n) ||
-    (version_mask && !SessionID.valid(version_mask))) {
-    console.log("failure line 14")
-    return
-  }
+    (!!version_mask && !SessionID.valid(version_mask))) return
 
   if (version_mask) {
     return new boostpow.work.Puzzle(
