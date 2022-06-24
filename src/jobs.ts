@@ -126,6 +126,8 @@ export function job_manager(
 
       // we can't do boost version 2 with the non extended Stratum protocol.j.output.script.scriptVersion
       if (!version_rolling && j.puzzle.output.script.scriptVersion > 1) continue
+      // we can't do boost version 1 with the extended protocol because we can't change version mask.
+      if (version_rolling && j.puzzle.output.script.scriptVersion == 1) continue
 
       // script version 1 can't do very high difficulties.
       if (j.puzzle.output.script.scriptVersion == 1 && difficulty > 4000000000) continue
