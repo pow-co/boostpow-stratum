@@ -11,6 +11,7 @@ export function work_puzzle(
 
   if (!Extranonce.valid(en) || !NotifyParams.valid(n) ||
     (version_mask && !SessionID.valid(version_mask))) {
+    console.log("failure line 14")
     return
   }
 
@@ -48,10 +49,8 @@ export function prove(
   if (!Share.valid(x) ||
     NotifyParams.jobID(n) != Share.jobID(x) ||
     en[1] != Share.extranonce2(x).length ||
-    (version_mask && !x[5]) ||
-    (!version_mask && x[5])) {
-    return
-  }
+    (version_mask === undefined && x[5] !== undefined) ||
+    (version_mask !== undefined && x[5] === undefined)) return
 
   let p: boostpow.work.Puzzle = work_puzzle(en, n, version_mask)
   if (!p) return
@@ -100,6 +99,13 @@ export class Proof {
 
   valid(d?: boostpow.Difficulty): boolean {
     if (!this.hash) return false
-    throw 'incomplete method'
+    let target: boostpow.bsv.crypto.BN
+    if (!!d) target = d.target
+    else target = this.proof.Puzzle.Difficulty.target
+    return (new boostpow.bsv.crypto.BN(this.hash.hex, 'hex')).cmp(target) < 0
+  }
+
+  get metadata(): boostpow.Bytes {
+    return this.proof.metadata()
   }
 }
