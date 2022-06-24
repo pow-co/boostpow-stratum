@@ -12,7 +12,7 @@ import { ConfigureResponse, Extensions } from '../src/Stratum/mining/configure'
 import { AuthorizeResponse } from '../src/Stratum/mining/authorize'
 import { SetDifficulty } from '../src/Stratum/mining/set_difficulty'
 import { Notify, notify_params } from '../src/Stratum/mining/notify'
-import { work_puzzle, prove } from '../src/Stratum/proof'
+import { work_puzzle, prove, Proof } from '../src/Stratum/proof'
 import { stratum } from '../src/stratum'
 import { job_manager } from '../src/jobs'
 import { extranonce, SetExtranonce } from '../src/Stratum/mining/set_extranonce'
@@ -74,10 +74,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
   const userNonceHex = "c8010000"
 
-  const minerPubKeyHashHex = "1A7340DA6FB3F728439A4BECFCA9CBEDDAF8795F"
-  const minerPubKeyHashBuffer = new Buffer(minerPubKeyHashHex, "hex")
-
-  let key = new bsv.PrivKey(new bsv.Bn(1234567), true)
+  let key = bsv.PrivKey.fromWif('KwKYRBpVWEYdQeA4uRGAu959BN4M1WpaTuetwsoBYES8CrVkxfLt')
   let minerPubKeyHash = privKeyToAddress(key)
 
   const jobBountyV1 = boostpow.Job.fromObject({
@@ -612,7 +609,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
     let subscribe_result = Response.read(dummy.end.read()).result
 
-    let en: extranonce = <extranonce>[subscribe_result[1], subscribe_result[3]]
+    let en: extranonce = <extranonce>[subscribe_result[1], subscribe_result[2]]
 
     // this should be a set difficulty.
     dummy.end.read()
@@ -621,8 +618,11 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     let valid_share = Share.make(worker_name, np[0], time_now, nonce_v1, extra_nonce_2_v1)
     let invalid_share = Share.make(worker_name, np[0], time_now, nonce_v2, extra_nonce_2_v1)
 
-    expect(prove(en, np, valid_share)).to.not.equal(undefined)
-    expect(prove(en, np, invalid_share)).to.equal(undefined)
+    let valid_proof = new Proof(en, np, valid_share)
+    let invalid_proof = new Proof(en, np, invalid_share)
+
+    expect(valid_proof.valid()).to.equal(true)
+    expect(invalid_proof.valid()).to.equal(false)
 
     send({
       id: 4,
@@ -704,8 +704,11 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     let valid_share = Share.make(worker_name, np[0], time_now, nonce_v2, extra_nonce_2_v2, gpr)
     let invalid_share = Share.make(worker_name, np[0], time_now, nonce_v1, extra_nonce_2_v2, gpr)
 
-    expect(prove(en, np, valid_share, gpr.hex)).to.not.equal(undefined)
-    expect(prove(en, np, invalid_share, gpr.hex)).to.equal(undefined)
+    let valid_proof = new Proof(en, np, valid_share, version_mask)
+    let invalid_proof = new Proof(en, np, invalid_share, version_mask)
+
+    expect(valid_proof.valid()).to.equal(true)
+    expect(invalid_proof.valid()).to.equal(false)
 
     send({
       id: 4,
