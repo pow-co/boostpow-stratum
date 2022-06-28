@@ -42,14 +42,18 @@ interface Options {
   secondsToSaveJobs?: number,
 
   // how many message ids do we remember to reject duplicates?
-  rememberThisManyMessageIds?: number
+  rememberThisManyMessageIds?: number,
+
+  // something to tell the time.
+  nowSeconds?: () => boostpow.UInt32Little
 }
 
 let default_options = {
   canSubmitWithoutAuthorization: false,
   maxTimeDifference: 5,
   secondsToSaveJobs: 600,
-  rememberThisManyMessageIds: 10
+  rememberThisManyMessageIds: 10,
+  nowSeconds: now_seconds
 }
 
 // Subscribe lets us subscribe to new jobs. The backend could be boost or a mining pool.
@@ -61,11 +65,19 @@ interface StratumJob {
   mask: string
 }
 
+// a number of checks have to pass in order for shares to be accepted.
+// this object handles all the information needed to check a share.
 let handle_jobs = (maxTimeDifference: number) => {
+  // list of previous jobs. We need this because a client
+  // may turn in a share for an old job.
   let jobs: StratumJob[] = []
 
+  // list of shares submitted for currently open jobs. We need this
+  // to be able to reject duplicate shares.
   let shares: share[] = []
 
+  // find the job that the client is submitting a share for from
+  // the job id.
   let find = (jid: string): {stale: boolean, job: StratumJob} => {
     let stale: boolean = false
 
@@ -84,13 +96,11 @@ let handle_jobs = (maxTimeDifference: number) => {
   }
 
   return {
-    push: (j: StratumJob) => {
+    push: (j: StratumJob, now: number) => {
       if (jobs.length === 0) {
         jobs.push(j)
         return
       }
-
-      let now: number = now_seconds().number
 
       let i
       for (i = 0; i < jobs.length; i++) {
@@ -100,9 +110,15 @@ let handle_jobs = (maxTimeDifference: number) => {
       jobs.splice(0, i).push(j)
     },
 
+    // After a share is found to be valid, it needs to be passed on to the
+    // job manager in order to be marked for payment to the client and
+    // checked to see if it is a complete boost job / Bitcoin block. function
+    // check() takes a function called solved that handles a complete proof
+    // and returns a function that tries to construct a complete proof from
+    // an incomplete proof. If unsuccessful it returns an error and if
+    // successful it runs solved on the complete proof.
     check: (solved: (p: Proof) => void) => {
-      return (x: share, d: boostpow.Difficulty): error => {
-        let now = now_seconds().number
+      return (x: share, d: boostpow.Difficulty, now: number): error => {
         let timestamp = Share.time(x).number
 
         if (now - timestamp > maxTimeDifference) return Error.make(Error.TIME_TOO_OLD);
@@ -112,9 +128,12 @@ let handle_jobs = (maxTimeDifference: number) => {
         if (!f) return Error.make(Error.JOB_NOT_FOUND);
         if (f.stale) return Error.make(Error.STALE_SHARE);
 
+        // this shouldn't really happen because the version mask is set
+        // at the start of the protocol so we would know if it's good then.
         let p: Proof = new Proof(f.job.extranonce, f.job.notify, x, f.job.mask);
         if (!p.proof) return Error.make(Error.ILLEGAL_VERMASK);
 
+        // check for duplicate shares.
         for (let i = shares.length; i > 0; i--) {
           let g = shares[i]
           if (now - Share.time(g).number > maxTimeDifference) break
@@ -135,7 +154,7 @@ let handle_jobs = (maxTimeDifference: number) => {
 
 export function server_session(
   select: Subscribe,
-  options: Options = default_options,
+  opts: Options = default_options,
   // undefined indicates that Stratum extensions are not supported.
   // Otherwise there is a list of supported extensions.
   extension_handlers?: ExtensionHandlers
@@ -148,7 +167,8 @@ export function server_session(
       disconnect()
     }
 
-    Object.assign(options, default_options)
+    let options = default_options
+    Object.assign(options, opts)
 
     let extensions = extend(extension_handlers)
 
@@ -222,7 +242,7 @@ export function server_session(
 
     // set during the subscribe method. We don't know where to send
     // a solved share until after the worker is registered.
-    let checkShare: (x: share, d: boostpow.Difficulty) => error
+    let checkShare: (x: share, d: boostpow.Difficulty, now: number) => error
 
     // configure is an optional first message that determines wheher
     // extensions and supported and which ones.
@@ -294,7 +314,7 @@ export function server_session(
           notify: job.notify,
           extranonce: extranonce,
           mask: version_mask()
-        })
+        }, options.nowSeconds().number)
 
         remote.respond({id: request.id, result: [subscriptions, id, job.extranonce2Size], err: null})
         send_set_difficulty(NotifyParams.nbits(job.notify))
@@ -329,11 +349,13 @@ export function server_session(
     }
 
     function submit(request: parameters): StratumResponse {
+
       if (!subscribed()) return {result: null, err: Error.make(Error.ILLEGAL_METHOD)}
       if (!authorized() && !options.canSubmitWithoutAuthorization) Error.make(Error.UNAUTHORIZED)
       let x = Share.read(request)
       if (!x) return {result: null, err: Error.make(Error.ILLEGAL_PARARMS)}
-      let err = checkShare(x, difficulty)
+
+      let err = checkShare(x, difficulty, options.nowSeconds().number)
       return {result: err === null, err: err}
     }
 
