@@ -3,6 +3,7 @@ import { privKeyToAddress, Keys, Network } from './bitcoin'
 import { notify_params, NotifyParams } from './Stratum/mining/notify'
 import { share } from './Stratum/mining/submit'
 import { Proof } from './Stratum/proof'
+import { now_seconds } from './time'
 import * as boostpow from 'boostpow'
 
 // this is how we index jobs internally.
@@ -71,6 +72,7 @@ export interface Worker {
 }
 
 export interface JobManager {
+  // add a job
   add: (o: boostpow.Output) => void,
   invalidate: (string, number) => void,
   subscribe: (w: Worker) => undefined | {initial: StratumAssignment, solved: (p: Proof) => void }
@@ -84,8 +86,6 @@ export function job_manager(
   initial_jobs: boostpow.Output[],
   // a way of assigning keys to jobs.
   keys: Keys,
-  // something that tells us what time it is.
-  now_seconds: () => boostpow.UInt32Little,
   // a way to broadcast to the bitcoin network.
   network: Network,
   maxDifficulty: number): JobManager {
