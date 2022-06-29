@@ -7,6 +7,17 @@ import * as net from 'net'
 
 import * as uuid from 'uuid'
 
+import { client as metrics, register } from './metrics'
+
+const gauge = new metrics.Gauge({
+  name: 'stratum_workers_connected',
+  help: 'stratum_workers_connected'
+})
+
+register.registerMetric(gauge)
+
+gauge.set(0)
+
 interface HostPort {
   ip: string;
   port: number;
@@ -64,7 +75,10 @@ export class Session {
 
       delete sessions[this.sessionId]
 
+      gauge.set(Object.keys(sessions).length)
+
       this.open = false
+
     })
 
     this.socket.on('error', (error) => {
@@ -79,6 +93,8 @@ export class Session {
     })
 
     sessions[this.sessionId] = this
+
+    gauge.set(Object.keys(sessions).length)
 
   }
   disconnect() {
