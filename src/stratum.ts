@@ -104,5 +104,32 @@ export function stratum(local: Local): Protocol {
         //log.info('stratum.message.error: name = ' + error.name + "; message = " + error.msg)
       }
     }
+
+    response['id'] = request.id
+    return <response>response
+  }
+}
+
+export function handleStratumMessage(handleRequest: (request: request) => Promise<response>): (data: Buffer, socket: net.Socket) => void {
+  return async (data: Buffer, socket: net.Socket) => {
+    try {
+      log.info('socket.message.data', {data: data.toString() })
+
+      var request: request = <request>JSON.parse(data.toString())
+      if (!Request.valid(request)) {
+        log.info('invalid message.')
+        socket.end()
+      }
+
+      var response: response = await handleRequest(request)
+      log.info('socket.message.response', {data: response.toString() })
+
+      socket.write(`${JSON.stringify(response)}\n`)
+
+    } catch(error) {
+
+      socket.write(`${JSON.stringify({"error": "invalid json"})}\n`)
+
+    }
   }
 }

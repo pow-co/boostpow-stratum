@@ -13,6 +13,8 @@ import { plugin as socketio } from './socket.io/plugin'
 
 var server
 
+import { register as prometheus } from './metrics'
+
 async function initServer(): Hapi.Server {
 
   server = new Hapi.Server({
@@ -29,6 +31,14 @@ async function initServer(): Hapi.Server {
   });
 
   await server.register(socketio)
+
+  server.route({
+    method: 'GET',
+    path: '/metrics',
+    handler: async (req, h) => {
+      return h.response(await prometheus.metrics())
+    }
+  })
 
   server.route({
 
