@@ -77,6 +77,8 @@ async function initServer(): Hapi.Server {
 
     options: {
 
+      tags: ['api', 'logs'],
+
       validate: {
 
         query: Joi.object({
@@ -152,6 +154,8 @@ async function initServer(): Hapi.Server {
     path: "/api/v1/sessions",
 
     options: { 
+
+      tags: ['api', 'sessions'],
 
       response: {
 
