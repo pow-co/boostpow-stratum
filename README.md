@@ -1,6 +1,10 @@
 
 # Stratum Server for Boost Jobs
 
+## Environment Variables
+
+- PRIVATE_KEY_WIF
+
 ## Installation
 
 Typescript must be installed on your development machine 

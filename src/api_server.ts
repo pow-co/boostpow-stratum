@@ -11,6 +11,14 @@ import { badRequest } from 'boom'
 
 import { plugin as socketio } from './socket.io/plugin'
 
+const Inert = require('@hapi/inert');
+
+const Vision = require('@hapi/vision');
+
+const HapiSwagger = require('hapi-swagger');
+
+const Pack = require('../package');
+
 var server
 
 import { register as prometheus } from './metrics'
@@ -31,6 +39,27 @@ async function initServer(): Hapi.Server {
   });
 
   await server.register(socketio)
+
+  const swaggerOptions = {
+    info: {
+      title: 'Boost Stratum Server API Docs',
+      version: Pack.version,
+      description: 'Developer API Documentation \n\n *** DEVELOPERS *** \n\n Edit this file under `swaggerOptions` in `src/server.ts` to better describe your service.'
+    },
+    schemes: ['https'],
+    host: 'stratum.pow.co',
+    documentationPath: '/',
+    grouping: 'tags'
+  }
+
+  await server.register([
+      Inert,
+      Vision,
+      {
+        plugin: HapiSwagger,
+        options: swaggerOptions
+      }
+  ]);
 
   server.route({
     method: 'GET',
