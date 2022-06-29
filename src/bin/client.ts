@@ -28,7 +28,7 @@ program
 
       const challenge = createHash('sha256').update(uuid.v4()).digest('hex');
 
-      socket.write(JSON.stringify({ challenge }))
+      //socket.write(JSON.stringify({ challenge }))
 
     } catch(error) {
 
