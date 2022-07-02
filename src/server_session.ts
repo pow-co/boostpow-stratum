@@ -83,7 +83,7 @@ let handle_jobs = (maxTimeDifference: number) => {
 
     for (let i = jobs.length - 1; i >= 0; i--) {
       let job = jobs[i]
-      
+
       if (NotifyParams.jobID(job.notify) === jid) return {
         stale: stale,
         job: job
@@ -127,7 +127,6 @@ let handle_jobs = (maxTimeDifference: number) => {
     check: (solved: (p: Proof) => void) => {
       return (x: share, d: boostpow.Difficulty, now: number): error => {
         let timestamp = Share.time(x).number
-
 
         if (now - timestamp > maxTimeDifference) return Error.make(Error.TIME_TOO_OLD);
         if (timestamp - now > maxTimeDifference) return Error.make(Error.TIME_TOO_NEW);
@@ -238,7 +237,8 @@ export function server_session(
       return username !== undefined
     }
 
-    function version_mask(): string|undefined {
+    function version_mask(): string | undefined {
+      if (!extensions.supported('version_rolling')) return
       let mask = extensions.parameters('version_rolling').mask
       if (!mask || typeof mask !== 'number') return boostpow.Int32Little.fromNumber(0).hex
       return boostpow.Int32Little.fromNumber(mask).hex
