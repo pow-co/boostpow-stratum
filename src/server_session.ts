@@ -62,7 +62,7 @@ type Subscribe = (w: Worker) => undefined | {initial: StratumAssignment, solved:
 interface StratumJob {
   notify: notify_params,
   extranonce: extranonce,
-  mask: string
+  mask: string|undefined
 }
 
 // a number of checks have to pass in order for shares to be accepted.
@@ -127,6 +127,7 @@ let handle_jobs = (maxTimeDifference: number) => {
     check: (solved: (p: Proof) => void) => {
       return (x: share, d: boostpow.Difficulty, now: number): error => {
         let timestamp = Share.time(x).number
+
 
         if (now - timestamp > maxTimeDifference) return Error.make(Error.TIME_TOO_OLD);
         if (timestamp - now > maxTimeDifference) return Error.make(Error.TIME_TOO_NEW);
@@ -237,7 +238,7 @@ export function server_session(
       return username !== undefined
     }
 
-    function version_mask(): string {
+    function version_mask(): string|undefined {
       let mask = extensions.parameters('version_rolling').mask
       if (!mask || typeof mask !== 'number') return boostpow.Int32Little.fromNumber(0).hex
       return boostpow.Int32Little.fromNumber(mask).hex
