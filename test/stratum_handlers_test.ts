@@ -5,7 +5,7 @@ import { extensionHandlers, versionRollingHandler } from '../src/extensions'
 import { message_id } from '../src/Stratum/messageID'
 import { response, Response, BooleanResponse } from '../src/Stratum/response'
 import { Notification } from '../src/Stratum/notification'
-import { Error } from '../src/Stratum/error'
+import { Error as StratumError } from '../src/Stratum/error'
 import { StratumResponse } from '../src/Stratum/handlers/base'
 import { SubscribeResponse } from '../src/Stratum/mining/subscribe'
 import { ConfigureResponse, Extensions } from '../src/Stratum/mining/configure'
@@ -28,6 +28,9 @@ function dummyConnection() {
   return {
     end: {
       read: (): undefined | JSONValue => {
+        if(!open) {
+          throw new Error("Reading from a closed connection");
+        }
         if (messages.length > index) {
           index++
           return messages[index - 1]
@@ -39,6 +42,9 @@ function dummyConnection() {
     },
     connection: {
       send: (j: JSONValue) => {
+        if(!open){
+          throw new Error("Writing to a closed connection");
+        }
         if (open) messages.push(j)
       },
       close: () => {
@@ -226,7 +232,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     dummy.end.read()
     let response = Response.read(dummy.end.read())
     expect(response).to.not.equal(undefined)
-    expect(Error.is_error(response.err)).to.equal(true)
+    expect(StratumError.is_error(response.err)).to.equal(true)
   })
 
   it("mining.subscribe cannot be called twice", async () => {
@@ -250,7 +256,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     dummy.end.read()
     let response = Response.read(dummy.end.read())
     expect(response).to.not.equal(undefined)
-    expect(Error.is_error(response.err)).to.equal(true)
+    expect(StratumError.is_error(response.err)).to.equal(true)
   })
 
   it("cannot reuse message ids", async () => {
@@ -274,7 +280,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     let response1 = Response.read(dummy.end.read())
     let response2 = Response.read(dummy.end.read())
     expect(response2).to.not.equal(undefined)
-    expect(Error.is_error(response2.err)).to.equal(true)
+    expect(StratumError.is_error(response2.err)).to.equal(true)
   })
 
   it("mining.configure returns an empty response back upon an empty configure message when extensions are supported", async () => {
