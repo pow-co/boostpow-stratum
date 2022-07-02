@@ -629,11 +629,37 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     // check that early and late shares are not accepted.
     let unknown_job_share = Share.make(worker_name, 'invalid', time_now, nonce_v1, extra_nonce_2_v1)
     let early_share = Share.make(worker_name, np[0], time_too_early, nonce_v1, extra_nonce_2_v1)
-    let late_share = Share.make(worker_name, np[0], time_too_early, nonce_v1, extra_nonce_2_v1)
+    let late_share = Share.make(worker_name, np[0], time_too_late, nonce_v1, extra_nonce_2_v1)
+
 
     {
       send({
         id: 4,
+        method: 'mining.submit',
+        params: valid_share
+      })
+
+      let submit_response = Response.read(dummy.end.read())
+      expect(submit_response).to.not.equal(undefined)
+      expect(BooleanResponse.result(submit_response)).to.equal(true)
+    }
+
+    {
+      send({
+        id: 5,
+        method: 'mining.submit',
+        params: valid_share
+      })
+
+      let submit_response = Response.read(dummy.end.read())
+      expect(submit_response).to.not.equal(undefined)
+      expect(BooleanResponse.result(submit_response)).to.equal(true)
+      expect(Response.error(submit_response)[0]).to.equal(22)
+    }
+
+    {
+      send({
+        id: 6,
         method: 'mining.submit',
         params: unknown_job_share
       })
@@ -646,7 +672,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
     {
       send({
-        id: 5,
+        id: 7,
         method: 'mining.submit',
         params: early_share
       })
@@ -659,7 +685,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
     {
       send({
-        id: 6,
+        id: 8,
         method: 'mining.submit',
         params: late_share
       })
@@ -672,7 +698,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
     {
       send({
-        id: 7,
+        id: 9,
         method: 'mining.submit',
         params: invalid_share
       })
@@ -683,30 +709,6 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       expect(Response.error(submit_response)[0]).to.equal(34)
     }
 
-    {
-      send({
-        id: 8,
-        method: 'mining.submit',
-        params: valid_share
-      })
-
-      let submit_response = Response.read(dummy.end.read())
-      expect(submit_response).to.not.equal(undefined)
-      expect(BooleanResponse.result(submit_response)).to.equal(true)
-    }
-
-    {
-      send({
-        id: 9,
-        method: 'mining.submit',
-        params: valid_share
-      })
-
-      let submit_response = Response.read(dummy.end.read())
-      expect(submit_response).to.not.equal(undefined)
-      expect(BooleanResponse.result(submit_response)).to.equal(true)
-      expect(Response.error(submit_response)[0]).to.equal(22)
-    }
 
   })
 
