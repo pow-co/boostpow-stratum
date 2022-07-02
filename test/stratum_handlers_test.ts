@@ -641,7 +641,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       let submit_response = Response.read(dummy.end.read())
       expect(submit_response).to.not.equal(undefined)
       expect(BooleanResponse.result(submit_response)).to.equal(false)
-      expect(Response.error(submit_response)[0]).to.equal(34)
+      expect(Response.error(submit_response)[0]).to.equal(36)
     }
 
     {

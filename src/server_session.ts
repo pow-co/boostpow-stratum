@@ -78,36 +78,43 @@ let handle_jobs = (maxTimeDifference: number) => {
 
   // find the job that the client is submitting a share for from
   // the job id.
-  let find = (jid: string): {stale: boolean, job: StratumJob} => {
+  let find = (jid: string): undefined | {stale: boolean, job: StratumJob} => {
     let stale: boolean = false
 
-    for (let i = jobs.length - 1; i > 0; i--) {
+    for (let i = jobs.length - 1; i >= 0; i--) {
       let job = jobs[i]
-      let next_stale = stale
-      if (NotifyParams.clean(job.notify)) next_stale = true
-
+      
       if (NotifyParams.jobID(job.notify) === jid) return {
         stale: stale,
         job: job
       }
 
-      stale = next_stale
+      if (NotifyParams.clean(job.notify)) stale = true
     }
+  }
+
+  let detect_duplicate = (x: share, now: number): boolean => {
+    let i
+    for (i = shares.length - 1; i >= 0; i--) {
+      let g = shares[i]
+      if (now - Share.time(g).number > maxTimeDifference) break
+      if (Share.equal(x, g)) return true
+    }
+
+    jobs.splice(0, i + 1)
+
+    return false
   }
 
   return {
     push: (j: StratumJob, now: number) => {
-      if (jobs.length === 0) {
-        jobs.push(j)
-        return
-      }
-
       let i
-      for (i = 0; i < jobs.length; i++) {
+      for (i = jobs.length - 1; i >= 0; i--) {
         if (now - NotifyParams.time(jobs[i].notify).number >= maxTimeDifference) break
       }
 
-      jobs.splice(0, i).push(j)
+      jobs.splice(0, i + 1)
+      jobs.push(j)
     },
 
     // After a share is found to be valid, it needs to be passed on to the
@@ -125,22 +132,20 @@ let handle_jobs = (maxTimeDifference: number) => {
         if (timestamp - now > maxTimeDifference) return Error.make(Error.TIME_TOO_NEW);
 
         let f = find(Share.jobID(x));
-        if (!f) return Error.make(Error.JOB_NOT_FOUND);
+
+        if (f === undefined) return Error.make(Error.JOB_NOT_FOUND);
         if (f.stale) return Error.make(Error.STALE_SHARE);
 
-        // this shouldn't really happen because the version mask is set
-        // at the start of the protocol so we would know if it's good then.
         let p: Proof = new Proof(f.job.extranonce, f.job.notify, x, f.job.mask);
+        // this can only happen if the client forgets to send us a version
+        // value when he is supposed to or when he sends one when he's not
+        // supposed to.
         if (!p.proof) return Error.make(Error.ILLEGAL_VERMASK);
 
         // check for duplicate shares.
-        for (let i = shares.length; i > 0; i--) {
-          let g = shares[i]
-          if (now - Share.time(g).number > maxTimeDifference) break
-          if (Share.equal(x, g)) return Error.make(Error.DUPLICATE_SHARE)
-        }
-
+        if (detect_duplicate(x, now)) return Error.make(Error.DUPLICATE_SHARE)
         if (!p.valid(d)) return Error.make(Error.INVALID_SOLUTION)
+        shares.push(x)
         solved(p)
         return null
       }
