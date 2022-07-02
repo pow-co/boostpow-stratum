@@ -17,7 +17,7 @@ export interface StratumAssignment {
 }
 
 // a boost output + a private key = a job that we can start working on.
-class BoostJob {
+export class BoostJob {
   constructor(
     public jobID: number,
     public puzzle: boostpow.Puzzle,
@@ -35,6 +35,7 @@ class BoostJob {
   }
 
   estimated_locking_script_size(): number {
+    return 1;
     throw "incomplete method"
   }
 
@@ -42,19 +43,40 @@ class BoostJob {
   complete(solution: boostpow.work.Solution,
     our_address: bsv.Address,
     satsPerByte: number): bsv.Transaction {
-    throw "incomplete method"
 
-    // TODO
     let incomplete_tx_length = 0
     let estimated_size = incomplete_tx_length + this.estimated_locking_script_size()
 
     let output_value = this.puzzle.output.value - Math.ceil(estimated_size * satsPerByte)
 
+    const tx = new boostpow.bsv.Transaction();
+    tx.addOutput(new boostpow.bsv.Transaction.Output({
+      script: boostpow.bsv.Script(new boostpow.bsv.Address(our_address.toString())),
+      satoshis: this.puzzle.output.value-517
+    }))
+
+    tx.addInput(
+        new boostpow.bsv.Transaction.Input({
+          output: new boostpow.bsv.Transaction.Output({
+            script: this.puzzle.output.script.toScript(),
+            satoshis: this.puzzle.output.value
+          }),
+          prevTxId: this.puzzle.output.txid.buffer,
+          outputIndex: this.puzzle.output.vout,
+          script: boostpow.bsv.Script.empty()
+        })
+    )
+    // TODO
+
+
     // TODO
     let incomplete_tx: Buffer
-
-    let redeem_script = this.puzzle.redeem(solution, incomplete_tx, 0)
-
+    let redeem_script = this.puzzle.redeem(solution,tx, 0)
+    const temp = redeem_script.toBuffer();
+    // @ts-ignore
+    console.log(temp.toString('hex'));
+    tx.inputs[0]['_scriptBuffer']=temp;
+    console.log(tx.inputs);
     // TODO put the redeem script into the tx
     return new bsv.Transaction(incomplete_tx)
   }

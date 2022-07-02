@@ -43,11 +43,17 @@ export function prove(
   x: share,
   version_mask?: string): boostpow.work.Proof | undefined {
 
-  if (!Share.valid(x) ||
-    NotifyParams.jobID(n) != Share.jobID(x) ||
-    en[1] != Share.extranonce2(x).length ||
-    (version_mask === undefined && x[5] !== undefined) ||
-    (version_mask !== undefined && x[5] === undefined)) return
+  const valid_share=Share.valid(x);
+  const right_params=NotifyParams.jobID(n) != Share.jobID(x);
+  const nonce_length=en[1] != Share.extranonce2(x).length;
+  const ver_mask_1= (version_mask === undefined && x[5] !== undefined);
+  const ver_mask_2=(version_mask !== undefined && x[5] === undefined);
+  if (!valid_share ||
+     right_params ||
+    nonce_length ||
+    ver_mask_1 ||
+      ver_mask_2)
+     return
 
   let p: boostpow.work.Puzzle = work_puzzle(en, n, version_mask)
   if (!p) return
