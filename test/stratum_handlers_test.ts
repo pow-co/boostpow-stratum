@@ -819,6 +819,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       expect(BooleanResponse.result(submit_response)).to.equal(false)
       expect(Response.error(submit_response)[0]).to.equal(33)
     }
+    
     {
       send({
         id: 6,
