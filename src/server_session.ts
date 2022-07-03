@@ -367,7 +367,7 @@ export function server_session(
       if (!authorized() && !options.canSubmitWithoutAuthorization)
         return remote.respond({id: request.id, result: null, err: Error.make(Error.UNAUTHORIZED)})
 
-      let x = Share.read(request)
+      let x = Share.read(request.params)
       if (!x) return remote.respond({id: request.id, result: null, err: Error.make(Error.ILLEGAL_PARARMS)})
 
       let r = jobs.check(x, difficulty, options.nowSeconds().number)
