@@ -87,7 +87,6 @@ export interface HashpowerEstimate {hashpower: number, certainty: number}
 // someone working on a job via stratum.
 export interface Worker {
   version_rolling: boolean,
-  new_job: (job: StratumAssignment) => void,
   hashpower: () => HashpowerEstimate,
   minimum_difficulty: () => number,
   cancel: () => void
@@ -97,7 +96,7 @@ export interface JobManager {
   // add a job
   add: (o: boostpow.Output) => void,
   invalidate: (string, number) => void,
-  subscribe: (w: Worker) => undefined | {initial: StratumAssignment, solved: (p: Proof) => void }
+  subscribe: (w: Worker) => undefined | {initial: StratumAssignment, solved: (p: Proof) => StratumAssignment | undefined }
 }
 
 // this has been implemented as a function rather than a class in order to avoid
@@ -170,7 +169,6 @@ export function job_manager(
     }
 
     workers[job.jobID] = w
-    w.new_job(job.stratumJob(now_seconds()))
     return job
   }
 
@@ -202,16 +200,15 @@ export function job_manager(
         // the initial job to assign to the worker.
         initial: job.stratumJob(now_seconds()),
 
-        solved: (x: Proof): void => {
-          // this should not happen. The function is supposed to be
-          // called on a solved share.
-          if (!x.valid()) throw "solved called on invalid job"
+        solved: (x: Proof): StratumAssignment | undefined => {
+          if (!x.valid()) return
 
           complete(job, x.proof.Solution)
 
           // assign a new job to the worker.
           let new_job = assign(w)
           if (new_job) job = new_job
+          return new_job.stratumJob(now_seconds())
         }
       }
     }
