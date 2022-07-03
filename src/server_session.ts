@@ -57,7 +57,7 @@ let default_options = {
 }
 
 // Subscribe lets us subscribe to new jobs. The backend could be boost or a mining pool.
-type Subscribe = (w: Worker) => undefined | {initial: StratumAssignment, solved: (p: Proof) => void }
+type Subscribe = (w: Worker) => undefined | {initial: StratumAssignment, solved: (p: Proof) => StratumAssignment | undefined }
 
 interface StratumJob {
   notify: notify_params,
@@ -124,31 +124,28 @@ let handle_jobs = (maxTimeDifference: number) => {
     // and returns a function that tries to construct a complete proof from
     // an incomplete proof. If unsuccessful it returns an error and if
     // successful it runs solved on the complete proof.
-    check: (solved: (p: Proof) => void) => {
-      return (x: share, d: boostpow.Difficulty, now: number): error => {
-        let timestamp = Share.time(x).number
+    check: (x: share, d: boostpow.Difficulty, now: number): {proof?: Proof, err: error} => {
+      let timestamp = Share.time(x).number
 
-        if (now - timestamp > maxTimeDifference) return Error.make(Error.TIME_TOO_OLD);
-        if (timestamp - now > maxTimeDifference) return Error.make(Error.TIME_TOO_NEW);
+      if (now - timestamp > maxTimeDifference) return {err: Error.make(Error.TIME_TOO_OLD)};
+      if (timestamp - now > maxTimeDifference) return {err: Error.make(Error.TIME_TOO_NEW)};
 
-        let f = find(Share.jobID(x));
+      let f = find(Share.jobID(x));
 
-        if (f === undefined) return Error.make(Error.JOB_NOT_FOUND);
-        if (f.stale) return Error.make(Error.STALE_SHARE);
+      if (f === undefined) return {err: Error.make(Error.JOB_NOT_FOUND)};
+      if (f.stale) return {err: Error.make(Error.STALE_SHARE)};
 
-        let p: Proof = new Proof(f.job.extranonce, f.job.notify, x, f.job.mask);
-        // this can only happen if the client forgets to send us a version
-        // value when he is supposed to or when he sends one when he's not
-        // supposed to.
-        if (!p.proof) return Error.make(Error.ILLEGAL_VERMASK);
+      let p: Proof = new Proof(f.job.extranonce, f.job.notify, x, f.job.mask);
+      // this can only happen if the client forgets to send us a version
+      // value when he is supposed to or when he sends one when he's not
+      // supposed to.
+      if (!p.proof) return {err: Error.make(Error.ILLEGAL_VERMASK)};
 
-        // check for duplicate shares.
-        if (detect_duplicate(x, now)) return Error.make(Error.DUPLICATE_SHARE)
-        if (!p.valid(d)) return Error.make(Error.INVALID_SOLUTION)
-        shares.push(x)
-        solved(p)
-        return null
-      }
+      // check for duplicate shares.
+      if (detect_duplicate(x, now)) return {err: Error.make(Error.DUPLICATE_SHARE)}
+      if (!p.valid(d)) return {err: Error.make(Error.INVALID_SOLUTION)}
+      shares.push(x)
+      return {proof: p, err: null}
     },
 
     hashpower: () => {
@@ -188,7 +185,7 @@ export function server_session(
 
     // send a set difficulty message to the client and remember
     // for when he submits a share later. The setting is not
-    // applied until after the next notify message is sent.
+    // applied by the client until after the next notify message is sent.
     function send_set_difficulty(d: boostpow.Difficulty) {
       next_difficulty = d
       remote.notify(SetDifficulty.make(d))
@@ -196,7 +193,7 @@ export function server_session(
 
     // send a set extranonce message to the client and remember
     // for when he submits a share later. The setting is not
-    // applied until after the next notify message is sent.
+    // applied by the client until after the next notify message is sent.
     function send_set_extranonce(en: extranonce) {
       next_extranonce = en
       remote.notify({id:null, method:'mining.set_extranonce', params: en})
@@ -208,15 +205,6 @@ export function server_session(
       if (next_difficulty) difficulty = next_difficulty
       if (next_extranonce) extranonce = next_extranonce
       remote.notify({id: null, method:'mining.notify', params: p})
-    }
-
-    // when we know of a new job, we have to send a notify message.
-    function notify_new_job(j: StratumAssignment) {
-      if (extensions.supported("subscribe_extranonce")) send_set_extranonce([id, j.extranonce2Size])
-
-      // we always use the same difficulty as the job for now.
-      send_set_difficulty(NotifyParams.nbits(j.notify))
-      send_mining_notify(j.notify)
     }
 
     // the user agent string sent in the subscribe method.
@@ -248,7 +236,30 @@ export function server_session(
 
     // set during the subscribe method. We don't know where to send
     // a solved share until after the worker is registered.
-    let checkShare: (x: share, d: boostpow.Difficulty, now: number) => error
+    let solved: (p: Proof) => StratumAssignment | undefined
+
+    // when we know of a new job, we have to send a notify message.
+    function notify_new_job(job: StratumAssignment, id?: string) {
+      let en: extranonce
+      if ((!!id || job.extranonce2Size != extranonce[1])) {
+        if (!extensions.supported("subscribe_extranonce")) throw "error: cannot update extranonce"
+
+        en = [!!id ? id : extranonce[0], job.extranonce2Size]
+        send_set_extranonce(en)
+      } else {
+        en = extranonce
+      }
+
+      jobs.push({
+        notify: job.notify,
+        extranonce: en,
+        mask: version_mask()
+      }, options.nowSeconds().number)
+
+      // we always use the same difficulty as the job for now.
+      send_set_difficulty(NotifyParams.nbits(job.notify))
+      send_mining_notify(job.notify)
+    }
 
     // configure is an optional first message that determines wheher
     // extensions and supported and which ones.
@@ -293,7 +304,6 @@ export function server_session(
 
         let register = select({
           'version_rolling': version_rolling,
-          'new_job': notify_new_job,
           'hashpower': jobs.hashpower,
           'minimum_difficulty': extensions.minimum_difficulty,
           'cancel': close
@@ -301,7 +311,7 @@ export function server_session(
         if (!register) return error(Error.INTERNAL_ERROR)
         let job = register.initial
 
-        checkShare = jobs.check(register.solved)
+        solved = register.solved
 
         subscriptions = subscribe_extranonce ?
           [['mining.notify', SubscribeResponse.random_subscription_id()],
@@ -315,16 +325,8 @@ export function server_session(
         let id = n1 ? n1.hex : SessionID.random()
 
         extranonce = [id, job.extranonce2Size]
-
-        jobs.push({
-          notify: job.notify,
-          extranonce: extranonce,
-          mask: version_mask()
-        }, options.nowSeconds().number)
-
         remote.respond({id: request.id, result: [subscriptions, id, job.extranonce2Size], err: null})
-        send_set_difficulty(NotifyParams.nbits(job.notify))
-        send_mining_notify(job.notify)
+        notify_new_job(job)
       })(SubscribeRequest.read(request),
       (err: number) => {
         remote.respond({id: request.id, result: null, err: Error.make(err)})
@@ -354,21 +356,22 @@ export function server_session(
       if (response.err != null) close()
     }
 
-    function submit(request: parameters): StratumResponse {
-
-      if (!subscribed()) return {result: null, err: Error.make(Error.ILLEGAL_METHOD)}
-      if (!authorized() && !options.canSubmitWithoutAuthorization) Error.make(Error.UNAUTHORIZED)
-      let x = Share.read(request)
-      if (!x) return {result: null, err: Error.make(Error.ILLEGAL_PARARMS)}
-
-      let err = checkShare(x, difficulty, options.nowSeconds().number)
-      return {result: err === null, err: err}
-    }
-
     function handleSubmit(request: request): void {
-      let response: StratumResponse = submit(request.params)
-      response.id = request.id
-      remote.respond(<response>response)
+      if (!subscribed())
+        return remote.respond({id: request.id, result: null, err: Error.make(Error.ILLEGAL_METHOD)})
+
+      if (!authorized() && !options.canSubmitWithoutAuthorization)
+        return remote.respond({id: request.id, result: null, err: Error.make(Error.UNAUTHORIZED)})
+
+      let x = Share.read(request)
+      if (!x) return remote.respond({id: request.id, result: null, err: Error.make(Error.ILLEGAL_PARARMS)})
+
+      let r = jobs.check(x, difficulty, options.nowSeconds().number)
+
+      let next_assignment: StratumAssignment
+      if (r.proof) next_assignment = solved(r.proof)
+      remote.respond({id: request.id, result: r.err === null, err: r.err})
+      if (!!next_assignment) notify_new_job(next_assignment)
     }
 
     let handleRequest = {
