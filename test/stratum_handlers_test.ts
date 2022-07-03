@@ -642,32 +642,6 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
     {
       send({
-        id: 4,
-        method: 'mining.submit',
-        params: valid_share
-      })
-
-      let submit_response = Response.read(dummy.end.read())
-      expect(submit_response).to.not.equal(undefined)
-      expect(BooleanResponse.result(submit_response)).to.equal(true)
-    }
-
-    {
-      send({
-        id: 5,
-        method: 'mining.submit',
-        params: valid_share
-      })
-
-      let submit_response = Response.read(dummy.end.read())
-      expect(submit_response).to.not.equal(undefined)
-      expect(BooleanResponse.result(submit_response)).to.equal(true)
-      expect(Response.error(submit_response)[0]).to.equal(22)
-
-    }
-
-    {
-      send({
         id: 6,
         method: 'mining.submit',
         params: unknown_job_share
@@ -730,6 +704,32 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       expect(BooleanResponse.result(submit_response)).to.equal(false)
       expect(Response.error(submit_response)[0]).to.equal(33)
     }
+
+    {
+      send({
+        id: 12,
+        method: 'mining.submit',
+        params: valid_share
+      })
+
+      let submit_response = Response.read(dummy.end.read())
+      expect(submit_response).to.not.equal(undefined)
+      expect(BooleanResponse.result(submit_response)).to.equal(true)
+    }
+/*
+    {
+      send({
+        id: 5,
+        method: 'mining.submit',
+        params: valid_share
+      })
+
+      let submit_response = Response.read(dummy.end.read())
+      expect(submit_response).to.not.equal(undefined)
+      expect(BooleanResponse.result(submit_response)).to.equal(true)
+      expect(Response.error(submit_response)[0]).to.equal(22)
+
+    }*/
 
 
   })
@@ -825,7 +825,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       expect(BooleanResponse.result(submit_response)).to.equal(false)
       expect(Response.error(submit_response)[0]).to.equal(33)
     }
-    
+
     {
       send({
         id: 6,
