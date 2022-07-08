@@ -57,7 +57,7 @@ let default_options = {
 }
 
 // Subscribe lets us subscribe to new jobs. The backend could be boost or a mining pool.
-type Subscribe = (w: Worker) => undefined | {initial: StratumAssignment, solved: (p: Proof) => StratumAssignment | undefined }
+type Subscribe = (w: Worker) => undefined | {initial: StratumAssignment, solved: (p: Proof) => StratumAssignment | boolean }
 
 interface StratumJob {
   notify: notify_params,
@@ -236,7 +236,11 @@ export function server_session(
 
     // set during the subscribe method. We don't know where to send
     // a solved share until after the worker is registered.
-    let solved: (p: Proof) => StratumAssignment | undefined
+    // when a proof is completed, we may need to send a new job to
+    // the client. Alternately, we may need to disconnect because
+    // we are out of jobs. A 'true' response indicates that the
+    // client should continue working on the same job.
+    let solved: (p: Proof) => StratumAssignment | boolean
 
     // when we know of a new job, we have to send a notify message.
     function notify_new_job(job: StratumAssignment, id?: string) {
@@ -368,10 +372,12 @@ export function server_session(
 
       let r = jobs.check(x, difficulty, options.nowSeconds().number)
 
-      let next_assignment: StratumAssignment
+      let next_assignment
       if (r.proof) next_assignment = solved(r.proof)
       remote.respond({id: request.id, result: r.err === null, err: r.err})
-      if (!!next_assignment) notify_new_job(next_assignment)
+      if (typeof next_assignment === 'boolean') {
+        if (!next_assignment) close()
+      } else notify_new_job(next_assignment)
     }
 
     let handleRequest = {
