@@ -1,51 +1,75 @@
-import * as boostpow from 'boostpow'
-import { error, Error } from './Stratum/error'
-import { JSONValue } from './json'
-import { now_seconds } from './time'
-import { SessionID, session_id } from './Stratum/sessionID'
-import { message_id } from './Stratum/messageID'
-import { request } from './Stratum/request'
-import { response } from './Stratum/response'
-import { result, parameters } from './Stratum/message'
-import { notification } from './Stratum/notification'
-import { extranonce, SetExtranonce } from './Stratum/mining/set_extranonce'
-import { set_difficulty, SetDifficulty } from './Stratum/mining/set_difficulty'
-import { notify, Notify } from './Stratum/mining/notify'
-import { Proof } from './Stratum/proof'
-import { subscriptions, subscribe_request, subscribe_response, SubscribeRequest, SubscribeResponse }
-  from './Stratum/mining/subscribe'
-import { configure_request, configure_response, extension_requests,
-  extension_result, extension_results,
-  ConfigureRequest, ConfigureResponse, Extensions }
-  from './Stratum/mining/configure'
-import { authorize_request, AuthorizeRequest, AuthorizeResponse }
-  from './Stratum/mining/authorize'
-import { share, submit_request, Share, SubmitRequest, SubmitResponse }
-  from './Stratum/mining/submit'
-import { notify_params, NotifyParams } from './Stratum/mining/notify'
-import { StratumAssignment, Worker } from './jobs'
-import { Local, Remote } from './stratum'
-import { StratumRequest, StratumResponse, StratumHandler, StratumHandlers } from './Stratum/handlers/base'
-import {extend, ExtensionHandlers} from './extensions'
+import * as boostpow from "boostpow";
+import { error, Error } from "./Stratum/error";
+import { JSONValue } from "./json";
+import { now_seconds } from "./time";
+import { SessionID, session_id } from "./Stratum/sessionID";
+import { message_id } from "./Stratum/messageID";
+import { request } from "./Stratum/request";
+import { response } from "./Stratum/response";
+import { result, parameters } from "./Stratum/message";
+import { notification } from "./Stratum/notification";
+import { extranonce, SetExtranonce } from "./Stratum/mining/set_extranonce";
+import { set_difficulty, SetDifficulty } from "./Stratum/mining/set_difficulty";
+import { notify, Notify } from "./Stratum/mining/notify";
+import { Proof } from "./Stratum/proof";
+import {
+  subscriptions,
+  subscribe_request,
+  subscribe_response,
+  SubscribeRequest,
+  SubscribeResponse,
+} from "./Stratum/mining/subscribe";
+import {
+  configure_request,
+  configure_response,
+  extension_requests,
+  extension_result,
+  extension_results,
+  ConfigureRequest,
+  ConfigureResponse,
+  Extensions,
+} from "./Stratum/mining/configure";
+import {
+  authorize_request,
+  AuthorizeRequest,
+  AuthorizeResponse,
+} from "./Stratum/mining/authorize";
+import {
+  share,
+  submit_request,
+  Share,
+  SubmitRequest,
+  SubmitResponse,
+} from "./Stratum/mining/submit";
+import { notify_params, NotifyParams } from "./Stratum/mining/notify";
+import { StratumAssignment, Worker } from "./jobs";
+import { Local, Remote } from "./stratum";
+import {
+  StratumRequest,
+  StratumResponse,
+  StratumHandler,
+  StratumHandlers,
+} from "./Stratum/handlers/base";
+import { extend, ExtensionHandlers } from "./extensions";
 
 interface Options {
   // do we require a miner to log in or can he submit shares without it?
   // if he doesn't log in we don't know how to pay him, so if this is allowed
   // the miner has to be us.
-  canSubmitWithoutAuthorization?: boolean,
+  canSubmitWithoutAuthorization?: boolean;
 
   // max time difference between the reported time of a submitted share and
   // our local time.
-  maxTimeDifference?: number,
+  maxTimeDifference?: number;
 
   // how long do we save old jobs in memory?
-  secondsToSaveJobs?: number,
+  secondsToSaveJobs?: number;
 
   // how many message ids do we remember to reject duplicates?
-  rememberThisManyMessageIds?: number,
+  rememberThisManyMessageIds?: number;
 
   // something to tell the time.
-  nowSeconds?: () => boostpow.UInt32Little
+  nowSeconds?: () => boostpow.UInt32Little;
 }
 
 let default_options = {
@@ -53,16 +77,21 @@ let default_options = {
   maxTimeDifference: 5,
   secondsToSaveJobs: 600,
   rememberThisManyMessageIds: 10,
-  nowSeconds: now_seconds
-}
+  nowSeconds: now_seconds,
+};
 
 // Subscribe lets us subscribe to new jobs. The backend could be boost or a mining pool.
-type Subscribe = (w: Worker) => undefined | {initial: StratumAssignment, solved: (p: Proof) => StratumAssignment | boolean }
+type Subscribe = (w: Worker) =>
+  | undefined
+  | {
+      initial: StratumAssignment;
+      solved: (p: Proof) => StratumAssignment | boolean;
+    };
 
 interface StratumJob {
-  notify: notify_params,
-  extranonce: extranonce,
-  mask: string|undefined
+  notify: notify_params;
+  extranonce: extranonce;
+  mask: string | undefined;
 }
 
 // a number of checks have to pass in order for shares to be accepted.
@@ -70,51 +99,53 @@ interface StratumJob {
 let handle_jobs = (maxTimeDifference: number) => {
   // list of previous jobs. We need this because a client
   // may turn in a share for an old job.
-  let jobs: StratumJob[] = []
+  let jobs: StratumJob[] = [];
 
   // list of shares submitted for currently open jobs. We need this
   // to be able to reject duplicate shares.
-  let shares: share[] = []
+  let shares: share[] = [];
 
   // find the job that the client is submitting a share for from
   // the job id.
-  let find = (jid: string): undefined | {stale: boolean, job: StratumJob} => {
-    let stale: boolean = false
+  let find = (jid: string): undefined | { stale: boolean; job: StratumJob } => {
+    let stale: boolean = false;
 
     for (let i = jobs.length - 1; i >= 0; i--) {
-      let job = jobs[i]
+      let job = jobs[i];
 
-      if (NotifyParams.jobID(job.notify) === jid) return {
-        stale: stale,
-        job: job
-      }
+      if (NotifyParams.jobID(job.notify) === jid)
+        return {
+          stale: stale,
+          job: job,
+        };
 
-      if (NotifyParams.clean(job.notify)) stale = true
+      if (NotifyParams.clean(job.notify)) stale = true;
     }
-  }
+  };
 
   let detect_duplicate = (x: share, now: number): boolean => {
-    let i
+    let i;
     for (i = shares.length - 1; i >= 0; i--) {
-      let g = shares[i]
-      if (now - Share.time(g).number > maxTimeDifference) break
-      if (Share.equal(x, g)) return true
+      let g = shares[i];
+      if (now - Share.time(g).number > maxTimeDifference) break;
+      if (Share.equal(x, g)) return true;
     }
 
-    jobs.splice(0, i + 1)
+    jobs.splice(0, i + 1);
 
-    return false
-  }
+    return false;
+  };
 
   return {
     push: (j: StratumJob, now: number) => {
-      let i
+      let i;
       for (i = jobs.length - 1; i >= 0; i--) {
-        if (now - NotifyParams.time(jobs[i].notify).number >= maxTimeDifference) break
+        if (now - NotifyParams.time(jobs[i].notify).number >= maxTimeDifference)
+          break;
       }
 
-      jobs.splice(0, i + 1)
-      jobs.push(j)
+      jobs.splice(0, i + 1);
+      jobs.push(j);
     },
 
     // After a share is found to be valid, it needs to be passed on to the
@@ -124,35 +155,42 @@ let handle_jobs = (maxTimeDifference: number) => {
     // and returns a function that tries to construct a complete proof from
     // an incomplete proof. If unsuccessful it returns an error and if
     // successful it runs solved on the complete proof.
-    check: (x: share, d: boostpow.Difficulty, now: number): {proof?: Proof, err: error} => {
-      let timestamp = Share.time(x).number
+    check: (
+      x: share,
+      d: boostpow.Difficulty,
+      now: number
+    ): { proof?: Proof; err: error } => {
+      let timestamp = Share.time(x).number;
 
-      if (now - timestamp > maxTimeDifference) return {err: Error.make(Error.TIME_TOO_OLD)};
-      if (timestamp - now > maxTimeDifference) return {err: Error.make(Error.TIME_TOO_NEW)};
+      if (now - timestamp > maxTimeDifference)
+        return { err: Error.make(Error.TIME_TOO_OLD) };
+      if (timestamp - now > maxTimeDifference)
+        return { err: Error.make(Error.TIME_TOO_NEW) };
 
       let f = find(Share.jobID(x));
 
-      if (f === undefined) return {err: Error.make(Error.JOB_NOT_FOUND)};
-      if (f.stale) return {err: Error.make(Error.STALE_SHARE)};
+      if (f === undefined) return { err: Error.make(Error.JOB_NOT_FOUND) };
+      if (f.stale) return { err: Error.make(Error.STALE_SHARE) };
 
       let p: Proof = new Proof(f.job.extranonce, f.job.notify, x, f.job.mask);
       // this can only happen if the client forgets to send us a version
       // value when he is supposed to or when he sends one when he's not
       // supposed to.
-      if (!p.proof) return {err: Error.make(Error.ILLEGAL_VERMASK)};
+      if (!p.proof) return { err: Error.make(Error.ILLEGAL_VERMASK) };
 
       // check for duplicate shares.
-      if (detect_duplicate(x, now)) return {err: Error.make(Error.DUPLICATE_SHARE)}
-      if (!p.valid(d)) return {err: Error.make(Error.INVALID_SOLUTION)}
-      shares.push(x)
-      return {proof: p, err: null}
+      if (detect_duplicate(x, now))
+        return { err: Error.make(Error.DUPLICATE_SHARE) };
+      if (!p.valid(d)) return { err: Error.make(Error.INVALID_SOLUTION) };
+      shares.push(x);
+      return { proof: p, err: null };
     },
 
     hashpower: () => {
-      return {hashpower:0, certainty: 0}
-    }
-  }
-}
+      return { hashpower: 0, certainty: 0 };
+    },
+  };
+};
 
 export function server_session(
   select: Subscribe,
@@ -162,77 +200,78 @@ export function server_session(
   extension_handlers?: ExtensionHandlers
 ): Local {
   return (remote: Remote, disconnect: () => void) => {
-    let running: boolean = true
+    let running: boolean = true;
 
     function close() {
-      running = false
-      disconnect()
+      running = false;
+      disconnect();
     }
 
-    let options = default_options
-    Object.assign(options, opts)
+    let options = default_options;
+    Object.assign(options, opts);
 
-    let extensions = extend(extension_handlers)
+    let extensions = extend(extension_handlers);
 
     // set during the subscribe method.
-    let id: session_id | undefined
+    let id: session_id | undefined;
 
-    let difficulty: boostpow.Difficulty
-    let next_difficulty: boostpow.Difficulty
+    let difficulty: boostpow.Difficulty;
+    let next_difficulty: boostpow.Difficulty;
 
-    let extranonce: extranonce
-    let next_extranonce: extranonce
+    let extranonce: extranonce;
+    let next_extranonce: extranonce;
 
     // send a set difficulty message to the client and remember
     // for when he submits a share later. The setting is not
     // applied by the client until after the next notify message is sent.
     function send_set_difficulty(d: boostpow.Difficulty) {
-      next_difficulty = d
-      remote.notify(SetDifficulty.make(d))
+      next_difficulty = d;
+      remote.notify(SetDifficulty.make(d));
     }
 
     // send a set extranonce message to the client and remember
     // for when he submits a share later. The setting is not
     // applied by the client until after the next notify message is sent.
     function send_set_extranonce(en: extranonce) {
-      next_extranonce = en
-      remote.notify({id:null, method:'mining.set_extranonce', params: en})
+      next_extranonce = en;
+      remote.notify({ id: null, method: "mining.set_extranonce", params: en });
     }
 
     // send a notify message to the client.
     function send_mining_notify(p: notify_params) {
       // apply latest difficulty and extra nonces.
-      if (next_difficulty) difficulty = next_difficulty
-      if (next_extranonce) extranonce = next_extranonce
-      remote.notify({id: null, method:'mining.notify', params: p})
+      if (next_difficulty) difficulty = next_difficulty;
+      if (next_extranonce) extranonce = next_extranonce;
+      remote.notify({ id: null, method: "mining.notify", params: p });
     }
 
     // the user agent string sent in the subscribe method.
-    let user_agent: undefined | string
+    let user_agent: undefined | string;
 
     // If the subscribe method has not yet been sent, this is undefined.
     // Otherwise, it has the subscriptions that were sent.
-    let subscriptions: undefined | subscriptions
+    let subscriptions: undefined | subscriptions;
 
     function subscribed(): boolean {
-      return subscriptions !== undefined
+      return subscriptions !== undefined;
     }
 
     // undefined indicates that the authorize request has not been sent.
-    let username: undefined | string
+    let username: undefined | string;
 
     function authorized(): boolean {
-      return username !== undefined
+      return username !== undefined;
     }
 
     function version_mask(): string | undefined {
-      if (!extensions.supported('version_rolling')) return
-      let mask = extensions.parameters('version_rolling').mask
-      if (!mask || typeof mask !== 'number') return boostpow.Int32Little.fromNumber(0).hex
-      return boostpow.Int32Little.fromNumber(mask).hex
+      if (!extensions.supported("version_rolling")) return;
+      let mask = extensions.parameters("version_rolling").mask;
+      if (!mask || typeof mask !== "number")
+        return boostpow.Int32Little.fromNumber(0).hex;
+      return boostpow.Int32Little.fromNumber(mask).hex;
     }
 
-    let jobs = handle_jobs(options.maxTimeDifference)
+    let jobs = handle_jobs(options.maxTimeDifference);
 
     // set during the subscribe method. We don't know where to send
     // a solved share until after the worker is registered.
@@ -240,29 +279,33 @@ export function server_session(
     // the client. Alternately, we may need to disconnect because
     // we are out of jobs. A 'true' response indicates that the
     // client should continue working on the same job.
-    let solved: (p: Proof) => StratumAssignment | boolean
+    let solved: (p: Proof) => StratumAssignment | boolean;
 
     // when we know of a new job, we have to send a notify message.
     function notify_new_job(job: StratumAssignment, id?: string) {
-      let en: extranonce
-      if ((!!id || job.extranonce2Size != extranonce[1])) {
-        if (!extensions.supported("subscribe_extranonce")) throw "error: cannot update extranonce"
+      let en: extranonce;
+      if (!!id || job.extranonce2Size != extranonce[1]) {
+        if (!extensions.supported("subscribe_extranonce"))
+          throw "error: cannot update extranonce";
 
-        en = [!!id ? id : extranonce[0], job.extranonce2Size]
-        send_set_extranonce(en)
+        en = [!!id ? id : extranonce[0], job.extranonce2Size];
+        send_set_extranonce(en);
       } else {
-        en = extranonce
+        en = extranonce;
       }
 
-      jobs.push({
-        notify: job.notify,
-        extranonce: en,
-        mask: version_mask()
-      }, options.nowSeconds().number)
+      jobs.push(
+        {
+          notify: job.notify,
+          extranonce: en,
+          mask: version_mask(),
+        },
+        options.nowSeconds().number
+      );
 
       // we always use the same difficulty as the job for now.
-      send_set_difficulty(NotifyParams.nbits(job.notify))
-      send_mining_notify(job.notify)
+      send_set_difficulty(NotifyParams.nbits(job.notify));
+      send_mining_notify(job.notify);
     }
 
     // configure is an optional first message that determines wheher
@@ -270,153 +313,205 @@ export function server_session(
     function configure(params: parameters): StratumResponse {
       // If extensions are not supported, then we are not using the extended
       // protocol, we don't know about this message, and it is an error.
-      if (!extension_handlers) return {result: null, err: Error.make(Error.ILLEGAL_METHOD)}
+      if (!extension_handlers)
+        return { result: null, err: Error.make(Error.ILLEGAL_METHOD) };
 
-      let requested = Extensions.extension_requests(params)
-      if (!requested) return {result: null, err: Error.make(Error.ILLEGAL_PARARMS)}
+      let requested = Extensions.extension_requests(params);
+      if (!requested)
+        return { result: null, err: Error.make(Error.ILLEGAL_PARARMS) };
 
       // If we have already received the configure method, then only minimum_difficulty is allowed.
-      if (extensions.configured() && !(extensions.supported('minimum_difficulty') &&
-        requested['minimum_difficulty'] && Object.keys(requested).length === 1))
-          return {result: null, err: Error.make(Error.ILLEGAL_METHOD)}
+      if (
+        extensions.configured() &&
+        !(
+          extensions.supported("minimum_difficulty") &&
+          requested["minimum_difficulty"] &&
+          Object.keys(requested).length === 1
+        )
+      )
+        return { result: null, err: Error.make(Error.ILLEGAL_METHOD) };
 
-      return {result: Extensions.configure_response_result(extensions.handle(requested)), err: null}
+      return {
+        result: Extensions.configure_response_result(
+          extensions.handle(requested)
+        ),
+        err: null,
+      };
     }
 
     function handleConfigure(request: request): void {
-      let response: StratumResponse = configure(request.params)
-      response.id = request.id
-      remote.respond(<response>response)
-      if (response.err != null) close()
+      let response: StratumResponse = configure(request.params);
+      response.id = request.id;
+      remote.respond(<response>response);
+      if (response.err != null) close();
     }
 
     function handleSubscribe(request: request): void {
-
       if (!extensions.configured()) extensions.handle();
 
       ((sub, error) => {
         // subscribe can only be called once. -- or can it?
-        if (subscribed()) return error(Error.ILLEGAL_METHOD)
+        if (subscribed()) return error(Error.ILLEGAL_METHOD);
 
-        if (!sub) return error(Error.ILLEGAL_PARARMS)
+        if (!sub) return error(Error.ILLEGAL_PARARMS);
 
-        user_agent = SubscribeRequest.userAgent(sub)
+        user_agent = SubscribeRequest.userAgent(sub);
 
         // if we use subscribe_extranonce, then the result is different.
-        let version_rolling: boolean = extensions.supported("version_rolling")
-        let subscribe_extranonce: boolean = extensions.supported("subscribe_extranonce")
+        let version_rolling: boolean = extensions.supported("version_rolling");
+        let subscribe_extranonce: boolean = extensions.supported(
+          "subscribe_extranonce"
+        );
 
         let register = select({
-          'version_rolling': version_rolling,
-          'hashpower': jobs.hashpower,
-          'minimum_difficulty': extensions.minimum_difficulty,
-          'cancel': close
-        })
-        if (!register) return error(Error.INTERNAL_ERROR)
-        let job = register.initial
+          version_rolling: version_rolling,
+          hashpower: jobs.hashpower,
+          minimum_difficulty: extensions.minimum_difficulty,
+          cancel: close,
+        });
+        if (!register) return error(Error.INTERNAL_ERROR);
+        let job = register.initial;
 
-        solved = register.solved
+        solved = register.solved;
 
-        subscriptions = subscribe_extranonce ?
-          [['mining.notify', SubscribeResponse.random_subscription_id()],
-            ['mining.set_difficulty', SubscribeResponse.random_subscription_id()],
-            ['mining.set_extranonce', SubscribeResponse.random_subscription_id()]] :
-          [['mining.notify', SubscribeResponse.random_subscription_id()],
-            ['mining.set_difficulty', SubscribeResponse.random_subscription_id()]]
+        subscriptions = subscribe_extranonce
+          ? [
+              ["mining.notify", SubscribeResponse.random_subscription_id()],
+              [
+                "mining.set_difficulty",
+                SubscribeResponse.random_subscription_id(),
+              ],
+              [
+                "mining.set_extranonce",
+                SubscribeResponse.random_subscription_id(),
+              ],
+            ]
+          : [
+              ["mining.notify", SubscribeResponse.random_subscription_id()],
+              [
+                "mining.set_difficulty",
+                SubscribeResponse.random_subscription_id(),
+              ],
+            ];
 
         // has the user requestd an extranonce1?
-        let n1 = SubscribeRequest.extranonce1(sub)
-        let id = n1 ? n1.hex : SessionID.random()
+        let n1 = SubscribeRequest.extranonce1(sub);
+        let id = n1 ? n1.hex : SessionID.random();
 
-        extranonce = [id, job.extranonce2Size]
-        remote.respond({id: request.id, result: [subscriptions, id, job.extranonce2Size], err: null})
-        notify_new_job(job)
-      })(SubscribeRequest.read(request),
-      (err: number) => {
-        remote.respond({id: request.id, result: null, err: Error.make(err)})
-        close()
-      })
+        extranonce = [id, job.extranonce2Size];
+        remote.respond({
+          id: request.id,
+          result: [subscriptions, id, job.extranonce2Size],
+          err: null,
+        });
+        notify_new_job(job);
+      })(SubscribeRequest.read(request), (err: number) => {
+        remote.respond({ id: request.id, result: null, err: Error.make(err) });
+        close();
+      });
     }
 
     function authorize(params: parameters): StratumResponse {
+      let auth = AuthorizeRequest.read_params(params);
 
-      let auth = AuthorizeRequest.read_params(params)
-
-      if (!auth) return {result: null, err: Error.make(Error.ILLEGAL_PARARMS)}
+      if (!auth)
+        return { result: null, err: Error.make(Error.ILLEGAL_PARARMS) };
 
       // can only auhorize once.
-      if (authorized()) return {result: null, err: Error.make(Error.ILLEGAL_METHOD)}
+      if (authorized())
+        return { result: null, err: Error.make(Error.ILLEGAL_METHOD) };
 
       // for now we accept all authorization requests.
-      username = auth[0]
-      return {result: true, err: null}
+      username = auth[0];
+      return { result: true, err: null };
     }
 
     function handleAuthorize(request: request): void {
       if (!extensions.configured()) extensions.handle();
-      let response: StratumResponse = authorize(request.params)
-      response.id = request.id
-      remote.respond(<response>response)
-      if (response.err != null) close()
+      let response: StratumResponse = authorize(request.params);
+      response.id = request.id;
+      remote.respond(<response>response);
+      if (response.err != null) close();
     }
 
     function handleSubmit(request: request): void {
       if (!subscribed())
-        return remote.respond({id: request.id, result: null, err: Error.make(Error.ILLEGAL_METHOD)})
+        return remote.respond({
+          id: request.id,
+          result: null,
+          err: Error.make(Error.ILLEGAL_METHOD),
+        });
 
       if (!authorized() && !options.canSubmitWithoutAuthorization)
-        return remote.respond({id: request.id, result: null, err: Error.make(Error.UNAUTHORIZED)})
+        return remote.respond({
+          id: request.id,
+          result: null,
+          err: Error.make(Error.UNAUTHORIZED),
+        });
 
-      let x = Share.read(request.params)
-      if (!x) return remote.respond({id: request.id, result: null, err: Error.make(Error.ILLEGAL_PARARMS)})
+      let x = Share.read(request.params);
+      if (!x)
+        return remote.respond({
+          id: request.id,
+          result: null,
+          err: Error.make(Error.ILLEGAL_PARARMS),
+        });
 
-      let r = jobs.check(x, difficulty, options.nowSeconds().number)
-      remote.respond({id: request.id, result: r.err === null, err: r.err})
-      if (!r.proof) return
+      let r = jobs.check(x, difficulty, options.nowSeconds().number);
+      remote.respond({ id: request.id, result: r.err === null, err: r.err });
+      if (!r.proof) return;
 
-      let next_assignment = solved(r.proof)
-      if (typeof next_assignment === 'boolean') {
-        if (!next_assignment) close()
-      } else notify_new_job(next_assignment)
+      let next_assignment = solved(r.proof);
+      if (typeof next_assignment === "boolean") {
+        if (!next_assignment) close();
+      } else notify_new_job(next_assignment);
     }
 
     let handleRequest = {
-      'mining.configure': handleConfigure,
-      'mining.subscribe': handleSubscribe,
-      'mining.authorize': handleAuthorize,
-      'mining.submit': handleSubmit
-    }
+      "mining.configure": handleConfigure,
+      "mining.subscribe": handleSubscribe,
+      "mining.authorize": handleAuthorize,
+      "mining.submit": handleSubmit,
+    };
 
-    let requests_ids: message_id[] = []
+    let requests_ids: message_id[] = [];
 
     let handle = {
-      'notify': (n: notification) => {
+      notify: (n: notification) => {
         // nothing to do here because there is no notification that
         // we need to respond to as the server.
       },
-      'request': (r: request) => {
-
-        if(!extensions.configured() && r.method !=='mining.configure')
+      request: (r: request) => {
+        if (!extensions.configured() && r.method !== "mining.configure")
           extensions.handle();
 
-        let handle = handleRequest[r.method]
+        let handle = handleRequest[r.method];
         if (!handle) {
-          remote.respond({id: r.id, result: null, err: Error.make(Error.ILLEGAL_METHOD)})
-          return
+          remote.respond({
+            id: r.id,
+            result: null,
+            err: Error.make(Error.ILLEGAL_METHOD),
+          });
+          return;
         }
 
         if (requests_ids.includes(r.id)) {
-          remote.respond({id: r.id, result: null, err: Error.make(Error.DUPLICATE_MESSAGE_ID)})
-          return
+          remote.respond({
+            id: r.id,
+            result: null,
+            err: Error.make(Error.DUPLICATE_MESSAGE_ID),
+          });
+          return;
         }
 
-        requests_ids.push(r.id)
-        if (requests_ids.length > options.rememberThisManyMessageIds) requests_ids.shift()
+        requests_ids.push(r.id);
+        if (requests_ids.length > options.rememberThisManyMessageIds)
+          requests_ids.shift();
 
-        handle(r)
-      }
-    }
+        handle(r);
+      },
+    };
 
-    return handle
-  }
+    return handle;
+  };
 }

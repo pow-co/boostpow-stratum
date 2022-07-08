@@ -1,12 +1,10 @@
+import { expect, spy } from "./utils";
 
-import { expect, spy } from './utils'
+import * as stratum from "../src/stratum";
 
-import * as stratum from '../src/stratum'
-
-import { log } from '../src/log'
+import { log } from "../src/log";
 
 describe("Stratum Protocol", () => {
-
   /* This Executable Spec Should Start as Just English
    *
    * Every detail about how the protocol should work, including
@@ -16,7 +14,7 @@ describe("Stratum Protocol", () => {
 
   it.skip("#methodA should do X and then respond with something", async () => {
     // Before writing the code it is best if we stick to english to begin.
-  })
+  });
 
   /*
    * This way we can get all the requirements out and slowly
@@ -24,6 +22,4 @@ describe("Stratum Protocol", () => {
    * coding syntax, focus on the business requirements here when
    * using "it" to describe desired system features.
    */
-
-})
-
+});

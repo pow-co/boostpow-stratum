@@ -1,17 +1,16 @@
+import { Schema } from "joi";
 
-import { Schema } from 'joi'
-
-import * as Joi from 'joi'
+import * as Joi from "joi";
 
 export class Handler {
   method: string;
   schema: Schema;
   handler: Function;
 
-  constructor(params: {method:string, schema: Schema, handler: Function}) {
-    this.method = params.method
-    this.schema = params.schema
-    this.handler = params.handler
+  constructor(params: { method: string; schema: Schema; handler: Function }) {
+    this.method = params.method;
+    this.schema = params.schema;
+    this.handler = params.handler;
   }
 }
 
@@ -20,16 +19,11 @@ interface AuthToken {
 }
 
 const handlers = {
-
   authenticate: new Handler({
-    method: 'authenticate',
+    method: "authenticate",
     schema: Joi.object({
-      token: Joi.string().required()
+      token: Joi.string().required(),
     }),
-    handler: async ({ token }: AuthToken) => {
-
-    }
-  })
-
-}
-
+    handler: async ({ token }: AuthToken) => {},
+  }),
+};

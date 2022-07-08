@@ -1,4 +1,3 @@
-
 export interface StreamQuery {
   type: string;
   payload?: any;
@@ -7,10 +6,9 @@ export interface StreamQuery {
   start?: Date;
 }
 
-import { Readable } from 'stream'
+import { Readable } from "stream";
 
 export class LogStream extends Readable {
-
   query: StreamQuery;
 
   offset: 0;
@@ -18,13 +16,8 @@ export class LogStream extends Readable {
   limit: 100;
 
   constructor(query: StreamQuery) {
+    super();
 
-    super()
-
-    this.query = query
-
+    this.query = query;
   }
-
 }
-
-

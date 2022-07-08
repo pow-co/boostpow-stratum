@@ -1,6 +1,5 @@
-
-import * as http from 'superagent'
-import * as boostpow from 'boostpow'
+import * as http from "superagent";
+import * as boostpow from "boostpow";
 
 interface PowcoJob {
   content: string;
@@ -17,20 +16,22 @@ interface PowcoJob {
 }
 
 export async function listJobs(): Promise<boostpow.Output[]> {
+  let response = await http.get("https://pow.co/api/v1/boost/jobs");
 
-  let response = await http.get('https://pow.co/api/v1/boost/jobs')
-
-  let jobs: boostpow.Output[] = []
+  let jobs: boostpow.Output[] = [];
   for (let j of response.body.jobs) {
-    if (j.script === null) continue
-    let o: boostpow.Output
+    if (j.script === null) continue;
+    let o: boostpow.Output;
     try {
-      o = new boostpow.Output(boostpow.Job.fromHex(j.script),
-        j.value, boostpow.Digest32.fromHex(j.txid), j.vout)
-      jobs.push(o)
+      o = new boostpow.Output(
+        boostpow.Job.fromHex(j.script),
+        j.value,
+        boostpow.Digest32.fromHex(j.txid),
+        j.vout
+      );
+      jobs.push(o);
     } catch (x) {}
   }
 
-  return jobs
-
+  return jobs;
 }

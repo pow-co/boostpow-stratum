@@ -1,9 +1,8 @@
-
 # Stratum Server for Boost Jobs
 
 ## Installation
 
-Typescript must be installed on your development machine 
+Typescript must be installed on your development machine
 
 ```
 npm install
@@ -50,4 +49,3 @@ To tail the logs in production run
 ```
 npm run logs
 ```
-

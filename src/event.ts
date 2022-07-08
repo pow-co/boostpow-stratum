@@ -1,38 +1,37 @@
-import { log } from './log'
+import { log } from "./log";
 
 export class Event {
   properties: object;
 
   constructor(properties: object) {
-    this.properties = properties
+    this.properties = properties;
   }
 
   get(property: string) {
-    return this.properties[property]
+    return this.properties[property];
   }
-};
+}
 
-var events : Event[] = [];
+var events: Event[] = [];
 
 export class Events {
-
   static last(who: String | undefined): Event | undefined {
     if (events.length == 0) {
-      return
+      return;
     }
 
     if (typeof who === undefined) {
-      return events[events.length - 1]
+      return events[events.length - 1];
     }
 
     for (let i = events.length; i > 0; i--) {
-      let v: Event = events[i - 1]
-      if (v['who'] == who) {
-        return v
+      let v: Event = events[i - 1];
+      if (v["who"] == who) {
+        return v;
       }
     }
 
-    return
+    return;
   }
 
   static list(who: String | undefined): Event[] {
@@ -43,12 +42,11 @@ export class Events {
     var filtered = [];
 
     events.forEach((event: Event) => {
-      if (event['who'] === who) {
+      if (event["who"] === who) {
         filtered.push(event);
       }
     });
 
     return filtered;
-
   }
 }

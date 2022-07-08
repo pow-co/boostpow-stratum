@@ -1,20 +1,18 @@
+import { log } from "./log";
 
-import { log } from './log'
+import { listSessions, Sessions } from "./session";
 
-import { listSessions, Sessions } from './session'
+import * as Joi from "joi";
 
-import * as Joi from 'joi'
+import * as Hapi from "@hapi/hapi";
 
-import * as Hapi from '@hapi/hapi'
+import { badRequest } from "boom";
 
-import { badRequest } from 'boom'
+import { plugin as socketio } from "./socket.io/plugin";
 
-import { plugin as socketio } from './socket.io/plugin'
-
-var server
+var server;
 
 async function initServer(): Hapi.Server {
-
   server = new Hapi.Server({
     host: process.env.HOST || "localhost",
     port: process.env.PORT || 5300,
@@ -22,172 +20,132 @@ async function initServer(): Hapi.Server {
       cors: true,
       validate: {
         options: {
-          stripUnknown: true
-        }
-      }
-    }
+          stripUnknown: true,
+        },
+      },
+    },
   });
 
-  await server.register(socketio)
+  await server.register(socketio);
 
   server.route({
-
     method: "GET",
 
     path: "/api/v1/events",
 
     options: {
-
       validate: {
-
         query: Joi.object({
-
           limit: Joi.number().optional(),
 
           offset: Joi.number().optional(),
 
           order: Joi.string().optional(),
 
-          type: Joi.string().optional()
-
-        })
+          type: Joi.string().optional(),
+        }),
       },
 
       response: {
-
         schema: Joi.object({
+          events: Joi.array().items(
+            Joi.object({
+              id: Joi.number().required(),
 
-          events: Joi.array().items(Joi.object({
+              payload: Joi.object().required(),
 
-            id: Joi.number().required(),
+              type: Joi.string().required(),
 
-            payload: Joi.object().required(),
+              createdAt: Joi.date().required(),
 
-            type: Joi.string().required(),
-
-            createdAt: Joi.date().required(),
-
-            updatedAt: Joi.date().required(),
-
-          }))
-
+              updatedAt: Joi.date().required(),
+            })
+          ),
         }),
 
-        failAction: 'log'
-
-      }
-
+        failAction: "log",
+      },
     },
 
     handler: async (request: Hapi.Request, h) => {
+      const { remoteAddress, remotePort, query } = request;
 
-      const { remoteAddress, remotePort, query } = request
-
-      await log.info('request.log.read', { remoteAddress, remotePort, query })
+      await log.info("request.log.read", { remoteAddress, remotePort, query });
 
       try {
-
-        let events = await log.read(request.query)
+        let events = await log.read(request.query);
 
         return h.response({
+          events,
+        });
+      } catch (error) {
+        log.error("request.events.list.error", error);
 
-          events
-
-        })
-
-      } catch(error) {
-
-        log.error('request.events.list.error', error)
-
-        return badRequest(error)
-
+        return badRequest(error);
       }
-
-    }
+    },
   });
 
   server.route({
-
     method: "GET",
 
     path: "/api/v1/sessions",
 
-    options: { 
-
+    options: {
       response: {
-
         schema: Joi.object({
+          sessions: Joi.array().items(
+            Joi.object({
+              connectedAt: Joi.date().required(),
 
-          sessions: Joi.array().items(Joi.object({
+              remoteIp: Joi.string().required(),
 
-            connectedAt: Joi.date().required(),
+              remotePort: Joi.number().required(),
 
-            remoteIp: Joi.string().required(),
-
-            remotePort: Joi.number().required(),
-
-            sessionId: Joi.string().required()
-
-          }))
-
+              sessionId: Joi.string().required(),
+            })
+          ),
         }),
 
-        failAction: 'log'
-
-      }
-
+        failAction: "log",
+      },
     },
 
     handler: async (request: Hapi.Request, h) => {
+      const { remoteAddress, remotePort } = request;
 
-      const { remoteAddress, remotePort } = request
-
-      log.info('request.sessions.list', {
-
-        remoteAddress, remotePort
-
-      })
+      log.info("request.sessions.list", {
+        remoteAddress,
+        remotePort,
+      });
 
       try {
-
         let sessions: Sessions = await listSessions();
 
         return {
+          sessions: Object.values(sessions).map((session) => session.toJSON()),
+        };
+      } catch (error) {
+        log.error("request.sessions.list.error", error);
 
-          sessions: Object.values(sessions).map(session => session.toJSON())
-
-        }
-
-      } catch(error) {
-
-        log.error('request.sessions.list.error', error)
-
-        return badRequest(error)
-
+        return badRequest(error);
       }
-
-    }
+    },
   });
 
-  return server
-
+  return server;
 }
 
-export { initServer } 
+export { initServer };
 
-export { server }
+export { server };
 
 if (require.main === module) {
-
   (async () => {
-
-    let server = await initServer()
+    let server = await initServer();
 
     server.start();
 
-    log.info('api.server.started', server.info);
-
-  })()
-
+    log.info("api.server.started", server.info);
+  })();
 }
-

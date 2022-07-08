@@ -1,11 +1,9 @@
+import { log } from "../../../lib/logger";
 
-import { log } from '../../../lib/logger'
+const io = require("socket.io-client");
 
-const io = require('socket.io-client')
+console.log(io);
 
-console.log(io)
+const socket = io.connect("http://localhost:3000");
 
-const socket = io.connect("http://localhost:3000")
-
-socket.on('connected', console.log)
-
+socket.on("connected", console.log);

@@ -1,39 +1,29 @@
+import { Socket } from "socket.io";
 
-import { Socket } from 'socket.io'
+import * as Joi from "joi";
 
-import * as Joi from 'joi'
+import { authenticate } from "./auth";
 
-import { authenticate } from './auth'
+import { subscribe, unsubscribe } from "./pubsub";
 
-import { subscribe, unsubscribe } from './pubsub'
-
-import * as uuid from 'uuid'
+import * as uuid from "uuid";
 
 type LiveSockets = {
-  [key: string]: Socket
-}
+  [key: string]: Socket;
+};
 
-export const sockets: LiveSockets = {}
+export const sockets: LiveSockets = {};
 
 export class Sockets {
-
   static async connect(socket) {
+    socket.sessionId = uuid.v4();
 
-    socket.sessionId = uuid.v4()
-
-    socket.on('authenticate', async (token) => {
-
-      await subscribe(socket)
-
-    })
-
+    socket.on("authenticate", async (token) => {
+      await subscribe(socket);
+    });
   }
 
   static async disconnect(socket: Socket) {
-
-    await unsubscribe(socket)
-
+    await unsubscribe(socket);
   }
-
 }
-

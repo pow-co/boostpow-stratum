@@ -22,7 +22,7 @@ jobs:
           command: npm test
       - run:
           name: Build docker image
-          command: docker build -t boost-stratum . 
+          command: docker build -t boost-stratum .
       - run:
           name: Push to Docker Hub
           command: |
@@ -38,7 +38,6 @@ jobs:
           name: Deploy to Web Servers
           command: ssh ubuntu@pow.co "sudo chef-client -o recipe[pow.co::boost_stratum]"
 
-
 workflows:
   version: 2
   build_and_deploy:
@@ -51,4 +50,3 @@ workflows:
             branches:
               only:
                 - master
-
