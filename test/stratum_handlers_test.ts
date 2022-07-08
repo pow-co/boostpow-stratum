@@ -27,8 +27,8 @@ function dummyConnection() {
   let index = 0
   return {
     end: {
-      read: (): undefined | JSONValue => {
-        if(!open) {
+      read: (error = false): undefined | JSONValue => {
+        if(!open && !error) {
           throw new Error("Reading from a closed connection");
         }
         if (messages.length > index) {
@@ -187,7 +187,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       params: [[], {}]
     })
 
-    let response = Response.read(dummy.end.read())
+    let response = Response.read(dummy.end.read(true))
     expect(response).to.not.equal(undefined)
     expect(ConfigureResponse.valid(response)).to.equal(true)
     expect(Response.is_error(response)).to.equal(true)
@@ -222,6 +222,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       method: 'mining.authorize',
       params: [worker_name]
     })
+    dummy.end.read()
 
     send({
       id: 3,
@@ -229,8 +230,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       params: [worker_name]
     })
 
-    dummy.end.read()
-    let response = Response.read(dummy.end.read())
+
+    let response = Response.read(dummy.end.read(true))
     expect(response).to.not.equal(undefined)
     expect(StratumError.is_error(response.err)).to.equal(true)
   })
@@ -246,15 +247,13 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       method: 'mining.authorize',
       params: [worker_name]
     })
-
+    dummy.end.read()
     send({
       id: 3,
       method: 'mining.authorize',
       params: [worker_name]
     })
-
-    dummy.end.read()
-    let response = Response.read(dummy.end.read())
+    let response = Response.read(dummy.end.read(true))
     expect(response).to.not.equal(undefined)
     expect(StratumError.is_error(response.err)).to.equal(true)
   })
@@ -424,6 +423,9 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       method: 'mining.subscribe',
       params: [worker_name]
     })
+    dummy.end.read();
+    dummy.end.read();
+    dummy.end.read();
 
     send({
       id: 3,
@@ -432,10 +434,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
         "info": {
         }
       })});
-    dummy.end.read();
-    dummy.end.read();
-    dummy.end.read();
-    let response = Response.read(dummy.end.read());
+
+    let response = Response.read(dummy.end.read(true));
     expect(Response.is_error(response)).to.be.true;
     expect(response['err'][0]).to.equal(26);
   })
@@ -452,7 +452,9 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       method: 'mining.subscribe',
       params: [worker_name]
     })
-
+    dummy.end.read();
+    dummy.end.read();
+    dummy.end.read();
     send({
       id: 3,
       method: 'mining.configure',
@@ -461,11 +463,9 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
           "value":10
         }
       })});
-    dummy.end.read();
-    dummy.end.read();
-    dummy.end.read();
 
-    let response = Response.read(dummy.end.read());
+
+    let response = Response.read(dummy.end.read(true));
     expect(Response.is_error(response)).to.be.true;
     expect(response['err'][0]).to.equal(26);
   })
