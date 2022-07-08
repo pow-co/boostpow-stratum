@@ -96,7 +96,7 @@ export interface JobManager {
   // add a job
   add: (o: boostpow.Output) => void,
   invalidate: (string, number) => void,
-  subscribe: (w: Worker) => undefined | {initial: StratumAssignment, solved: (p: Proof) => StratumAssignment | undefined }
+  subscribe: (w: Worker) => undefined | {initial: StratumAssignment, solved: (p: Proof) => StratumAssignment | boolean }
 }
 
 // this has been implemented as a function rather than a class in order to avoid
@@ -200,15 +200,19 @@ export function job_manager(
         // the initial job to assign to the worker.
         initial: job.stratumJob(now_seconds()),
 
-        solved: (x: Proof): StratumAssignment | undefined => {
+        solved: (x: Proof): StratumAssignment | boolean => {
           if (!x.valid()) return
 
           complete(job, x.proof.Solution)
 
           // assign a new job to the worker.
           let new_job = assign(w)
-          if (new_job) job = new_job
-          return new_job.stratumJob(now_seconds())
+          if (new_job) {
+            job = new_job
+            return new_job.stratumJob(now_seconds())
+          }
+
+          return false
         }
       }
     }
