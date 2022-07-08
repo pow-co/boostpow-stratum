@@ -371,12 +371,10 @@ export function server_session(
       if (!x) return remote.respond({id: request.id, result: null, err: Error.make(Error.ILLEGAL_PARARMS)})
 
       let r = jobs.check(x, difficulty, options.nowSeconds().number)
-
-      let next_assignment
-      if (r.proof) {
-        next_assignment = solved(r.proof)
-      }
       remote.respond({id: request.id, result: r.err === null, err: r.err})
+      if (!r.proof) return
+
+      let next_assignment = solved(r.proof)
       if (typeof next_assignment === 'boolean') {
         if (!next_assignment) close()
       } else notify_new_job(next_assignment)
