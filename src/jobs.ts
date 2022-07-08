@@ -201,6 +201,7 @@ export function job_manager(
         initial: job.stratumJob(now_seconds()),
 
         solved: (x: Proof): StratumAssignment | boolean => {
+          throw new Error("Cheeeese Grommit")
           if (!x.valid()) return true
 
           complete(job, x.proof.Solution)

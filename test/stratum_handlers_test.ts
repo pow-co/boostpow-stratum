@@ -601,137 +601,154 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   let nonce_v1 = boostpow.UInt32Little.fromNumber(151906)
   let nonce_v2 = boostpow.UInt32Little.fromNumber(2768683)
 
-  it("mining.submit original protocol", async () => {
-    let jobs = job_manager(outputs, wallet, network, 1)
-    let dummy = dummyConnection()
-    let send = stratum(server_session(jobs.subscribe,
-      {canSubmitWithoutAuthorization:true, nowSeconds: now},
-      extensionHandlers))(dummy.connection)
+  describe("mining.submit original protocol tests", async () => {
+    let jobs;
+    let dummy;
+    let send;
+    let np: notify_params;
+    let en: extranonce;
+    let valid_share;
+    let invalid_share;
+    let valid_proof;
+    let invalid_proof;
 
-    send({
-      id: 3,
-      method: 'mining.subscribe',
-      params: [worker_name, extra_nonce_1.hex]
+
+    beforeEach(function (done) {
+      jobs = job_manager(outputs, wallet, network, 1)
+      dummy = dummyConnection()
+      send = stratum(server_session(jobs.subscribe,
+          {canSubmitWithoutAuthorization:true, nowSeconds: now},
+          extensionHandlers))(dummy.connection)
+      send({
+        id: 3,
+        method: 'mining.subscribe',
+        params: [worker_name, extra_nonce_1.hex]
+      })
+      let subscribe_result = Response.read(dummy.end.read()).result
+
+      en = <extranonce>[subscribe_result[1], subscribe_result[2]]
+      // this should be a set difficulty.
+      dummy.end.read()
+      np = Notification.read(dummy.end.read()).params
+      valid_share = Share.make(worker_name, np[0], time_now, nonce_v1, extra_nonce_2_v1)
+      invalid_share = Share.make(worker_name, np[0], time_now, nonce_v2, extra_nonce_2_v1)
+
+      valid_proof = new Proof(en, np, valid_share)
+      invalid_proof = new Proof(en, np, invalid_share)
+    done();
     })
 
-    let subscribe_result = Response.read(dummy.end.read()).result
+    it("Made a valid proof", async() => {
+      expect(valid_proof.valid()).to.equal(true)
+      expect(invalid_proof.valid()).to.equal(false)
+    })
 
-    let en: extranonce = <extranonce>[subscribe_result[1], subscribe_result[2]]
+    it("mining.submit original protocol fails on unknown job share", async () => {
 
-    // this should be a set difficulty.
-    dummy.end.read()
-    let np: notify_params = Notification.read(dummy.end.read()).params
+      // some invalid shares to test various cases.
+      let unknown_job_share = Share.make(worker_name, 'invalid', time_now, nonce_v1, extra_nonce_2_v1)
 
-    // construct the proofs that we will return.
-    let valid_share = Share.make(worker_name, np[0], time_now, nonce_v1, extra_nonce_2_v1)
-    let invalid_share = Share.make(worker_name, np[0], time_now, nonce_v2, extra_nonce_2_v1)
+      {
+        send({
+          id: 6,
+          method: 'mining.submit',
+          params: unknown_job_share
+        })
 
-    let valid_proof = new Proof(en, np, valid_share)
-    let invalid_proof = new Proof(en, np, invalid_share)
+        let submit_response = Response.read(dummy.end.read())
+        expect(submit_response).to.not.equal(undefined)
+        expect(BooleanResponse.result(submit_response)).to.equal(false)
+        expect(Response.error(submit_response)[0]).to.equal(36)
 
-    expect(valid_proof.valid()).to.equal(true)
-    expect(invalid_proof.valid()).to.equal(false)
+      }
+    });
+    it("mining.submit original protocol fails on early job share", async () => {
+      let early_share = Share.make(worker_name, np[0], time_too_early, nonce_v1, extra_nonce_2_v1)
+      {
+        send({
+          id: 7,
+          method: 'mining.submit',
+          params: early_share
+        })
 
-    // some invalid shares to test various cases.
-    let unknown_job_share = Share.make(worker_name, 'invalid', time_now, nonce_v1, extra_nonce_2_v1)
-    let early_share = Share.make(worker_name, np[0], time_too_early, nonce_v1, extra_nonce_2_v1)
-    let late_share = Share.make(worker_name, np[0], time_too_early, nonce_v1, extra_nonce_2_v1)
-    let version_mask_share = Share.make(worker_name, np[0], time_now, nonce_v1, extra_nonce_2_v1,
-        boostpow.Int32Little.fromHex('00000000'))
+        let submit_response = Response.read(dummy.end.read())
+        expect(submit_response).to.not.equal(undefined)
+        expect(BooleanResponse.result(submit_response)).to.equal(false)
+        expect(Response.error(submit_response)[0]).to.equal(31)
+      }});
 
-    {
-      send({
-        id: 6,
-        method: 'mining.submit',
-        params: unknown_job_share
-      })
+    it("mining.submit original protocol fails on late job share", async () => {
+      let late_share = Share.make(worker_name, np[0], time_too_late, nonce_v1, extra_nonce_2_v1)
+      {
+        send({
+          id: 9,
+          method: 'mining.submit',
+          params: late_share
+        })
 
-      let submit_response = Response.read(dummy.end.read())
-      expect(submit_response).to.not.equal(undefined)
-      expect(BooleanResponse.result(submit_response)).to.equal(false)
-      expect(Response.error(submit_response)[0]).to.equal(31)
-    }
+        let submit_response = Response.read(dummy.end.read())
+        expect(submit_response).to.not.equal(undefined)
+        expect(BooleanResponse.result(submit_response)).to.equal(false)
+        expect(Response.error(submit_response)[0]).to.equal(32)
+      }
+    });
+    it("mining.submit original protocol fails on invalid  share", async () => {
+      {
+        send({
+          id: 10,
+          method: 'mining.submit',
+          params: invalid_share
+        })
 
-    {
-      send({
-        id: 7,
-        method: 'mining.submit',
-        params: version_mask_share
-      })
+        let submit_response = Response.read(dummy.end.read())
+        expect(submit_response).to.not.equal(undefined)
+        expect(BooleanResponse.result(submit_response)).to.equal(false)
+        expect(Response.error(submit_response)[0]).to.equal(34)
+      }});
 
-      let submit_response = Response.read(dummy.end.read())
-      expect(submit_response).to.not.equal(undefined)
-      expect(BooleanResponse.result(submit_response)).to.equal(false)
-      expect(Response.error(submit_response)[0]).to.equal(33)
-    }
+    it("mining.submit original protocol fails on version mask job share", async () => {
+      let version_mask_share = Share.make(worker_name, np[0], time_now, nonce_v1, extra_nonce_2_v1,
+                     boostpow.Int32Little.fromHex('00000000'))
+      {
+        send({
+          id: 11,
+          method: 'mining.submit',
+          params: version_mask_share
+        })
 
-    {
-      send({
-        id: 8,
-        method: 'mining.submit',
-        params: invalid_share
-      })
+        let submit_response = Response.read(dummy.end.read())
+        expect(submit_response).to.not.equal(undefined)
+        expect(BooleanResponse.result(submit_response)).to.equal(false)
+        expect(Response.error(submit_response)[0]).to.equal(33)
+      }});
+    it("mining.submit original protocol succeeds on valid", async () => {
+      {
+        send({
+          id: 12,
+          method: 'mining.submit',
+          params: valid_share
+        })
 
-      let submit_response = Response.read(dummy.end.read())
-      expect(submit_response).to.not.equal(undefined)
-      expect(BooleanResponse.result(submit_response)).to.equal(false)
-      expect(Response.error(submit_response)[0]).to.equal(31)
-    }
+        let submit_response = Response.read(dummy.end.read())
+        expect(submit_response).to.not.equal(undefined)
+        expect(BooleanResponse.result(submit_response)).to.equal(true)
+      }});
+      /*
+          {
+            send({
+              id: 5,
+              method: 'mining.submit',
+              params: valid_share
+            })
 
-    {
-      send({
-        id: 9,
-        method: 'mining.submit',
-        params: late_share
-      })
+            let submit_response = Response.read(dummy.end.read())
+            expect(submit_response).to.not.equal(undefined)
+            expect(BooleanResponse.result(submit_response)).to.equal(true)
+            expect(Response.error(submit_response)[0]).to.equal(22)
 
-      let submit_response = Response.read(dummy.end.read())
-      expect(submit_response).to.not.equal(undefined)
-      expect(BooleanResponse.result(submit_response)).to.equal(false)
-      expect(Response.error(submit_response)[0]).to.equal(32)
-    }
-
-    {
-      send({
-        id: 10,
-        method: 'mining.submit',
-        params: invalid_share
-      })
-
-      let submit_response = Response.read(dummy.end.read())
-      expect(submit_response).to.not.equal(undefined)
-      expect(BooleanResponse.result(submit_response)).to.equal(false)
-      expect(Response.error(submit_response)[0]).to.equal(34)
-    }
-
-    {
-      send({
-        id: 12,
-        method: 'mining.submit',
-        params: valid_share
-      })
-
-      let submit_response = Response.read(dummy.end.read())
-      expect(submit_response).to.not.equal(undefined)
-      expect(BooleanResponse.result(submit_response)).to.equal(true)
-    }
-/*
-    {
-      send({
-        id: 5,
-        method: 'mining.submit',
-        params: valid_share
-      })
-
-      let submit_response = Response.read(dummy.end.read())
-      expect(submit_response).to.not.equal(undefined)
-      expect(BooleanResponse.result(submit_response)).to.equal(true)
-      expect(Response.error(submit_response)[0]).to.equal(22)
-
-    }*/
-
-
+          }*/
   })
+
 
   it("mining.submit extended protocol", async () => {
     let jobs = job_manager(outputs, wallet, network, 1)
