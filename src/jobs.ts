@@ -201,13 +201,13 @@ export function job_manager(
         initial: job.stratumJob(now_seconds()),
 
         solved: (x: Proof): StratumAssignment | boolean => {
-          if (!x.valid()) return
+          if (!x.valid()) return true
 
           complete(job, x.proof.Solution)
 
           // assign a new job to the worker.
           let new_job = assign(w)
-          if (new_job) {
+          if (!!new_job) {
             job = new_job
             return new_job.stratumJob(now_seconds())
           }
