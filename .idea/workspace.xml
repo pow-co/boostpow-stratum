@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="7acfc49c-736f-4f82-b267-4c6637d5848e" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/src/Stratum/client/get_version.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/Stratum/client/get_version.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Stratum/mining/authorize.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/Stratum/mining/authorize.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Stratum/mining/configure.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/Stratum/mining/configure.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Stratum/mining/submit.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/Stratum/mining/submit.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Stratum/mining/subscribe.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/Stratum/mining/subscribe.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Stratum/request.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/Stratum/request.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Stratum/response.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/Stratum/response.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/server_session.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/server_session.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/session.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/session.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/stratum.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/stratum.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/stratum_handlers_test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/test/stratum_handlers_test.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="29ITZKYWkAgR9HdzDU2OrAuzYXk" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/katrinaknight/Projects/cosmos/boost-stratum/test&quot;,
+    &quot;nodejs.jest.jest_package&quot;: &quot;&quot;,
+    &quot;nodejs.mocha.mocha_node_package_dir&quot;: &quot;/Users/katrinaknight/Projects/cosmos/boost-stratum/node_modules/mocha&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;/Users/katrinaknight/Projects/cosmos/boost-stratum/node_modules/prettier&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;editor.preferences.gutterIcons&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/katrinaknight/Projects/cosmos/boost-stratum/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
+      &quot;JSON&quot;
+    ]
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/test" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Mocha.Stratum Handlers Client -&gt; Server -&gt; Client">
+    <configuration name="start L4zjyPeL2DDzytJdJCxbndy1BukrcuLVLXNqdGqzKhyCkATPZnUv" type="js.build_tools.npm" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="start" />
+      </scripts>
+      <arguments value="L4zjyPeL2DDzytJdJCxbndy1BukrcuLVLXNqdGqzKhyCkATPZnUv" />
+      <node-interpreter value="$USER_HOME$/.nvm/versions/node/v16.13.2/bin/node" />
+      <envs>
+        <env name="DATABASE_URL_DEV" value="postgresql://katrinaknight@localhost/katrinaknight " />
+      </envs>
+      <method v="2" />
+    </configuration>
+    <configuration name="test" type="js.build_tools.npm" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="test" />
+      </scripts>
+      <node-interpreter value="$USER_HOME$/.nvm/versions/node/v16.13.2/bin/node" />
+      <envs>
+        <env name="DATABASE_URL_TEST" value="postgresql://katrinaknight@localhost/katrinaknight " />
+      </envs>
+      <method v="2" />
+    </configuration>
+    <configuration name="Stratum Handlers Client -&gt; Server -&gt; Client" type="mocha-javascript-test-runner" temporary="true" nameIsGenerated="true">
+      <node-interpreter>$USER_HOME$/.nvm/versions/node/v16.13.2/bin/node</node-interpreter>
+      <node-options />
+      <mocha-package>$PROJECT_DIR$/node_modules/mocha</mocha-package>
+      <working-directory>$PROJECT_DIR$</working-directory>
+      <pass-parent-env>true</pass-parent-env>
+      <envs>
+        <env name="DATABASE_URL_TEST" value="postgresql://katrinaknight@localhost/katrinaknight " />
+      </envs>
+      <ui>bdd</ui>
+      <extra-mocha-options>--require ts-node/register</extra-mocha-options>
+      <test-kind>SUITE</test-kind>
+      <test-file>$PROJECT_DIR$/test/stratum_handlers_test.ts</test-file>
+      <test-names>
+        <name value="Stratum Handlers Client -&gt; Server -&gt; Client" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration name="Stratum Handlers Client -&gt; Server -&gt; Client.mining.submit extended protocol" type="mocha-javascript-test-runner" temporary="true" nameIsGenerated="true">
+      <node-interpreter>$USER_HOME$/.nvm/versions/node/v16.13.2/bin/node</node-interpreter>
+      <node-options />
+      <mocha-package>$PROJECT_DIR$/node_modules/mocha</mocha-package>
+      <working-directory>$PROJECT_DIR$</working-directory>
+      <pass-parent-env>true</pass-parent-env>
+      <envs>
+        <env name="DATABASE_URL_TEST" value="postgresql://katrinaknight@localhost/katrinaknight " />
+      </envs>
+      <ui>bdd</ui>
+      <extra-mocha-options>--require ts-node/register</extra-mocha-options>
+      <test-kind>SUITE</test-kind>
+      <test-file>$PROJECT_DIR$/test/stratum_handlers_test.ts</test-file>
+      <test-names>
+        <name value="Stratum Handlers Client -&gt; Server -&gt; Client" />
+        <name value="mining.submit extended protocol" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration name="Stratum Handlers Client -&gt; Server -&gt; Client.mining.submit original protocol tests" type="mocha-javascript-test-runner" temporary="true" nameIsGenerated="true">
+      <node-interpreter>$USER_HOME$/.nvm/versions/node/v16.13.2/bin/node</node-interpreter>
+      <node-options />
+      <mocha-package>$PROJECT_DIR$/node_modules/mocha</mocha-package>
+      <working-directory>$PROJECT_DIR$</working-directory>
+      <pass-parent-env>true</pass-parent-env>
+      <envs>
+        <env name="DATABASE_URL_TEST" value="postgresql://katrinaknight@localhost/katrinaknight " />
+      </envs>
+      <ui>bdd</ui>
+      <extra-mocha-options>--require ts-node/register</extra-mocha-options>
+      <test-kind>SUITE</test-kind>
+      <test-file>$PROJECT_DIR$/test/stratum_handlers_test.ts</test-file>
+      <test-names>
+        <name value="Stratum Handlers Client -&gt; Server -&gt; Client" />
+        <name value="mining.submit original protocol tests" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration name="Stratum Handlers Client -&gt; Server -&gt; Client.mining.submit original protocol tests.mining.submit original protocol fails on early job share" type="mocha-javascript-test-runner" temporary="true" nameIsGenerated="true">
+      <node-interpreter>$USER_HOME$/.nvm/versions/node/v16.13.2/bin/node</node-interpreter>
+      <node-options />
+      <mocha-package>$PROJECT_DIR$/node_modules/mocha</mocha-package>
+      <working-directory>$PROJECT_DIR$</working-directory>
+      <pass-parent-env>true</pass-parent-env>
+      <envs>
+        <env name="DATABASE_URL_TEST" value="postgresql://katrinaknight@localhost/katrinaknight " />
+      </envs>
+      <ui>bdd</ui>
+      <extra-mocha-options>--require ts-node/register</extra-mocha-options>
+      <test-kind>TEST</test-kind>
+      <test-file>$PROJECT_DIR$/test/stratum_handlers_test.ts</test-file>
+      <test-names>
+        <name value="Stratum Handlers Client -&gt; Server -&gt; Client" />
+        <name value="mining.submit original protocol tests" />
+        <name value="mining.submit original protocol fails on early job share" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration name="Stratum Handlers Client -&gt; Server -&gt; Client.mining.submit original protocol tests.mining.submit original protocol fails on unknown job share" type="mocha-javascript-test-runner" temporary="true" nameIsGenerated="true">
+      <node-interpreter>$USER_HOME$/.nvm/versions/node/v16.13.2/bin/node</node-interpreter>
+      <node-options />
+      <mocha-package>$PROJECT_DIR$/node_modules/mocha</mocha-package>
+      <working-directory>$PROJECT_DIR$</working-directory>
+      <pass-parent-env>true</pass-parent-env>
+      <envs>
+        <env name="DATABASE_URL_TEST" value="postgresql://katrinaknight@localhost/katrinaknight " />
+      </envs>
+      <ui>bdd</ui>
+      <extra-mocha-options>--require ts-node/register</extra-mocha-options>
+      <test-kind>TEST</test-kind>
+      <test-file>$PROJECT_DIR$/test/stratum_handlers_test.ts</test-file>
+      <test-names>
+        <name value="Stratum Handlers Client -&gt; Server -&gt; Client" />
+        <name value="mining.submit original protocol tests" />
+        <name value="mining.submit original protocol fails on unknown job share" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="mocha-javascript-test-runner">
+      <node-interpreter>$USER_HOME$/.nvm/versions/node/v16.13.2/bin/node</node-interpreter>
+      <node-options />
+      <working-directory />
+      <pass-parent-env>true</pass-parent-env>
+      <envs>
+        <env name="DATABASE_URL_TEST" value="postgresql://katrinaknight@localhost/katrinaknight " />
+      </envs>
+      <ui />
+      <extra-mocha-options />
+      <test-kind>DIRECTORY</test-kind>
+      <test-directory />
+      <recursive>false</recursive>
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Mocha.Stratum Handlers Client -&gt; Server -&gt; Client" />
+      <item itemvalue="Mocha.Stratum Handlers Client -&gt; Server -&gt; Client.mining.submit extended protocol" />
+      <item itemvalue="Mocha.Stratum Handlers Client -&gt; Server -&gt; Client.mining.submit original protocol tests" />
+      <item itemvalue="Mocha.Stratum Handlers Client -&gt; Server -&gt; Client.mining.submit original protocol tests.mining.submit original protocol fails on early job share" />
+      <item itemvalue="Mocha.Stratum Handlers Client -&gt; Server -&gt; Client.mining.submit original protocol tests.mining.submit original protocol fails on unknown job share" />
+      <item itemvalue="npm.test" />
+      <item itemvalue="npm.start L4zjyPeL2DDzytJdJCxbndy1BukrcuLVLXNqdGqzKhyCkATPZnUv" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Mocha.Stratum Handlers Client -&gt; Server -&gt; Client" />
+        <item itemvalue="Mocha.Stratum Handlers Client -&gt; Server -&gt; Client.mining.submit original protocol tests" />
+        <item itemvalue="Mocha.Stratum Handlers Client -&gt; Server -&gt; Client.mining.submit extended protocol" />
+        <item itemvalue="Mocha.Stratum Handlers Client -&gt; Server -&gt; Client.mining.submit original protocol tests.mining.submit original protocol fails on unknown job share" />
+        <item itemvalue="Mocha.Stratum Handlers Client -&gt; Server -&gt; Client.mining.submit original protocol tests.mining.submit original protocol fails on early job share" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="7acfc49c-736f-4f82-b267-4c6637d5848e" name="Changes" comment="" />
+      <created>1652799653376</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1652799653376</updated>
+      <workItem from="1652799654504" duration="8954000" />
+      <workItem from="1654717055070" duration="15161000" />
+      <workItem from="1654894218955" duration="1366000" />
+      <workItem from="1655245509529" duration="598000" />
+      <workItem from="1655313418488" duration="432000" />
+      <workItem from="1655562905978" duration="35693000" />
+      <workItem from="1655988630648" duration="442000" />
+      <workItem from="1655994951230" duration="816000" />
+      <workItem from="1656189694015" duration="583000" />
+      <workItem from="1656234608984" duration="510000" />
+      <workItem from="1656327725713" duration="1555000" />
+      <workItem from="1656684255289" duration="13067000" />
+      <workItem from="1656858104039" duration="2031000" />
+      <workItem from="1657290820066" duration="2055000" />
+      <workItem from="1657295273374" duration="888000" />
+      <workItem from="1657297723635" duration="6777000" />
+      <workItem from="1658167359436" duration="719000" />
+      <workItem from="1659449769020" duration="2728000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/stratum.ts</url>
+          <line>102</line>
+          <option name="timeStamp" value="9" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/jobs.ts</url>
+          <line>33</line>
+          <option name="timeStamp" value="32" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/jobs.ts</url>
+          <line>193</line>
+          <option name="timeStamp" value="55" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/server_session.ts</url>
+          <line>374</line>
+          <option name="timeStamp" value="56" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/jobs.ts</url>
+          <line>214</line>
+          <option name="timeStamp" value="58" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="js.build_tools.npm">
+        <watch expression="key" />
+      </configuration>
+    </watches-manager>
+  </component>
+</project>

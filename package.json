@@ -21,7 +21,7 @@
     "@types/chai-spies": "^1.0.3",
     "@types/sequelize": "^4.28.11",
     "boom": "^7.3.0",
-    "boostpow": "^1.5.0",
+    "boostpow": "^1.7.1",
     "bsv": "^2.0.7",
     "chai-spies": "^1.0.0",
     "cleaners": "^0.3.12",
