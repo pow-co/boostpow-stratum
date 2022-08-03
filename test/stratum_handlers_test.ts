@@ -17,7 +17,7 @@ import { stratum } from '../src/stratum'
 import { job_manager } from '../src/jobs'
 import { extranonce, SetExtranonce } from '../src/Stratum/mining/set_extranonce'
 import { Share } from '../src/Stratum/mining/submit'
-import { private_key_wallet, nonfunctional_network, privKeyToAddress } from '../src/bitcoin'
+import { private_key_wallet, nonfunctional_network, privKeyToPubKeyHash } from '../src/bitcoin'
 import * as bsv from 'bsv'
 import * as boostpow from 'boostpow'
 
@@ -81,7 +81,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
   const userNonceHex = "c8010000"
 
   let key = bsv.PrivKey.fromWif('KwKYRBpVWEYdQeA4uRGAu959BN4M1WpaTuetwsoBYES8CrVkxfLt')
-  let minerPubKeyHash = privKeyToAddress(key)
+  let minerPubKeyHash = privKeyToPubKeyHash(key)
 
   const jobBountyV1 = boostpow.Job.fromObject({
     category: categoryHex,
@@ -749,7 +749,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
           }*/
   })
 
-
+/*
   it("mining.submit extended protocol", async () => {
     let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
@@ -854,6 +854,6 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       expect(BooleanResponse.result(submit_response)).to.equal(true)
     }
 
-  })
+  })*/
 
 })
