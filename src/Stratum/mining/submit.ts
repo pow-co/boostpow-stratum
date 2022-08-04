@@ -13,8 +13,8 @@ export type share = [string, string, string, string, string] |
 export class Share {
 
   static valid(params: share): boolean {
-    return SessionID.valid(params[2]) && SessionID.valid(params[3]) &&
-      /^(([0-9a-f][0-9a-f])*)|(([0-9A-F][0-9A-F])*)$/.test(params[4]) &&
+    return SessionID.valid(params[4]) && SessionID.valid(params[3]) &&
+      /^(([0-9a-f][0-9a-f])*)|(([0-9A-F][0-9A-F])*)$/.test(params[2]) &&
       (params.length === 5 ||
         (params.length === 6 && SessionID.valid(params[5])))
   }
@@ -47,7 +47,7 @@ export class Share {
 
   static time(x: share): boostpow.UInt32Little {
     if (this.valid(x)) {
-      return boostpow.UInt32Little.fromHex(x[2])
+      return boostpow.UInt32Little.fromHex(x[3])
     }
 
     throw "invalid share"
@@ -55,7 +55,7 @@ export class Share {
 
   static nonce(x: share): boostpow.UInt32Little {
     if (this.valid(x)) {
-      return boostpow.UInt32Little.fromHex(x[3])
+      return boostpow.UInt32Little.fromHex(x[4])
     }
 
     throw "invalid share"
@@ -63,7 +63,7 @@ export class Share {
 
   static extranonce2(x: share): boostpow.Bytes {
     if (this.valid(x)) {
-      return boostpow.Bytes.fromHex(x[4])
+      return boostpow.Bytes.fromHex(x[2])
     }
 
     throw "invalid share"
@@ -84,14 +84,14 @@ export class Share {
   static make(
     worker_name: string,
     job_id: string,
+    en2: boostpow.Bytes,
     time: boostpow.UInt32Little,
     nonce: boostpow.UInt32Little,
-    en2: boostpow.Bytes,
     gpr?: boostpow.Int32Little): share {
     if (gpr) {
-      return [worker_name, job_id, time.hex, nonce.hex, en2.hex, gpr.hex]
+      return [worker_name, job_id, en2.hex, time.hex, nonce.hex, gpr.hex]
     } else {
-      return [worker_name, job_id, time.hex, nonce.hex, en2.hex]
+      return [worker_name, job_id, en2.hex, time.hex, nonce.hex]
     }
   }
 }
@@ -116,11 +116,11 @@ export class SubmitRequest extends Request {
     id: message_id,
     worker_name: string,
     job_id: string,
+    en2: boostpow.Bytes,
     time: boostpow.UInt32Little,
     nonce: boostpow.UInt32Little,
-    en2: boostpow.Bytes,
     gpr?: boostpow.Int32Little): submit_request {
-    return {id: id, method: 'mining.submit', params: Share.make(worker_name, job_id, time, nonce, en2, gpr)}
+    return {id: id, method: 'mining.submit', params: Share.make(worker_name, job_id, en2, time, nonce, gpr)}
   }
 
 }
