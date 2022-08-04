@@ -630,8 +630,8 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       // this should be a set difficulty.
       dummy.end.read()
       np = Notification.read(dummy.end.read()).params
-      valid_share = Share.make(worker_name, np[0], time_now, nonce_v1, extra_nonce_2_v1)
-      invalid_share = Share.make(worker_name, np[0], time_now, nonce_v2, extra_nonce_2_v1)
+      valid_share = Share.make(worker_name, np[0], extra_nonce_2_v1, time_now, nonce_v1)
+      invalid_share = Share.make(worker_name, np[0], extra_nonce_2_v1, time_now, nonce_v2)
 
       valid_proof = new Proof(en, np, valid_share)
       invalid_proof = new Proof(en, np, invalid_share)
@@ -646,7 +646,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     it("mining.submit original protocol fails on unknown job share", async () => {
 
       // some invalid shares to test various cases.
-      let unknown_job_share = Share.make(worker_name, 'invalid', time_now, nonce_v1, extra_nonce_2_v1)
+      let unknown_job_share = Share.make(worker_name, 'invalid', extra_nonce_2_v1, time_now, nonce_v1)
 
       {
         send({
@@ -663,7 +663,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       }
     });
     it("mining.submit original protocol fails on early job share", async () => {
-      let early_share = Share.make(worker_name, np[0], time_too_early, nonce_v1, extra_nonce_2_v1)
+      let early_share = Share.make(worker_name, np[0], extra_nonce_2_v1, time_too_early, nonce_v1)
       {
         send({
           id: 7,
@@ -678,7 +678,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       }});
 
     it("mining.submit original protocol fails on late job share", async () => {
-      let late_share = Share.make(worker_name, np[0], time_too_late, nonce_v1, extra_nonce_2_v1)
+      let late_share = Share.make(worker_name, np[0], extra_nonce_2_v1, time_too_late, nonce_v1)
       {
         send({
           id: 9,
@@ -707,7 +707,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
       }});
 
     it("mining.submit original protocol fails on version mask job share", async () => {
-      let version_mask_share = Share.make(worker_name, np[0], time_now, nonce_v1, extra_nonce_2_v1,
+      let version_mask_share = Share.make(worker_name, np[0], extra_nonce_2_v1, time_now, nonce_v1,
                      boostpow.Int32Little.fromHex('00000000'))
       {
         send({
