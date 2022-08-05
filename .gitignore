@@ -1,4 +1,9 @@
 node_modules/
 dist/
 .env
+<<<<<<< HEAD
 db-data
+=======
+.DS_Store
+.idea
+>>>>>>> 6aac5f5 (Added Network to server start)

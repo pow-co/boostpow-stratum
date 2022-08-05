@@ -6,7 +6,7 @@ import { server_session } from './server_session'
 import { log } from './log'
 import { listJobs } from './powco'
 import { JobManager, job_manager } from './jobs'
-import { wallet } from './bitcoin'
+import {Keys, powco_network} from './bitcoin'
 import { extensionHandlers } from './extensions'
 
 interface NewServer {
@@ -88,9 +88,9 @@ export const server = new Server({
 
 })
 
-async function startServer(w: wallet) {
+async function startServer(w: Keys) {
 
-  server.start(job_manager(await listJobs(), w, 10))
+  server.start(job_manager(await listJobs(), w,powco_network(), 10))
 
   log.info('stratum.server.started', server.server.info);
 }
