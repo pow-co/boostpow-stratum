@@ -1,5 +1,6 @@
 require('dotenv').config()
 import * as bsv from 'bsv'
+import * as boostpow from 'boostpow'
 import {powco_network, private_key_wallet} from './bitcoin'
 
 // Include process module
@@ -14,6 +15,8 @@ import { server as stratum } from './server'
 import { listJobs } from './powco'
 
 import { job_manager } from './jobs'
+
+import { stream } from 'powco'
 
 export async function start() {
 
@@ -55,7 +58,19 @@ export async function start() {
 
   await log.info('api.server.started', api.info);
 
-  await stratum.start(job_manager(await listJobs(), private_key_wallet(key),powco_network(), 10))
+  let jobs = job_manager(await listJobs(), private_key_wallet(key), powco_network(), 10);
+
+  stream.on('boostpow.job', (job: boostpow.Job) => {
+    jobs.add(new boostpow.Output(job))
+  })
+
+  stream.on('boostpow.proof', (proof: boostpow.Redeem) => {
+    jobs.invalidate(proof.spentTxid(), proof.spentVout()
+  })
+
+  await log.info('powco.listening', api.info);
+
+  await stratum.start(jobs)
 
   await log.info('stratum.server.started', api.info);
 
