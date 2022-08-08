@@ -46,7 +46,7 @@
     "pg": "^8.7.3",
     "pino": "^7.8.0",
     "pino-postgres": "^0.0.33",
-    "powco": "^1.1.0",
+    "powco": "^1.2.0",
     "prom-client": "^14.0.1",
     "require-all": "^3.0.0",
     "run-sdk": "^0.6.40",

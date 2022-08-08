@@ -65,7 +65,7 @@ export async function start() {
   })
 
   stream.on('boostpow.proof', (proof: boostpow.Redeem) => {
-    jobs.invalidate(proof.spentTxid(), proof.spentVout()
+    jobs.invalidate(proof.spentTxid, proof.spentVout)
   })
 
   await log.info('powco.listening', api.info);

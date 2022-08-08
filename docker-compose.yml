@@ -1,0 +1,32 @@
+services:
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+  database:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./db-data:/var/lib/postgresql/data
+  migration:
+    depends_on:
+      - database
+    build: .
+    env_file:
+      - .env
+    command: npx sequelize-cli db:migrate
+  stratum:
+    depends_on:
+      - migration
+      - database
+    build: .
+    ports:
+      - 5200:5200
+    env_file:
+      - .env
+    command: npm start ${PRIVATE_KEY}
