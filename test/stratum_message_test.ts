@@ -337,3 +337,19 @@ describe("Stratum Messages", () => {
   })
 
 })
+
+describe("test stuff", () => {
+  it("check Stratum real-world example", async () => {
+    let subscribe_request = JSON.parse('{"id": 1, "method": "mining.subscribe", "params": ["cpuminer/2.5.1"]}')
+    let en = JSON.parse('{"id":1,"result":[[["mining.notify","4c9c37c6"],["mining.set_difficulty","b378490f"]],"7a5b630c",8],"err":null}').result.slice(1, 3)
+    let set_difficulty = JSON.parse('{"id":null,"method":"mining.set_difficulty","params":[0.0010000003662166597]}')
+    let notify = JSON.parse('{"id":null,"method":"mining.notify","params":["1","08503d5b3bb20970e75897187fb9ddf033ec7e296db01ef38402cc011a58776f","556861f59752685f9b5f90fe07832cffb4a827e5","b8e15e9a",[],"00000000","fce7031e","d917f162",true]}').params
+    //let share = JSON.parse('{"method": "mining.submit", "params": ["", "1", "0000000000000000", "d917f162", "db250010"], "id":4}').params
+    let share = JSON.parse('{"method": "mining.submit", "params": ["", "1", "0000000000000000", "62f117d9", "100025db"], "id":4}').params
+
+    let p = prove(en, notify, share)
+    expect(p).to.not.equal(undefined)
+    console.log(p.string().toHex())
+    expect(p.valid()).to.equal(true)
+  })
+})

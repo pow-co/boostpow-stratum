@@ -16,57 +16,19 @@ import { listJobs } from './powco'
 
 import { job_manager } from './jobs'
 
-import { stream } from 'powco'
+import { test_job_manager } from './jobs_test'
 
 export async function start() {
 
-  // Printing process.argv property value
-  var args = process.argv;
-
-  let key
-
-  if (process.env.PRIVATE_KEY_WIF) {
-
-    key = new bsv.PrivKey().fromWif(process.env.PRIVATE_KEY_WIF)
-
-  } else if (args.length !== 3) {
-    console.log("expecting one argument; " + (args.length - 2) + " provided.")
-    console.log("the first argument should be a WIF private key that will be used as a wallet.")
-    console.log("alternatively use the PRIVATE_KEY_WIF environment variable.")
-    return
-  } else {
-    try {
-      key = new bsv.PrivKey().fromWif(args[2])
-    } catch (er) {
-      console.log("could not read WIF: " + er.name + ", " + er.message)
-      return
-    }
-  }
-
-  try {
-    key.validate()
-  } catch (er) {
-    console.log("Key is invalid: " + er.name + ", " + er.message)
-    return
-  }
-
   log.info('main.start')
 
-  await initServer()
+  //await initServer()
 
-  await api.start()
+  //await api.start()
 
-  await log.info('api.server.started', api.info);
+  //await log.info('api.server.started', api.info);
 
-  let jobs = job_manager(await listJobs(), private_key_wallet(key), powco_network(), 10);
-
-  stream.on('boostpow.job', (job: boostpow.Job) => {
-    jobs.add(new boostpow.Output(job))
-  })
-
-  stream.on('boostpow.proof', (proof: boostpow.Redeem) => {
-    jobs.invalidate(proof.spentTxid(), proof.spentVout()
-  })
+  let jobs = test_job_manager();
 
   await log.info('powco.listening', api.info);
 
