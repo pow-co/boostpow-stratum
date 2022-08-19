@@ -1,7 +1,6 @@
 require('dotenv').config()
 import * as bsv from 'bsv'
 import * as boostpow from 'boostpow'
-import {powco_network, private_key_wallet} from './bitcoin'
 
 // Include process module
 const process = require('process');
@@ -30,11 +29,9 @@ export async function start() {
 
   let jobs = test_job_manager();
 
-  await log.info('powco.listening', api.info);
 
   await stratum.start(jobs)
 
-  await log.info('stratum.server.started', api.info);
 
 }
 
