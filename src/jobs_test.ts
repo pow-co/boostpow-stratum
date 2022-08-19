@@ -21,12 +21,12 @@ export function test_job_manager(): JobManager {
   // TODO make the test job
   let job: BoostJob = new BoostJob(0, new boostpow.Puzzle(new boostpow.Output(boostpow.Job.fromObject(
         {
-          content: content.string,
+          content: content.hex,
           diff: target,
-          category: category.string,
-          tag: topic.string,
-          additionalData: data.string,
-          userNonce: user_nonce.string
+          category: category.hex,
+          tag: topic.hex,
+          additionalData: data.hex,
+          userNonce: user_nonce.hex
         }),
       7777,
       digest,
