@@ -1,16 +1,29 @@
 {
-  "name": "boost-stratum",
+  "name": "boostpow-stratum",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
     "connect": "ts-node src/bin/client.ts connect",
     "logs": "ts-node src/bin/logs.ts tail",
-    "test": "NODE_ENV=test mocha --require=ts-node/register --timeout=10000 test/*test.ts --exit",
+    "test": "NODE_ENV=test nyc --reporter=text --reporter=lcov mocha --require=ts-node/register --timeout=10000 test/*test.ts --exit",
     "runtest": "NODE_ENV=test mocha --require=ts-node/register $TEST --timeout=20000 --exit",
     "test:stratum": "TEST=test/stratum_test.ts npm run runtest",
     "start": "ts-node src/main.ts",
     "commit": "cz"
+  },
+  "nyc": {
+    "check-coverage": false,
+    "all": true,
+    "include": [
+      "src/*.ts",
+      "src/**/*.ts"
+    ],
+    "exclude": [
+      "includes/**.ts"
+    ],
+    "reporter": "lcov",
+    "report-dir": "./coverage"
   },
   "author": "",
   "license": "ISC",
@@ -30,6 +43,7 @@
     "dotenv": "^16.0.0",
     "hapi-swagger": "^14.5.5",
     "joi": "^17.6.0",
+    "nyc": "^15.1.0",
     "pg": "^8.7.3",
     "pino": "^7.8.0",
     "pino-postgres": "^0.0.33",

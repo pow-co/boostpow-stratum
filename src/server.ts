@@ -1,7 +1,5 @@
 
-import { Event, Events } from './event'
 import * as net from 'net'
-import { asOptional, asNumber } from 'cleaners'
 import { Session } from './session'
 import { handleStratumMessage, handleStratumRequest } from './stratum'
 import { server_session } from './server_session'
