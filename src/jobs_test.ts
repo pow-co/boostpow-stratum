@@ -8,7 +8,7 @@ import { JobManager, BoostJob, HashpowerEstimate, Worker, StratumAssignment } fr
 export function test_job_manager(): JobManager {
 
   console.log("about to start job manager")
-  let target = .001
+  let target = .01
   let content = new boostpow.Digest32(Buffer.from('12131415161718190ff0f0f00fff000f0f00f000f0000fff1213141516171819', 'hex'))
   let category = new boostpow.Int32Little(Buffer.from('12345678', 'hex'))
   let topic = new boostpow.Bytes(Buffer.from('0f0e0d0c0b0a0908070605040201000000000000', 'hex'))
@@ -41,6 +41,7 @@ export function test_job_manager(): JobManager {
       // we ignore hashpower and minimum difficulty for now.
       h: HashpowerEstimate,
       minimum_difficulty: number) => {
+      console.log("about to send job to miner")
       return job
   }
 
@@ -65,6 +66,9 @@ export function test_job_manager(): JobManager {
         initial: job.stratumJob(now_seconds()),
 
         solved: (x: Proof): StratumAssignment | boolean => {
+          console.log("checking proof");
+          console.log("work string: ", x.string.toString())
+          console.log("hash: ", x.string.hash.string)
           if (!x.valid()) return true
 
           complete(job, x.proof.Solution)

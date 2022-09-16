@@ -127,8 +127,11 @@ let handle_jobs = (maxTimeDifference: number) => {
     check: (x: share, d: boostpow.Difficulty, now: number): {proof?: Proof, err: error} => {
       let timestamp = Share.time(x).number
 
+      console.log("now: ", now, ", timestamp: ", timestamp, "; difference: ", (now - timestamp))
+      /*
       if (now - timestamp > maxTimeDifference) return {err: Error.make(Error.TIME_TOO_OLD)};
       if (timestamp - now > maxTimeDifference) return {err: Error.make(Error.TIME_TOO_NEW)};
+      */
 
       let f = find(Share.jobID(x));
 
@@ -143,6 +146,10 @@ let handle_jobs = (maxTimeDifference: number) => {
 
       // check for duplicate shares.
       if (detect_duplicate(x, now)) return {err: Error.make(Error.DUPLICATE_SHARE)}
+
+        console.log("checking proof");
+        console.log("work string: ", p.string.toString())
+        console.log("hash: ", p.string.hash.hex)
       if (!p.valid(d)) return {err: Error.make(Error.INVALID_SOLUTION)}
       shares.push(x)
       return {proof: p, err: null}
@@ -326,7 +333,8 @@ export function server_session(
 
         // has the user requestd an extranonce1?
         let n1 = SubscribeRequest.extranonce1(sub)
-        let id = n1 ? n1.hex : SessionID.random()
+        //let id = n1 ? n1.hex : SessionID.random()
+        let id = n1 ? n1.hex : "a8b8c8d8"
 
         extranonce = [id, job.extranonce2Size]
         remote.respond({id: request.id, result: [subscriptions, id, job.extranonce2Size], err: null})

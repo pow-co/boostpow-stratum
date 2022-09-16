@@ -41,7 +41,9 @@ export class NotifyParams {
 
   static prevHash(p: notify_params): boostpow.Digest32 {
     if (this.valid(p)) {
-      return boostpow.Digest32.fromHex(p[1])
+      let digest = boostpow.Digest32.fromHex(p[1])
+      digest.buffer.reverse()
+      return digest
     }
 
     throw "invalid notify"
@@ -122,7 +124,7 @@ export class NotifyParams {
       path.push(d.hex)
     }
 
-    return [job_id, prev_hash.hex, gtx1.hex, gtx2.hex, path, version.hex, bits.hex, time.hex, clean]
+    return [job_id, prev_hash.buffer.toString('hex'), gtx1.hex, gtx2.hex, path, version.hex, bits.hex, time.hex, clean]
   }
 
 }
@@ -152,7 +154,7 @@ export class Notify extends Notification {
       typeof n.params[8] !== 'boolean') return
 
     for (let x of n.params[4]) if (typeof x !== 'string') return
-    
+
     if (NotifyParams.valid(n['params'])) return <notify>n
   }
 
