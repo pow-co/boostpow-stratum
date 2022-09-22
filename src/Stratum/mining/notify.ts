@@ -18,17 +18,11 @@ export class NotifyParams {
       is_hex(params[2]) && is_hex(params[3]) && Array.isArray(params[4]) &&
       SessionID.valid(params[5]) && SessionID.valid(params[6]) &&
       SessionID.valid(params[7]) && typeof params[8] === 'boolean')) {
-      console.log("invalid notify params x: " + params[1].length + " " +
-        is_hex(params[1]) + (params[1].length == 64) +
-        is_hex(params[2]) + is_hex(params[3]) + Array.isArray(params[4]) +
-        SessionID.valid(params[5]) + SessionID.valid(params[6]) +
-        SessionID.valid(params[7]) + (typeof params[8] === 'boolean'))
       return false
     }
 
     for (let digest of params[4]) {
       if (!(is_hex(digest) && digest.length === 64)) {
-        console.log("invalid notify params y")
         return false
       }
     }
@@ -98,7 +92,9 @@ export class NotifyParams {
 
   static nbits(p: notify_params): boostpow.Difficulty {
     if (this.valid(p)) {
-      return boostpow.Difficulty.fromBits(boostpow.UInt32Little.fromHex(p[6]).number)
+      let bits = boostpow.UInt32Little.fromHex(p[6])
+      bits.buffer.reverse()
+      return boostpow.Difficulty.fromBits(bits.number)
     }
 
     throw "invalid notify"
@@ -142,7 +138,10 @@ export class NotifyParams {
     let path: string[] = []
     for (let d of branch) path.push(d.buffer.toString('hex'))
 
-    return [job_id, prev_hash.hex, gtx1.hex, gtx2.hex, path, version.hex, bits.hex, time.hex, clean]
+    let compact = boostpow.UInt32Little.fromNumber(bits.bits)
+    compact.buffer.reverse()
+
+    return [job_id, buf.toString('hex'), gtx1.hex, gtx2.hex, path, version.hex, compact.hex, time.hex, clean]
   }
 
 }
