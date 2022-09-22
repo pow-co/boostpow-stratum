@@ -43,8 +43,9 @@
     "dotenv": "^16.0.0",
     "hapi-swagger": "^14.5.5",
     "joi": "^17.6.0",
+    "nconf": "^0.12.0",
     "nyc": "^15.1.0",
-    "pg": "^8.7.3",
+    "pg": "^8.8.0",
     "pino": "^7.8.0",
     "pino-postgres": "^0.0.33",
     "prom-client": "^14.0.1",
@@ -56,7 +57,9 @@
     "through2": "^4.0.2",
     "ts-node": "^10.6.0",
     "typescript": "^4.6.2",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "winston": "^3.8.2",
+    "winston-loki": "^6.0.6"
   },
   "devDependencies": {
     "@types/chai": "^4.3.0",

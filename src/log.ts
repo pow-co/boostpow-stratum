@@ -5,6 +5,38 @@ import { models } from './models'
 
 import { broadcast } from './socket.io/pubsub'
 
+import * as winston from 'winston'
+
+import config from './config'
+
+const transports = [
+  new winston.transports.Console({ level: 'debug' })
+]
+
+if (config.get('loki_host')) {
+
+  const LokiTransport = require("winston-loki");
+
+  const lokiConfig = {
+    format: winston.format.json(),
+    host: config.get('loki_host'),
+    json: true,
+    batching: false,
+    labels: { app: config.get('loki_label_app') },
+    level: 'info'
+  }
+
+  if (config.get('loki_basic_auth')) {
+
+    lokiConfig['basicAuth'] = config.get('loki_basic_auth')
+  }
+
+  transports.push(
+    new LokiTransport(lokiConfig)
+  )
+
+}
+
 interface NewLogger {
   namespace: string;
 }
@@ -22,11 +54,43 @@ class Logger {
 
   namespace: string;
 
-  pino: typeof Pino;
+  log: winston.Logger;
 
   constructor(params: NewLogger = {namespace: ''}) {
 
-    this.pino = Pino()
+    const transports = [
+      new winston.transports.Console(),
+    ]
+
+    if (config.get('loki_host')) {
+
+      const LokiTransport = require("winston-loki");
+    
+      const lokiConfig = {
+        format: winston.format.json(),
+        host: config.get('loki_host'),
+        json: true,
+        batching: false,
+        labels: { app: config.get('loki_label_app') }
+      }
+    
+      if (config.get('loki_basic_auth')) {
+    
+        lokiConfig['basicAuth'] = config.get('loki_basic_auth')
+      }
+    
+      transports.push(
+        new LokiTransport(lokiConfig)
+      )
+    
+    }    
+    
+    this.log = winston.createLogger({
+      level: 'info',
+      format: winston.format.json(),
+      defaultMeta: { service: 'boostpow' },
+      transports
+    });
 
     this.namespace = params.namespace
 
@@ -34,7 +98,7 @@ class Logger {
 
   async info(event_type: string, payload: any = {}) {
 
-    this.pino.info({...payload, namespace: this.namespace }, event_type)
+    this.log.info(event_type, payload)
 
     let record = await models.Event.create({
       namespace: this.namespace,
@@ -57,7 +121,7 @@ class Logger {
 
   async error(error_type: string, payload: any = {}) {
 
-    this.pino.error({...payload, namespace: this.namespace }, error_type)
+    this.log.error(error_type, payload)
 
     let record = await models.Event.create({
       namespace: this.namespace,
@@ -72,13 +136,13 @@ class Logger {
 
   async debug(...params) {
 
-    this.pino.debug(params)
+    this.log.debug(params)
 
   }
 
   async read(query: LogQuery = {}) {
 
-    this.pino.debug('log.read', query)
+    this.log.debug('log.read', query)
 
     const where = {
       namespace: this.namespace,
