@@ -46,7 +46,16 @@ export class NotifyParams {
 
   static prevHash(p: notify_params): boostpow.Digest32 {
     if (this.valid(p)) {
-      return boostpow.Digest32.fromHex(p[1])
+      let buf = Buffer.from(p[1], 'hex')
+      for (let i = 0; i < 32; i += 4) {
+        let z = buf[i]
+        buf[i] = buf[i + 3]
+        buf[i + 3] = z
+        z = buf[i + 1]
+        buf[i + 1] = buf[i + 2]
+        buf[i + 2] = z
+      }
+      return new boostpow.Digest32(buf)
     }
 
     throw "invalid notify"
@@ -74,9 +83,7 @@ export class NotifyParams {
     let path_hex: string[] = p[4]
 
     let path: boostpow.Digest32[] = []
-    for (let d of path_hex) {
-      path.push(boostpow.Digest32.fromHex(d))
-    }
+    for (let d of path_hex) path.push(new boostpow.Digest32(Buffer.from(d, 'hex')))
 
     return path
   }
@@ -122,10 +129,18 @@ export class NotifyParams {
     time: boostpow.UInt32Little,
     clean: boolean): notify_params {
 
-    let path: string[] = []
-    for (let d of branch) {
-      path.push(d.hex)
+    let buf = new Buffer(prev_hash.buffer)
+    for (let i = 0; i < 32; i += 4) {
+      let z = buf[i]
+      buf[i] = buf[i + 3]
+      buf[i + 3] = z
+      z = buf[i + 1]
+      buf[i + 1] = buf[i + 2]
+      buf[i + 2] = z
     }
+
+    let path: string[] = []
+    for (let d of branch) path.push(d.buffer.toString('hex'))
 
     return [job_id, prev_hash.hex, gtx1.hex, gtx2.hex, path, version.hex, bits.hex, time.hex, clean]
   }

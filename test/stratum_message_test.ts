@@ -338,4 +338,36 @@ describe("Stratum Messages", () => {
     expect(pt2.valid()).to.be.equal(true)
   })
 
+  it("should construct proofs from notify, subscribe, and submit (standard test case from the web)", async () => {
+
+    let notify = JSON.parse('{"params":'+
+      '["bf", "4d16b6f85af6e2198f44ae2a6de67f78487ae5611b77c6c0440b921e00000000",' +
+        '"01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff20020862062f503253482f04b8864e5008",' +
+        '"072f736c7573682f000000000100f2052a010000001976a914d23fcdf86f7e756a64a7a9688ef9903327048ed988ac00000000",' +
+        '[], "00000002", "1c2ac4af", "504e86b9", false],' +
+      '"id": null, "method": "mining.notify"}')
+
+    let expected_prev_hash = "f8b6164d19e2f65a2aae448f787fe66d61e57a48c0c6771b1e920b4400000000"
+    console.log("expected prev hash: ", expected_prev_hash)
+    let prev_hash = NotifyParams.prevHash(notify.params).buffer.toString('hex')
+    console.log("         prev hash: ", prev_hash)
+    expect(prev_hash).to.be.equal(expected_prev_hash)
+
+    let subscribe_response = JSON.parse('{"id": 1, "result": ' +
+      '[ [ ["mining.set_difficulty", "b4b6693b72a50c7116db18d6497cac52"], ' +
+      '["mining.notify", "ae6812eb4cd7735a302a8a9dd95cf71f"]], "08000002", 4], ' +
+      '"error": null}')
+    let en = <extranonce>[subscribe_response.result[1], subscribe_response.result[2]]
+
+    let submit_request = JSON.parse('{"params": ' +
+      '["slush.miner1", "bf", "00000001", "504e86ed", "b2957c02"],' +
+      '"id": 4, "method": "mining.submit"}')
+
+    let proof = prove(en, notify.params, submit_request.params)
+    expect(proof.valid()).to.be.equal(true)
+    let z = proof.string()
+    console.log("zstring: ", z.toString())
+    expect(z.hash.buffer).to.be.equal(Buffer.from("32abdc31d947623a2482144f92dbc092a84fd8ee6e2b5ae60f87762000000000", 'hex'))
+
+  })
 })
