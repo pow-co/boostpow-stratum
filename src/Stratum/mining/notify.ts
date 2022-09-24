@@ -18,17 +18,11 @@ export class NotifyParams {
       is_hex(params[2]) && is_hex(params[3]) && Array.isArray(params[4]) &&
       SessionID.valid(params[5]) && SessionID.valid(params[6]) &&
       SessionID.valid(params[7]) && typeof params[8] === 'boolean')) {
-      console.log("invalid notify params x: " + params[1].length + " " +
-        is_hex(params[1]) + (params[1].length == 64) +
-        is_hex(params[2]) + is_hex(params[3]) + Array.isArray(params[4]) +
-        SessionID.valid(params[5]) + SessionID.valid(params[6]) +
-        SessionID.valid(params[7]) + (typeof params[8] === 'boolean'))
       return false
     }
 
     for (let digest of params[4]) {
       if (!(is_hex(digest) && digest.length === 64)) {
-        console.log("invalid notify params y")
         return false
       }
     }
@@ -46,7 +40,16 @@ export class NotifyParams {
 
   static prevHash(p: notify_params): boostpow.Digest32 {
     if (this.valid(p)) {
-      return boostpow.Digest32.fromHex(p[1])
+      let buf = Buffer.from(p[1], 'hex')
+      for (let i = 0; i < 32; i += 4) {
+        let z = buf[i]
+        buf[i] = buf[i + 3]
+        buf[i + 3] = z
+        z = buf[i + 1]
+        buf[i + 1] = buf[i + 2]
+        buf[i + 2] = z
+      }
+      return new boostpow.Digest32(buf)
     }
 
     throw "invalid notify"
@@ -74,9 +77,7 @@ export class NotifyParams {
     let path_hex: string[] = p[4]
 
     let path: boostpow.Digest32[] = []
-    for (let d of path_hex) {
-      path.push(boostpow.Digest32.fromHex(d))
-    }
+    for (let d of path_hex) path.push(new boostpow.Digest32(Buffer.from(d, 'hex')))
 
     return path
   }
@@ -91,7 +92,9 @@ export class NotifyParams {
 
   static nbits(p: notify_params): boostpow.Difficulty {
     if (this.valid(p)) {
-      return boostpow.Difficulty.fromBits(boostpow.UInt32Little.fromHex(p[6]).number)
+      let bits = boostpow.UInt32Little.fromHex(p[6])
+      bits.buffer.reverse()
+      return boostpow.Difficulty.fromBits(bits.number)
     }
 
     throw "invalid notify"
@@ -122,12 +125,23 @@ export class NotifyParams {
     time: boostpow.UInt32Little,
     clean: boolean): notify_params {
 
-    let path: string[] = []
-    for (let d of branch) {
-      path.push(d.hex)
+    let buf = new Buffer(prev_hash.buffer)
+    for (let i = 0; i < 32; i += 4) {
+      let z = buf[i]
+      buf[i] = buf[i + 3]
+      buf[i + 3] = z
+      z = buf[i + 1]
+      buf[i + 1] = buf[i + 2]
+      buf[i + 2] = z
     }
 
-    return [job_id, prev_hash.hex, gtx1.hex, gtx2.hex, path, version.hex, bits.hex, time.hex, clean]
+    let path: string[] = []
+    for (let d of branch) path.push(d.buffer.toString('hex'))
+
+    let compact = boostpow.UInt32Little.fromNumber(bits.bits)
+    compact.buffer.reverse()
+
+    return [job_id, buf.toString('hex'), gtx1.hex, gtx2.hex, path, version.hex, compact.hex, time.hex, clean]
   }
 
 }
