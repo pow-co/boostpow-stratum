@@ -7,15 +7,23 @@ services:
   database:
     image: postgres
     restart: always
+    env_file:
+      - .env
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - ./db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   migration:
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     build: .
     env_file:
       - .env
@@ -23,7 +31,6 @@ services:
   stratum:
     depends_on:
       - migration
-      - database
     build: .
     ports:
       - 5200:5200

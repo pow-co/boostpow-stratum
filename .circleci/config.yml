@@ -3,23 +3,26 @@ jobs:
   build_docker:
     docker:
       - image: circleci/node:12
-      - image: circleci/postgres:9.5-postgis
-        environment:
-          POSTGRES_USER: user
-          POSTGRES_DB: db
-          POSTGRES_PASSWORD: password
     steps:
       - checkout
       - setup_remote_docker
       - run:
-          name: Install Dependencies
-          command: npm install
+          name: Setup .ENV file
+          command: |
+            cat << EOF > .env
+            DB_PASSWORD=password
+            DB_HOST=database
+            DB_NAME=dbname
+            DB_USER=dbuser
+            DATABASE_URL_DEV=postgresql://dbuser:password@database/dbname
+            PRIVATE_KEY_WIF=L4zjyPeL2DDzytJdJCxbndy1BukrcuLVLXNqdGqzKhyCkATPZnUv
+            EOF
       - run:
-          name: Migrate Database
-          command: npx sequelize db:migrate --url=postgres://user:password@localhost/db
+          name: Startup docker
+          command: docker-compose up -d
       - run:
           name: Run Tests
-          command: npm test
+          command: docker compose run stratum npm test
       - run:
           name: Report Code Coverage
           command: |
