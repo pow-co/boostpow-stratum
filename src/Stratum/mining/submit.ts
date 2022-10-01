@@ -47,7 +47,9 @@ export class Share {
 
   static time(x: share): boostpow.UInt32Little {
     if (this.valid(x)) {
-      return boostpow.UInt32Little.fromHex(x[3])
+      let t = boostpow.UInt32Little.fromHex(x[3])
+      t.buffer.reverse()
+      return t
     }
 
     throw "invalid share"
@@ -55,7 +57,9 @@ export class Share {
 
   static nonce(x: share): boostpow.UInt32Little {
     if (this.valid(x)) {
-      return boostpow.UInt32Little.fromHex(x[4])
+      let n = boostpow.UInt32Little.fromHex(x[4])
+      n.buffer.reverse()
+      return n
     }
 
     throw "invalid share"
@@ -88,10 +92,17 @@ export class Share {
     time: boostpow.UInt32Little,
     nonce: boostpow.UInt32Little,
     gpr?: boostpow.Int32Little): share {
+
+    let t = boostpow.UInt32Little.fromNumber(time.number)
+    t.buffer.reverse()
+
+    let n = boostpow.UInt32Little.fromNumber(nonce.number)
+    n.buffer.reverse()
+
     if (gpr) {
-      return [worker_name, job_id, en2.hex, time.hex, nonce.hex, gpr.hex]
+      return [worker_name, job_id, en2.hex, t.hex, n.hex, gpr.hex]
     } else {
-      return [worker_name, job_id, en2.hex, time.hex, nonce.hex]
+      return [worker_name, job_id, en2.hex, t.hex, n.hex]
     }
   }
 }

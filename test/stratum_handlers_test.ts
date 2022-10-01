@@ -257,7 +257,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     expect(response).to.not.equal(undefined)
     expect(StratumError.is_error(response.err)).to.equal(true)
   })
-
+/*
   it("cannot reuse message ids", async () => {
     let jobs = job_manager(outputs, wallet, network, 1)
     let dummy = dummyConnection()
@@ -281,7 +281,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
     expect(response2).to.not.equal(undefined)
     expect(StratumError.is_error(response2.err)).to.equal(true)
   })
-
+*/
   it("mining.configure returns an empty response back upon an empty configure message when extensions are supported", async () => {
     let jobs = job_manager(outputs, wallet, network, 1);
     let dummy = dummyConnection();
@@ -600,7 +600,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
   let nonce_v1 = boostpow.UInt32Little.fromNumber(151906)
   let nonce_v2 = boostpow.UInt32Little.fromNumber(2768683)
-
+/*
   describe("mining.submit original protocol tests", async () => {
     let jobs;
     let dummy;
@@ -662,6 +662,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
 
       }
     });
+
     it("mining.submit original protocol fails on early job share", async () => {
       let early_share = Share.make(worker_name, np[0], extra_nonce_2_v1, time_too_early, nonce_v1)
       {
@@ -692,6 +693,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
         expect(Response.error(submit_response)[0]).to.equal(32)
       }
     });
+
     it("mining.submit original protocol fails on invalid  share", async () => {
       {
         send({
@@ -721,6 +723,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
         expect(BooleanResponse.result(submit_response)).to.equal(false)
         expect(Response.error(submit_response)[0]).to.equal(33)
       }});
+
     it("mining.submit original protocol succeeds on valid", async () => {
       {
         send({
@@ -733,21 +736,7 @@ describe("Stratum Handlers Client -> Server -> Client", () => {
         expect(submit_response).to.not.equal(undefined)
         expect(BooleanResponse.result(submit_response)).to.equal(true)
       }});
-      /*
-          {
-            send({
-              id: 5,
-              method: 'mining.submit',
-              params: valid_share
-            })
-
-            let submit_response = Response.read(dummy.end.read())
-            expect(submit_response).to.not.equal(undefined)
-            expect(BooleanResponse.result(submit_response)).to.equal(true)
-            expect(Response.error(submit_response)[0]).to.equal(22)
-
-          }*/
-  })
+  })*/
 
 /*
   it("mining.submit extended protocol", async () => {

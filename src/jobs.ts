@@ -4,6 +4,7 @@ import { notify_params, NotifyParams } from './Stratum/mining/notify'
 import { share } from './Stratum/mining/submit'
 import { Proof } from './Stratum/proof'
 import { now_seconds } from './time'
+import { log } from './log'
 import * as boostpow from 'boostpow'
 
 // this is how we index jobs internally.
@@ -31,11 +32,6 @@ export class BoostJob {
       [], p.Category, p.Difficulty, now, true),
       extranonce2Size: this.puzzle.output.script.scriptVersion === 1 ? 8 : 32
     }
-  }
-
-  estimated_locking_script_size(): number {
-    return 1;
-    throw "incomplete method"
   }
 
   // create a transaction that sends all coins in a boost output to our address.
@@ -75,6 +71,7 @@ export function job_manager(
   // a way to broadcast to the bitcoin network.
   network: Network,
   maxDifficulty: number): JobManager {
+  log.info('job_manager.start', {'initial_jobs': initial_jobs.length})
 
   // this will contain all boost jobs that we are keeping track of.
   let jobs: {[key: string]: BoostJob} = {}
@@ -105,6 +102,7 @@ export function job_manager(
       h: HashpowerEstimate,
       minimum_difficulty: number) => {
     for (let index of Object.keys(jobs)) {
+
       let j = jobs[index]
 
       let difficulty = j.puzzle.output.script.difficulty
@@ -138,7 +136,9 @@ export function job_manager(
   }
 
   let complete = async (j: BoostJob, x: boostpow.work.Solution): Promise<boolean> => {
-    return network.broadcast(j.complete(x, keys.nextReceive(), await network.satsPerByte()))
+    let tx = j.complete(x, keys.nextReceive(), await network.satsPerByte())
+
+    return network.broadcast(tx)
   }
 
   return {
@@ -166,7 +166,6 @@ export function job_manager(
         initial: job.stratumJob(now_seconds()),
 
         solved: (x: Proof): StratumAssignment | boolean => {
-          throw new Error("Cheeeese Grommit")
           if (!x.valid()) return true
 
           complete(job, x.proof.Solution)

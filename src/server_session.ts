@@ -404,12 +404,13 @@ export function server_session(
           remote.respond({id: r.id, result: null, err: Error.make(Error.ILLEGAL_METHOD)})
           return
         }
-
+        // commented out because pooler/cpuminer does not increment message ids correctly
+/*
         if (requests_ids.includes(r.id)) {
           remote.respond({id: r.id, result: null, err: Error.make(Error.DUPLICATE_MESSAGE_ID)})
           return
         }
-
+*/
         requests_ids.push(r.id)
         if (requests_ids.length > options.rememberThisManyMessageIds) requests_ids.shift()
 

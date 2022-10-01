@@ -2,6 +2,8 @@ import * as bsv from 'bsv'
 import * as boostpow from 'boostpow'
 import { broadcast } from 'powco'
 
+import { log } from './log'
+
 export function pubKeyToPubKeyHash(pubKey: bsv.PubKey): boostpow.Digest20 {
   return new boostpow.Digest20(bsv.Hash.sha256Ripemd160(pubKey.toBuffer()))
 }
@@ -36,7 +38,12 @@ export function powco_network(): Network {
       return .5
     },
     broadcast: async (tx: Buffer) => {
-      await broadcast(tx.toString('hex'));
+      try {
+        await broadcast(tx.toString('hex'));
+      } catch (e) {
+        log.info("broadcast.fail", e)
+        return false
+      }
       return true
     }
   }

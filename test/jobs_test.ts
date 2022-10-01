@@ -49,7 +49,7 @@ describe('Jobs', () => {
                 }), satoshis, txid, vout), key)
         const job=new BoostJob(1,puzzleBountyV1);
         let solutionV1 = new boostpow.work.Solution(time, extraNonce1, extraNonce2, nonceV1);
-        job.complete(solutionV1,new bsv.Address().fromString("1Hh2ZrptvqCRRN2DztggtAnSyMqfc2s289"),1);
+        job.complete(solutionV1, "1Hh2ZrptvqCRRN2DztggtAnSyMqfc2s289",1);
 
     })
 })

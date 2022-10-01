@@ -84,7 +84,9 @@ export class NotifyParams {
 
   static version(p: notify_params): boostpow.Int32Little {
     if (this.valid(p)) {
-      return boostpow.Int32Little.fromHex(p[5])
+      let v = boostpow.Int32Little.fromHex(p[5])
+      v.buffer.reverse()
+      return v
     }
 
     throw "invalid notify"
@@ -102,7 +104,9 @@ export class NotifyParams {
 
   static time(p: notify_params): boostpow.UInt32Little {
     if (this.valid(p)) {
-      return boostpow.UInt32Little.fromHex(p[7])
+      let t = boostpow.UInt32Little.fromHex(p[7])
+      t.buffer.reverse()
+      return t
     }
 
     throw "invalid notify"
@@ -138,10 +142,16 @@ export class NotifyParams {
     let path: string[] = []
     for (let d of branch) path.push(d.buffer.toString('hex'))
 
+    let v = boostpow.Int32Little.fromNumber(version.number)
+    v.buffer.reverse()
+
+    let t = boostpow.UInt32Little.fromNumber(time.number)
+    t.buffer.reverse()
+
     let compact = boostpow.UInt32Little.fromNumber(bits.bits)
     compact.buffer.reverse()
 
-    return [job_id, buf.toString('hex'), gtx1.hex, gtx2.hex, path, version.hex, compact.hex, time.hex, clean]
+    return [job_id, buf.toString('hex'), gtx1.hex, gtx2.hex, path, v.hex, compact.hex, t.hex, clean]
   }
 
 }
@@ -171,7 +181,7 @@ export class Notify extends Notification {
       typeof n.params[8] !== 'boolean') return
 
     for (let x of n.params[4]) if (typeof x !== 'string') return
-    
+
     if (NotifyParams.valid(n['params'])) return <notify>n
   }
 

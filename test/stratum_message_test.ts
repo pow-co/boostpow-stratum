@@ -364,10 +364,9 @@ describe("Stratum Messages", () => {
       '"id": 4, "method": "mining.submit"}')
 
     let proof = prove(en, notify.params, submit_request.params)
-/*    expect(proof.valid()).to.be.equal(true)
     let z = proof.string()
-    console.log("zstring: ", z.toString())
-    expect(z.hash.buffer).to.be.equal(Buffer.from("32abdc31d947623a2482144f92dbc092a84fd8ee6e2b5ae60f87762000000000", 'hex'))
-*/
+    expect(proof.valid()).to.be.equal(true)
+    expect(z.hash.buffer.toString('hex')).to.be.equal("32abdc31d947623a2482144f92dbc092a84fd8ee6e2b5ae60f87762000000000")
+
   })
 })

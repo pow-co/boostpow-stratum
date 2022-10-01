@@ -58,7 +58,7 @@ export async function start() {
 
   await log.info('api.server.started', api.info);
 
-  let jobs = job_manager(await listJobs(), private_key_wallet(key), powco_network(), 10);
+  let jobs = job_manager(await listJobs(), private_key_wallet(key), powco_network(), .05);
 
   stream.on('boostpow.job', (job: boostpow.Job) => {
     jobs.add(new boostpow.Output(job))
