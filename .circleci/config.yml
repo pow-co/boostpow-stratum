@@ -22,7 +22,7 @@ jobs:
           command: docker-compose up -d
       - run:
           name: Run Tests
-          command: docker compose run stratum npm test
+          command: docker-compose run stratum npm test
       - run:
           name: Report Code Coverage
           command: |
