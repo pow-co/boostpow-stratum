@@ -9,7 +9,7 @@ jobs:
       - run:
           name: Setup .ENV file
           command: |
-            cat << EOF > .env
+            cat \<< EOF > .env
             DB_PASSWORD=password
             DB_HOST=database
             DB_NAME=dbname
