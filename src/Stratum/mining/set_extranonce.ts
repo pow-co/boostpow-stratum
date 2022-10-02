@@ -1,3 +1,4 @@
+import { JSONValue } from '../../json'
 import { Notification } from '../notification'
 import { method } from '../method'
 import { SessionID } from '../sessionID'
@@ -55,6 +56,11 @@ export class SetExtranonce extends Notification {
 
   static make(ex1: boostpow.UInt32Big, s: number): set_extranonce {
     return {id: null, method: 'mining.set_extranonce', params: Extranonce.make(ex1, s)}
+  }
+
+  static read(message: JSONValue): set_extranonce | undefined {
+    let n = Notification.read(message)
+    if (!!n && SetExtranonce.valid_extranonce(n.params)) return <set_extranonce>(n)
   }
 
 }

@@ -120,8 +120,6 @@ describe("Stratum Messages", () => {
   it("should distinguish valid and invalid set_difficulty messages", async () => {
     expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: [1]})).to.be.equal(true)
     expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: [1.1]})).to.be.equal(true)
-    expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: []})).to.be.equal(false)
-    expect(SetDifficulty.valid({id:null, method: 'mining.set_difficulty', params: [""]})).to.be.equal(false)
     expect(SetDifficulty.valid({id:null, method: '', params: [1]})).to.be.equal(false)
   })
 
@@ -174,14 +172,14 @@ describe("Stratum Messages", () => {
 
   it("should distinguish valid and invalid submit request messages", async () => {
     expect(SubmitRequest.valid({id:55, method: 'mining.submit',
-      params: ["daniel", "abcd", "00000000", "00000001",
-        "00000000000000000000000000000001"]})).to.be.equal(true)
+      params: ["daniel", "abcd", "00000000000000000000000000000001",
+        "00000000", "00000001"]})).to.be.equal(true)
     expect(SubmitRequest.valid({id:55, method: 'mining.submit',
-      params: ["daniel", "abcd", "00000000", "00000001",
-        "00000000000000000000000000000001", "00000000"]})).to.be.equal(true)
+      params: ["daniel", "abcd", "00000000000000000000000000000001",
+        "00000000", "00000001", "00000000"]})).to.be.equal(true)
     expect(SubmitRequest.valid({id:55, method: '',
-      params: ["daniel", "abcd", "00000000", "00000001",
-        "00000000000000000000000000000001", "00000000"]})).to.be.equal(false)
+      params: ["daniel", "abcd", "00000000000000000000000000000001",
+        "00000000", "00000001", "00000000"]})).to.be.equal(false)
   })
 
   it("should read submit request parameters", async () => {
@@ -191,10 +189,10 @@ describe("Stratum Messages", () => {
     let nonce = boostpow.UInt32Little.fromNumber(4)
     let en2 = boostpow.Bytes.fromHex("0000000000000001")
     let version = boostpow.Int32Little.fromNumber(23)
-    let share = Share.make(worker_name, job_id, timestamp, nonce, en2, version)
+    let share = Share.make(worker_name, job_id, en2, timestamp, nonce, version)
     expect(Share.workerName(share)).to.be.equal(worker_name)
     expect(Share.jobID(share)).to.be.equal(job_id)
-    expect(Share.timestamp(share).hex).to.be.equal(timestamp.hex)
+    expect(Share.time(share).hex).to.be.equal(timestamp.hex)
     expect(Share.nonce(share).hex).to.be.equal(nonce.hex)
     expect(Share.extranonce2(share).hex).to.be.equal(en2.hex)
     expect(Share.generalPurposeBits(share).hex).to.be.equal(version.hex)
@@ -301,12 +299,12 @@ describe("Stratum Messages", () => {
     let extra_nonce_2_big = boostpow.Bytes.fromHex("abcdef012345678900")
     let gpr = boostpow.Int32Little.fromHex("ffffffff")
 
-    let submit_wrong_job_id = SubmitRequest.make(777, worker_name, "xyzt", timestamp, nonce_true_v2, extra_nonce_2, gpr)['params']
-    let submit_wrong_size = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_true_v2, extra_nonce_2_big, gpr)['params']
-    let submit_true_v1 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_true_v1, extra_nonce_2)['params']
-    let submit_true_v2 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_true_v2, extra_nonce_2, gpr)['params']
-    let submit_false_v1 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_false, extra_nonce_2)['params']
-    let submit_false_v2 = SubmitRequest.make(777, worker_name, job_id, timestamp, nonce_false, extra_nonce_2, gpr)['params']
+    let submit_wrong_job_id = SubmitRequest.make(777, worker_name, "xyzt", extra_nonce_2, timestamp, nonce_true_v2, gpr)['params']
+    let submit_wrong_size = SubmitRequest.make(777, worker_name, job_id, extra_nonce_2_big, timestamp, nonce_true_v2, gpr)['params']
+    let submit_true_v1 = SubmitRequest.make(777, worker_name, job_id, extra_nonce_2, timestamp, nonce_true_v1)['params']
+    let submit_true_v2 = SubmitRequest.make(777, worker_name, job_id, extra_nonce_2, timestamp, nonce_true_v2, gpr)['params']
+    let submit_false_v1 = SubmitRequest.make(777, worker_name, job_id, extra_nonce_2, timestamp, nonce_false)['params']
+    let submit_false_v2 = SubmitRequest.make(777, worker_name, job_id, extra_nonce_2, timestamp, nonce_false, gpr)['params']
 
     let version_mask = boostpow.Int32Little.fromNumber(boostpow.Utils.generalPurposeBitsMask()).hex
 
@@ -366,10 +364,9 @@ describe("Stratum Messages", () => {
       '"id": 4, "method": "mining.submit"}')
 
     let proof = prove(en, notify.params, submit_request.params)
-/*    expect(proof.valid()).to.be.equal(true)
     let z = proof.string()
-    console.log("zstring: ", z.toString())
-    expect(z.hash.buffer).to.be.equal(Buffer.from("32abdc31d947623a2482144f92dbc092a84fd8ee6e2b5ae60f87762000000000", 'hex'))
-*/
+    expect(proof.valid()).to.be.equal(true)
+    expect(z.hash.buffer.toString('hex')).to.be.equal("32abdc31d947623a2482144f92dbc092a84fd8ee6e2b5ae60f87762000000000")
+
   })
 })

@@ -1,72 +1,72 @@
 import * as bsv from 'bsv'
 import * as boostpow from 'boostpow'
+import { broadcast } from 'powco'
 
-export function pubKeyToAddress(pubKey: bsv.PubKey): boostpow.Digest20 {
+import { log } from './log'
+
+export function pubKeyToPubKeyHash(pubKey: bsv.PubKey): boostpow.Digest20 {
   return new boostpow.Digest20(bsv.Hash.sha256Ripemd160(pubKey.toBuffer()))
 }
 
-export function privKeyToAddress(p: bsv.PrivKey): boostpow.Digest20 {
-  return pubKeyToAddress(bsv.PubKey.fromPrivKey(p))
+export function privKeyToPubKeyHash(p: bsv.PrivKey): boostpow.Digest20 {
+  return pubKeyToPubKeyHash(bsv.PubKey.fromPrivKey(p))
 }
 
-export function hdToAddress(hd: bsv.Bip32.Mainnet): boostpow.Digest20 {
-  return pubKeyToAddress(hd.pubKey)
+export function hdToPubKeyHash(hd: bsv.Bip32.Mainnet): boostpow.Digest20 {
+  return pubKeyToPubKeyHash(hd.pubKey)
 }
 
-export interface wallet {
-  nextReceive: () => boostpow.Digest20,
-  nextChange: () => boostpow.Digest20,
-  nextBoost: () => bsv.PrivKey
+export interface Network {
+  satsPerByte: () => Promise<number>,
+  broadcast: (tx: Buffer) => Promise<boolean>
 }
 
-// a really basic wallet that only uses one key.
-export function private_key_wallet(p: bsv.PrivKey): wallet {
+export function nonfunctional_network(): Network {
   return {
-    nextReceive: () => {
-      return privKeyToAddress(p)
+    satsPerByte: async () => {
+      return .5
     },
-    nextChange: () => {
-      return privKeyToAddress(p)
-    },
-    nextBoost: () => {
-      return p
+    broadcast: async (tx: Buffer) => {
+      return false;
     }
   }
 }
 
-export function hd_wallet(master: bsv.Bip32.Mainnet, pathBIP44: string): wallet {
-
-  function receive(i: number): bsv.Bip32.Mainnet {
-    throw 'incomplete method'
+export function powco_network(): Network {
+  return {
+    satsPerByte: async () => {
+      return .5
+    },
+    broadcast: async (tx: Buffer) => {
+      try {
+        await broadcast(tx.toString('hex'));
+      } catch (e) {
+        log.info("broadcast.fail", e)
+        return false
+      }
+      return true
+    }
   }
+}
 
-  function change(i: number): bsv.Bip32.Mainnet {
-    throw 'incomplete method'
-  }
+export interface Keys {
+  nextReceive: () => string,
+  nextChange: () => string,
+  nextBoost: () => bsv.PrivKey
+}
 
-  function boost(i: number): bsv.Bip32.Mainnet {
-    throw 'incomplete method'
-  }
-
-  let receiveIndex: number = 0
-  let changeIndex: number = 0
-  let boostIndex: number = 0
-
+// a really basic wallet that only uses one key.
+export function private_key_wallet(p: bsv.PrivKey): Keys {
+  let addr: string = bsv.Address.fromPrivKey(p).toString()
   return {
     nextReceive: () => {
-      let i: number = this.receiveIndex
-      this.receiveIndex++
-      return hdToAddress(this.receive(i))
+      return addr
     },
     nextChange: () => {
-      let i: number = this.changeIndex
-      this.changeIndex++
-      return hdToAddress(this.receive(i))
+      return addr
     },
     nextBoost: () => {
-      let i: number = this.boostIndex
-      this.boostIndex++
-      return hdToAddress(this.receive(i))
+      return p
     }
   }
 }

@@ -1,12 +1,13 @@
 
 import * as net from 'net'
 import { Session } from './session'
-import { handleStratumMessage, handleStratumRequest } from './stratum'
+import { stratum } from './stratum'
 import { server_session } from './server_session'
 import { log } from './log'
 import { listJobs } from './powco'
 import { JobManager, job_manager } from './jobs'
-import { wallet } from './bitcoin'
+import {Keys, powco_network} from './bitcoin'
+import { extensionHandlers } from './extensions'
 
 interface NewServer {
   name: string;
@@ -28,7 +29,10 @@ export class Server {
 
       // this session is not immediately deleted because it adds itself
       // to a global object called sessions containing all sessions.
-      new Session({ socket }, handleStratumMessage(handleStratumRequest(server_session(this.jobs.subscribe, true))))
+      new Session({ socket }, stratum(
+        server_session(this.jobs.subscribe,
+          {canSubmitWithoutAuthorization:true},
+          extensionHandlers)))
 
     })
 
@@ -84,9 +88,9 @@ export const server = new Server({
 
 })
 
-async function startServer(w: wallet) {
+async function startServer(w: Keys) {
 
-  server.start(job_manager(await listJobs(), w, 10))
+  server.start(job_manager(await listJobs(), w,powco_network(), 10))
 
   log.info('stratum.server.started', server.server.info);
 }
